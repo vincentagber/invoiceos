@@ -118,3 +118,30 @@ export const trackView = async (req: AuthRequest, res: Response, next: NextFunct
     next(error);
   }
 };
+
+export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if invoice exists and belongs to the business
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: id as string }
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    // Delete items first due to foreign key constraints if not using cascade
+    await prisma.invoiceItem.deleteMany({ where: { invoiceId: id as string } });
+    await prisma.payment.deleteMany({ where: { invoiceId: id as string } });
+    
+    await prisma.invoice.delete({
+      where: { id: id as string }
+    });
+
+    res.json({ success: true, message: 'Invoice deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

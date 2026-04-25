@@ -1,0 +1,20 @@
+[
+    {
+        "slug": "how-to-write-an-invoice",
+        "title": "How to Write an Invoice: The Ultimate Guide for Freelancers",
+        "excerpt": "Learn the essential components of a professional invoice and how to ensure you get paid on time, every time.",
+        "date": "2025-04-20",
+        "author": "InvoiceOS Team",
+        "category": "Invoicing",
+        "content": "Writing an invoice might seem simple, but missing key details can lead to payment delays. In this guide, we cover everything from tax IDs to payment terms..."
+    },
+    {
+        "slug": "proforma-vs-standard-invoice",
+        "title": "Proforma Invoice vs. Standard Invoice: What's the Difference?",
+        "excerpt": "Not sure which document to send? We break down the differences between proforma and standard invoices.",
+        "date": "2025-04-22",
+        "author": "InvoiceOS Team",
+        "category": "Guides",
+        "content": "A proforma invoice is a preliminary bill of sale sent to buyers in advance of a shipment or delivery of goods..."
+    }
+]

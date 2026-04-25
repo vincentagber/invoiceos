@@ -19,7 +19,8 @@ import {
     Coins,
     Percent,
     ShieldCheck,
-    Clock
+    Clock,
+    Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
@@ -89,6 +90,17 @@ export default function NewInvoicePage() {
         setItems(items.filter((_, i) => i !== index));
     };
 
+    const generateAIDescription = async (index: number) => {
+        const item = items[index];
+        if (!item.description) return;
+        try {
+            const res = await api.post('/ai/generate-description', { serviceType: item.description });
+            updateItem(index, 'description', res.data.description);
+        } catch (error) {
+            console.error("AI Generation failed", error);
+        }
+    };
+
     const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
         const newItems = [...items];
         // @ts-ignore
@@ -112,11 +124,12 @@ export default function NewInvoicePage() {
             const payload = {
                 businessId: bizRes.data.id,
                 clientId: clientId,
-                issueDate: issueDate,
-                dueDate: dueDate,
+                issueDate: new Date(issueDate).toISOString(),
+                dueDate: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
                 currency,
-                taxRate: taxRate,
-                discount: discount,
+                taxRate: Number(taxRate),
+                discountAmount: Number(discount),
+                totalAmount: total,
                 items: items,
                 notes: notes,
                 status: status.toUpperCase()
@@ -139,7 +152,7 @@ export default function NewInvoicePage() {
             <div className="flex justify-between items-start border-b border-slate-100 pb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-6">
-                        <span className="text-2xl font-bold tracking-tight text-indigo-600">InvoiceOS</span>
+                        <span className="text-2xl font-bold tracking-tight text-emerald-600">InvoiceOS</span>
                     </div>
                     <div className="text-slate-500 space-y-0.5 text-[11px] leading-relaxed">
                         <p className="font-semibold text-slate-900 text-base">{settings.company_name || "InvoiceOS User"}</p>
@@ -175,7 +188,7 @@ export default function NewInvoicePage() {
                     {dueDate && (
                         <div className="text-right">
                             <p className="text-[13px] font-semibold text-slate-400 mb-0.5 leading-tight">Due Date</p>
-                            <p className="font-semibold text-indigo-600">{dueDate}</p>
+                            <p className="font-semibold text-emerald-600">{dueDate}</p>
                         </div>
                     )}
                 </div>
@@ -252,7 +265,7 @@ export default function NewInvoicePage() {
     if (loading) return (
         <div className="h-screen w-full flex items-center justify-center bg-white">
             <div className="flex flex-col items-center gap-4">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
                 <p className="text-sm font-bold tracking-widest uppercase text-slate-400">Booting Invoice Engine...</p>
             </div>
         </div>
@@ -268,7 +281,7 @@ export default function NewInvoicePage() {
                     </Link>
                     <div>
                         <h1 className="text-lg font-black text-slate-900 tracking-tighter uppercase">Invoice Engine</h1>
-                        <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Drafting Phase</p>
+                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Drafting Phase</p>
                     </div>
                 </div>
                 
@@ -285,7 +298,7 @@ export default function NewInvoicePage() {
                     <button
                         onClick={(e) => handleSubmit(e, 'sent')}
                         disabled={submitting}
-                        className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all active:scale-95 disabled:opacity-50"
                     >
                         {submitting ? <Loader2 className="animate-spin" size={18} /> : (
                             <>
@@ -306,20 +319,20 @@ export default function NewInvoicePage() {
 
                         {/* Intelligence Sidebar (Float right on lg) */}
                         <div className="lg:hidden">
-                            <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} />
+                            <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} items={items} notes={notes} />
                         </div>
 
                         {/* Section: Client & Global Settings */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
                                 <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                                    <UserIcon size={16} className="text-indigo-600" />
+                                    <UserIcon size={16} className="text-emerald-600" />
                                     Recipient
                                 </h2>
                                 <div className="space-y-4">
                                     <div>
                                         <select
-                                            className="block w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                            className="block w-full rounded-xl border-slate-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-3 bg-slate-50/50 font-bold"
                                             value={clientId}
                                             onChange={(e) => setClientId(e.target.value)}
                                         >
@@ -354,7 +367,7 @@ export default function NewInvoicePage() {
 
                             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
                                 <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                                    <Settings size={16} className="text-indigo-600" />
+                                    <Settings size={16} className="text-emerald-600" />
                                     Configurations
                                 </h2>
                                 <div className="space-y-4">
@@ -407,7 +420,7 @@ export default function NewInvoicePage() {
                         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                                    <FileText size={16} className="text-indigo-600" />
+                                    <FileText size={16} className="text-emerald-600" />
                                     Revenue Streams
                                 </h2>
                             </div>
@@ -415,7 +428,7 @@ export default function NewInvoicePage() {
                             <div className="space-y-4">
                                 {items.map((item, index) => (
                                     <div key={index} className="group relative flex flex-col sm:grid sm:grid-cols-12 gap-4 items-center p-6 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:shadow-lg transition-all">
-                                        <div className="w-full sm:col-span-6">
+                                        <div className="w-full sm:col-span-6 flex gap-2">
                                             <input
                                                 type="text"
                                                 placeholder="Service or Product name"
@@ -423,6 +436,13 @@ export default function NewInvoicePage() {
                                                 value={item.description}
                                                 onChange={(e) => updateItem(index, 'description', e.target.value)}
                                             />
+                                            <button 
+                                                onClick={() => generateAIDescription(index)}
+                                                title="AI Magic Description"
+                                                className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-all shadow-sm"
+                                            >
+                                                <Sparkles size={18} />
+                                            </button>
                                         </div>
                                         <div className="flex gap-4 w-full sm:contents">
                                             <div className="flex-1 sm:col-span-2">
@@ -459,7 +479,7 @@ export default function NewInvoicePage() {
                             <button
                                 type="button"
                                 onClick={addItem}
-                                className="w-full py-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-2xl border-2 border-dashed border-indigo-200 transition-all active:scale-[0.99]"
+                                className="w-full py-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl border-2 border-dashed border-emerald-200 transition-all active:scale-[0.99]"
                             >
                                 <Plus size={18} /> Add Line Item
                             </button>
@@ -482,7 +502,7 @@ export default function NewInvoicePage() {
                 {/* Right Panel: AI Sidebar + Preview */}
                 <div className="hidden lg:flex w-[460px] bg-white border-l border-slate-200 flex-col overflow-hidden">
                     <div className="p-8 space-y-8 overflow-y-auto">
-                        <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} />
+                        <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} items={items} notes={notes} />
                         
                         <div className="space-y-4">
                             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live Preview</h3>
