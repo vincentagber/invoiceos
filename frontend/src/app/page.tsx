@@ -96,7 +96,7 @@ export default function EmeraldLandingPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="space-y-6"
                             >
-                                <h1 className="text-5xl md:text-7xl font-serif leading-[1.1]">
+                                <h1 className="text-5xl md:text-7xl font-sans font-semibold leading-[1.1]">
                                     Powerful Invoicing Platform <br /> 
                                     <span className="text-emerald-200 italic">Your Business</span> & Your Clients
                                 </h1>
@@ -163,7 +163,7 @@ export default function EmeraldLandingPage() {
                         <div className="space-y-10">
                             <div className="space-y-6">
                                 <h2 className="text-emerald-600 text-sm font-black uppercase tracking-[0.3em]">The Platform</h2>
-                                <h3 className="text-5xl font-serif text-slate-900 leading-tight">All-In-One Invoice Platform</h3>
+                                <h3 className="text-5xl font-sans font-semibold text-slate-900 leading-tight">All-In-One Invoice Platform</h3>
                                 <p className="text-lg text-slate-500 leading-relaxed">
                                     Everything you need to manage your business finances in one place. From automated billing to deep revenue analytics.
                                 </p>
@@ -215,7 +215,7 @@ export default function EmeraldLandingPage() {
                                 </div>
                             </div>
                             <div className="space-y-8">
-                                <h2 className="text-4xl font-serif text-slate-900 leading-tight">Invoicing Solution For All Businesses</h2>
+                                <h2 className="text-4xl font-sans font-semibold text-slate-900 leading-tight">Invoicing Solution For All Businesses</h2>
                                 <p className="text-slate-500 leading-relaxed font-medium">
                                     Whether you are a solo freelancer or a growing agency, InvoiceOS provides the infrastructure you need to scale your revenue.
                                 </p>
@@ -238,7 +238,7 @@ export default function EmeraldLandingPage() {
                 <section className="py-32 bg-white">
                     <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-24 items-center">
                         <div className="space-y-10 order-2 lg:order-1">
-                            <h2 className="text-5xl font-serif text-slate-900 leading-tight">An Online Invoicing Software</h2>
+                            <h2 className="text-5xl font-sans font-semibold text-slate-900 leading-tight">An Online Invoicing Software</h2>
                             <p className="text-lg text-slate-500 leading-relaxed">
                                 Get a bird's eye view of your business performance. Track outstanding payments and monitor your cash flow in real-time.
                             </p>
@@ -278,7 +278,7 @@ export default function EmeraldLandingPage() {
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center max-w-2xl mx-auto mb-20 space-y-6">
                             <h2 className="text-emerald-600 text-sm font-black uppercase tracking-[0.3em]">Workflow</h2>
-                            <h3 className="text-5xl font-serif text-slate-900">How Does It Work?</h3>
+                            <h3 className="text-5xl font-sans font-semibold text-slate-900">How Does It Work?</h3>
                             <p className="text-slate-500 font-medium">Three simple steps to streamline your revenue operations.</p>
                         </div>
                         
@@ -305,7 +305,7 @@ export default function EmeraldLandingPage() {
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center max-w-2xl mx-auto mb-24 space-y-6">
                             <h2 className="text-emerald-600 text-sm font-black uppercase tracking-[0.3em]">Pricing Plans</h2>
-                            <h3 className="text-5xl font-serif text-slate-900">Choose Your Plan</h3>
+                            <h3 className="text-5xl font-sans font-semibold text-slate-900">Choose Your Plan</h3>
                             <p className="text-slate-500 font-medium">Simple, transparent pricing for teams of all sizes.</p>
                         </div>
 
@@ -347,7 +347,7 @@ export default function EmeraldLandingPage() {
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center max-w-2xl mx-auto mb-24 space-y-6">
                             <h2 className="text-emerald-600 text-sm font-black uppercase tracking-[0.3em]">Testimonials</h2>
-                            <h3 className="text-5xl font-serif text-slate-900">What Our Client Says</h3>
+                            <h3 className="text-5xl font-sans font-semibold text-slate-900">What Our Client Says</h3>
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-12">
@@ -381,7 +381,7 @@ export default function EmeraldLandingPage() {
                     <div className="max-w-7xl mx-auto bg-emerald-600 rounded-[4rem] p-12 lg:p-24 flex flex-col lg:flex-row items-center justify-between gap-12 overflow-hidden relative">
                         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/5 rounded-full -mr-40 -mt-40 blur-3xl" />
                         <div className="space-y-8 text-white relative z-10 text-center lg:text-left">
-                            <h2 className="text-4xl lg:text-6xl font-serif leading-tight">
+                            <h2 className="text-4xl lg:text-6xl font-sans font-semibold leading-tight">
                                 Let's Start Create Your <br /> Invoices For 30 Days Trial
                             </h2>
                             <Link href="/register" className="inline-flex px-10 py-5 bg-white text-emerald-600 font-bold rounded-2xl hover:bg-emerald-50 shadow-2xl transition-all active:scale-95">
@@ -405,7 +405,7 @@ export default function EmeraldLandingPage() {
                         <div className="space-y-12">
                             <div className="space-y-6">
                                 <h2 className="text-emerald-600 text-sm font-black uppercase tracking-[0.3em]">Help Center</h2>
-                                <h3 className="text-5xl font-serif text-slate-900 leading-tight">General Questions</h3>
+                                <h3 className="text-5xl font-sans font-semibold text-slate-900 leading-tight">General Questions</h3>
                             </div>
                             <div className="space-y-4">
                                 {[
@@ -445,7 +445,7 @@ export default function EmeraldLandingPage() {
                 
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-20 items-end border-b border-white/5 pb-20 mb-20">
-                        <h2 className="text-5xl lg:text-7xl font-serif leading-tight">
+                        <h2 className="text-5xl lg:text-7xl font-sans font-semibold leading-tight">
                             Ready to take control <br /> of your finances?
                         </h2>
                         <div className="flex gap-6">

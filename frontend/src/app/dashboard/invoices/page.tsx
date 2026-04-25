@@ -111,12 +111,12 @@ export default function InvoicesPage() {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Number</th>
+                                <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Client</th>
+                                <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Date</th>
+                                <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Total</th>
+                                <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Status</th>
+                                <th className="px-6 py-3 text-right text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -127,19 +127,19 @@ export default function InvoicesPage() {
                             ) : (
                                 filteredInvoices.map((inv) => (
                                     <tr key={inv.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">
+                                        <td className="px-6 py-4 whitespace-nowrap text-[13px] font-semibold text-indigo-600 tabular-nums">
                                             <Link href={`/dashboard/invoices/${inv.id}/edit`} className="hover:underline">
                                                 {inv.invoiceNumber}
                                             </Link>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.client?.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.issueDate}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(inv.totalAmount)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-[13px] font-medium text-slate-900">{inv.client?.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-[13px] text-slate-500 tabular-nums">{inv.issueDate}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrency(inv.totalAmount)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full 
-                                                ${inv.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                                    inv.status === 'OVERDUE' ? 'bg-red-100 text-red-800' :
-                                                        'bg-yellow-100 text-yellow-800'}`}>
+                                            <span className={`inline-flex px-2 py-0.5 text-[11px] font-semibold tracking-wider uppercase rounded-md 
+                                                ${inv.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
+                                                    inv.status === 'OVERDUE' ? 'bg-red-100 text-red-700' :
+                                                        'bg-amber-100 text-amber-700'}`}>
                                                 {inv.status}
                                             </span>
                                         </td>
