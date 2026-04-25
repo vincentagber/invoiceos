@@ -4,32 +4,60 @@ import React, { useState } from 'react';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save } from 'lucide-react';
+import { StatusModal } from '@/components/ui/StatusModal';
 import Link from 'next/link';
+
+import { useAuth } from '@/context/AuthContext';
 
 export default function NewClientPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
     const [taxId, setTaxId] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!user?.businesses?.[0]?.id) {
+            setModalConfig({
+                title: 'Session Expired',
+                message: 'Business profile not found. Please relogin to continue.',
+                type: 'error'
+            });
+            setShowModal(true);
+            return;
+        }
+
         setSubmitting(true);
         try {
-            await api.post('/clients/create.php', {
+            await api.post('/clients', {
                 name,
                 email,
                 phone,
                 address,
-                tax_id: taxId
+                taxId,
+                businessId: user.businesses[0].id
             });
-            router.push('/dashboard/clients');
+            setModalConfig({
+                title: 'Partner Registered',
+                message: 'The new revenue partner has been successfully integrated into your database.',
+                type: 'success'
+            });
+            setShowModal(true);
         } catch (error) {
-            alert('Failed to create client');
             console.error(error);
+            setModalConfig({
+                title: 'Registration Failed',
+                message: 'We encountered an error while adding this partner. Please check all fields.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setSubmitting(false);
         }
@@ -113,6 +141,20 @@ export default function NewClientPage() {
                     </button>
                 </div>
             </form>
+
+            <StatusModal 
+                isOpen={showModal}
+                onClose={() => {
+                    setShowModal(false);
+                    if (modalConfig.type === 'success') {
+                        router.push('/dashboard/clients');
+                    }
+                }}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel={modalConfig.type === 'success' ? 'View Partners' : 'Close'}
+            />
         </div>
     );
 }

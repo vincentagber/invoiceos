@@ -7,14 +7,16 @@ import { generateInvoicePDF } from '@/lib/pdfGenerator';
 import { formatCurrency } from '@/lib/utils';
 import { Plus, Download, Search, FileText, Filter, Loader2, File, ArrowRightCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import clsx from 'clsx';
+import { StatusModal } from '@/components/ui/StatusModal';
 
 interface Quotation {
-    id: number;
-    quotation_number: string;
-    client_name: string;
-    issue_date: string;
-    expiry_date: string;
-    total: number;
+    id: string;
+    quotationNumber: string;
+    client: { name: string };
+    issueDate: string;
+    expiryDate: string;
+    totalAmount: number;
     status: string;
     items: any[];
 }
@@ -23,9 +25,11 @@ export default function QuotationsPage() {
     const [quotations, setQuotations] = useState<Quotation[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [downloadingId, setDownloadingId] = useState<number | null>(null);
-    const [convertingId, setConvertingId] = useState<number | null>(null);
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
+    const [convertingId, setConvertingId] = useState<string | null>(null);
     const [settings, setSettings] = useState<any>({});
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const router = useRouter();
 
     useEffect(() => {
@@ -35,7 +39,7 @@ export default function QuotationsPage() {
 
     const fetchSettings = async () => {
         try {
-            const res = await api.get('/settings/read.php?all=true');
+            const res = await api.get('/business/me');
             if (res.data) setSettings(res.data);
         } catch (e) {
             console.error("Failed to fetch settings", e);
@@ -44,198 +48,259 @@ export default function QuotationsPage() {
 
     const fetchQuotations = async () => {
         try {
-            const res = await api.get('/quotations/read.php');
-            // Ensure data is array, otherwise default to empty array
-            if (Array.isArray(res.data)) {
-                setQuotations(res.data);
-            } else {
-                console.error("API returned non-array:", res.data);
-                setQuotations([]);
+            const bizRes = await api.get('/business/me');
+            if (bizRes.data && bizRes.data.id) {
+                const res = await api.get(`/quotations?businessId=${bizRes.data.id}`);
+                if (Array.isArray(res.data)) {
+                    setQuotations(res.data);
+                }
             }
         } catch (error) {
-            console.error(error);
+            console.error("Failed to fetch quotations", error);
             setQuotations([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDownload = async (id: number) => {
+    const handleDownload = async (id: string) => {
         setDownloadingId(id);
         try {
-            const res = await api.get(`/quotations/read.php?id=${id}`);
+            const res = await api.get(`/quotations/${id}`);
             const data = res.data;
             await generateInvoicePDF(data, settings, 'quotation');
         } catch (error) {
             console.error("Failed to download PDF", error);
-            alert("Failed to generate PDF");
+            setModalConfig({
+                title: 'Export Failed',
+                message: 'We could not generate the PDF proposal. Please try again.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setDownloadingId(null);
         }
     };
 
-    const handleConvertToInvoice = async (id: number) => {
+    const handleConvertToInvoice = async (id: string) => {
         if (!confirm("Convert this quotation to an invoice? This will create a new invoice draft.")) return;
         setConvertingId(id);
         try {
-            const res = await api.post('/quotations/convert_to_invoice.php', { quotation_id: id });
-            alert("Quotation converted successfully!");
-            router.push('/dashboard/invoices');
+            await api.post(`/quotations/${id}/convert`);
+            setModalConfig({
+                title: 'Pipeline Deployment',
+                message: 'Quotation has been successfully converted to a revenue-generating invoice draft.',
+                type: 'success'
+            });
+            setShowModal(true);
+            // We'll redirect after the user closes the modal or just let them see it?
+            // Actually, let's redirect after a small delay or on close.
         } catch (error) {
             console.error("Conversion failed", error);
-            alert("Failed to convert quotation.");
+            setModalConfig({
+                title: 'Conversion Error',
+                message: 'Failed to deploy quotation to invoice pipeline. Please check system logs.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setConvertingId(null);
         }
     }
 
     const StatusBadge = ({ status }: { status: string }) => {
-        const styles: Record<string, string> = {
-            accepted: 'bg-green-50 text-green-700 ring-green-600/20',
-            draft: 'bg-gray-50 text-gray-600 ring-gray-500/10',
-            sent: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-            rejected: 'bg-red-50 text-red-700 ring-red-600/20',
-        };
-        const defaultStyle = styles.draft;
-
         return (
-            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${styles[status.toLowerCase()] || defaultStyle}`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+            <span className={clsx(
+                "inline-flex px-3 py-1 text-[9px] font-black tracking-widest uppercase rounded-lg shadow-sm border",
+                status === 'ACCEPTED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                status === 'SENT' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                'bg-slate-50 text-slate-700 border-slate-100'
+            )}>
+                {status}
             </span>
         );
     };
 
     const filteredQuotations = Array.isArray(quotations) ? quotations.filter(q =>
-        q.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        q.quotation_number.toLowerCase().includes(searchTerm.toLowerCase())
+        q.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        q.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase())
     ) : [];
 
     if (loading) {
         return (
             <div className="flex h-96 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-8 animate-in fade-in duration-700">
+            {/* Header Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-100 pb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quotations</h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage and track your price quotes.</p>
+                    <h1 className="text-3xl font-heading font-black text-slate-900 tracking-tighter uppercase leading-none">Quote Matrix</h1>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Proposal & Bid Pipeline</p>
                 </div>
                 <Link
                     href="/dashboard/quotations/new"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-all active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-3.5 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95"
                 >
                     <Plus size={18} />
-                    New Quote
+                    New Proposal
                 </Link>
             </div>
 
+            {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row gap-4 p-1">
-                <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <div className="relative flex-1 group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                         <Search size={18} />
                     </div>
                     <input
                         type="text"
-                        placeholder="Search quotations..."
-                        className="block w-full rounded-lg border-gray-200 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 border p-2"
+                        placeholder="Search proposals by number or client..."
+                        className="block w-full rounded-2xl border-slate-200 bg-white pl-12 pr-4 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 sm:text-sm h-14 border transition-all outline-none font-medium"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {filteredQuotations.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50/50">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-100">
+                        <thead className="bg-slate-50/50">
+                            <tr>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Proposal ID</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Prospect</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Issue Date</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Est. Value</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 bg-white">
+                            {filteredQuotations.length === 0 ? (
                                 <tr>
-                                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Quote #</th>
-                                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
-                                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                                        No Proposals in Pipeline
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white">
-                                {filteredQuotations.map((quote) => (
-                                    <tr key={quote.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                            ) : (
+                                filteredQuotations.map((quote) => (
+                                    <tr key={quote.id} className="hover:bg-slate-50/30 transition-colors group">
+                                        <td className="px-8 py-6 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-8 w-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                                                <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 shadow-sm">
                                                     <FileText size={16} />
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-900">{quote.quotation_number}</span>
+                                                <span className="font-heading font-black text-slate-900 tracking-tighter">{quote.quotationNumber}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                            {quote.client_name}
+                                        <td className="px-8 py-6 whitespace-nowrap text-[13px] font-bold text-slate-900">
+                                            {quote.client?.name}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {quote.issue_date}
+                                        <td className="px-8 py-6 whitespace-nowrap text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                            {quote.issueDate}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {formatCurrency(quote.total)}
+                                        <td className="px-8 py-6 whitespace-nowrap text-[14px] font-black text-slate-900 tracking-tight">
+                                            {formatCurrency(quote.totalAmount)}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <StatusBadge status={quote.status || 'draft'} />
+                                        <td className="px-8 py-6 whitespace-nowrap">
+                                            <StatusBadge status={quote.status || 'DRAFT'} />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {quote.status !== 'accepted' && (
+                                        <td className="px-8 py-6 whitespace-nowrap text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {quote.status !== 'ACCEPTED' && (
                                                     <button
                                                         onClick={() => handleConvertToInvoice(quote.id)}
                                                         disabled={convertingId === quote.id}
-                                                        className="text-green-600 hover:text-green-800 p-1"
-                                                        title="Convert to Invoice"
+                                                        className="p-2 text-slate-300 hover:text-emerald-600 transition-all rounded-xl hover:bg-emerald-50"
+                                                        title="Deploy to Invoice"
                                                     >
-                                                        {convertingId === quote.id ? <Loader2 size={16} className="animate-spin" /> : <ArrowRightCircle size={18} />}
+                                                        {convertingId === quote.id ? <Loader2 size={18} className="animate-spin" /> : <ArrowRightCircle size={18} />}
                                                     </button>
                                                 )}
                                                 <button
                                                     onClick={() => handleDownload(quote.id)}
                                                     disabled={downloadingId === quote.id}
-                                                    className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 p-1"
-                                                    title="Download PDF"
+                                                    className="p-2 text-slate-300 hover:text-indigo-600 transition-all rounded-xl hover:bg-indigo-50"
+                                                    title="Export Proposal"
                                                 >
-                                                    {downloadingId === quote.id ? (
-                                                        <Loader2 size={16} className="animate-spin" />
-                                                    ) : (
-                                                        <Download size={18} />
-                                                    )}
+                                                    {downloadingId === quote.id ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                {filteredQuotations.length === 0 ? (
+                    <div className="col-span-full flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-[2rem] border border-dashed border-slate-200">
+                        <div className="h-16 w-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-4 text-slate-300">
+                            <File size={32} />
+                        </div>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">No Active Proposals Found</h3>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                        <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <File size={32} className="text-gray-400" />
+                    filteredQuotations.map((quote) => (
+                        <div key={quote.id} className="bg-white rounded-[2rem] border border-slate-200/60 p-8 space-y-6 shadow-sm">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <StatusBadge status={quote.status || 'DRAFT'} />
+                                    <h3 className="mt-3 font-heading font-black text-lg text-slate-900 tracking-tighter">{quote.quotationNumber}</h3>
+                                    <p className="text-sm font-bold text-slate-500 mt-1">{quote.client?.name}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-lg font-black text-slate-900 tracking-tight">{formatCurrency(quote.totalAmount)}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{quote.issueDate}</p>
+                                </div>
+                            </div>
+
+                            <div className="pt-6 border-t border-slate-50 flex justify-end gap-2">
+                                {quote.status !== 'ACCEPTED' && (
+                                    <button
+                                        onClick={() => handleConvertToInvoice(quote.id)}
+                                        className="flex-1 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <ArrowRightCircle size={14} /> Convert
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => handleDownload(quote.id)}
+                                    className="flex-1 py-3 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Download size={14} /> PDF
+                                </button>
+                            </div>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">No quotes found</h3>
-                        <p className="text-gray-500 mt-1 max-w-sm">
-                            Create a quote to send to your potential clients.
-                        </p>
-                        <Link
-                            href="/dashboard/quotations/new"
-                            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-                        >
-                            <Plus size={16} />
-                            Create Quote
-                        </Link>
-                    </div>
+                    ))
                 )}
             </div>
+
+            <StatusModal 
+                isOpen={showModal}
+                onClose={() => {
+                    setShowModal(false);
+                    if (modalConfig.title === 'Pipeline Deployment') {
+                        router.push('/dashboard/invoices');
+                    }
+                }}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel={modalConfig.title === 'Pipeline Deployment' ? 'View Invoices' : 'Continue'}
+            />
         </div>
     );
 }
+

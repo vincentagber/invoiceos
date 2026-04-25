@@ -44,10 +44,10 @@ export default function LoginPage() {
                             className="h-full w-auto object-contain"
                         />
                     </div>
-                    <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome back</h1>
-                        <p className="text-slate-500 text-sm">
-                            Sign in to your InvoiceOS account
+                    <div className="text-center space-y-2">
+                        <h1 className="text-3xl font-heading font-black text-slate-900 tracking-tighter uppercase leading-none">Welcome back</h1>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
+                            Revenue Engine Authentication
                         </p>
                     </div>
                 </div>

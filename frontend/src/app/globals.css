@@ -1,34 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  
+  /* Modern Typography Scale */
+  --text-xs: 0.75rem;     /* 12px */
+  --text-sm: 0.875rem;    /* 14px */
+  --text-base: 1rem;      /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.25rem;     /* 20px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-3xl: 1.875rem;   /* 30px */
+  --text-4xl: 2.25rem;    /* 36px */
+  --text-5xl: 3rem;       /* 48px */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  
+  /* Font Families */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-outfit), var(--font-inter), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 
-  /* Brand Override: Map Indigo (used in code) to Violet (Brand Color) */
-  --color-indigo-50: var(--color-violet-50);
-  --color-indigo-100: var(--color-violet-100);
-  --color-indigo-200: var(--color-violet-200);
-  --color-indigo-300: var(--color-violet-300);
-  --color-indigo-400: var(--color-violet-400);
-  --color-indigo-500: var(--color-violet-500);
-  --color-indigo-600: var(--color-violet-600);
-  --color-indigo-700: var(--color-violet-700);
-  --color-indigo-800: var(--color-violet-800);
-  --color-indigo-900: var(--color-violet-900);
-  --color-indigo-950: var(--color-violet-950);
+  /* Refined Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+
+  /* Brand Overrides (Indigo -> Modern Violet/Indigo Hybrid) */
+  --color-indigo-50: #f5f3ff;
+  --color-indigo-100: #ede9fe;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-900: #312e81;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #020617;
+    --foreground: #F8FAFC;
   }
 }
 
@@ -39,6 +54,35 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: 1.2;
+}
+
+/* Premium Typography Utilities */
+.heading-hero {
+  font-size: var(--text-5xl);
+  font-weight: 800;
+  letter-spacing: var(--letter-spacing-tighter);
+  line-height: 1.1;
+}
+
+.heading-section {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.text-premium {
+  color: #64748b;
+  font-size: var(--text-base);
+  line-height: 1.7;
+}
+
