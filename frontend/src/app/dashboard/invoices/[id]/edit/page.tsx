@@ -9,7 +9,7 @@ import Link from 'next/link';
 import clsx from 'clsx';
 
 interface Client {
-    id: number;
+    id: string;
     name: string;
     email?: string;
     address?: string;
@@ -18,7 +18,7 @@ interface Client {
 interface InvoiceItem {
     description: string;
     quantity: number;
-    unit_price: number;
+    unitPrice: number;
 }
 
 export default function EditInvoicePage() {
@@ -47,9 +47,9 @@ export default function EditInvoicePage() {
         const init = async () => {
             try {
                 const [clientsRes, settingsRes, invoiceRes] = await Promise.all([
-                    api.get('/clients/read.php'),
-                    api.get('/settings/read.php?all=true'),
-                    api.get(`/invoices/read.php?id=${invoiceId}`)
+                    api.get('/clients'),
+                    api.get('/business/me'),
+                    api.get(`/invoices/${invoiceId}`)
                 ]);
                 setClients(clientsRes.data);
                 if (settingsRes.data) setSettings(settingsRes.data);
@@ -57,17 +57,17 @@ export default function EditInvoicePage() {
                 // Populate Invoice Data
                 const inv = invoiceRes.data;
                 if (inv) {
-                    setClientId(inv.client_id.toString());
-                    setInvoiceNumber(inv.invoice_number);
-                    setIssueDate(inv.issue_date);
-                    setDueDate(inv.due_date);
+                    setClientId(inv.clientId);
+                    setInvoiceNumber(inv.invoiceNumber);
+                    setIssueDate(new Date(inv.issueDate).toISOString().split('T')[0]);
+                    setDueDate(new Date(inv.dueDate).toISOString().split('T')[0]);
                     setNotes(inv.notes || '');
 
                     // Map items (ensure numbers are numbers)
                     const mappedItems = inv.items.map((i: any) => ({
                         description: i.description,
                         quantity: Number(i.quantity),
-                        unit_price: Number(i.unit_price)
+                        unitPrice: Number(i.unitPrice)
                     }));
                     setItems(mappedItems);
                 }
@@ -84,7 +84,7 @@ export default function EditInvoicePage() {
     }, [invoiceId]);
 
     const addItem = () => {
-        setItems([...items, { description: '', quantity: 1, unit_price: 0 }]);
+        setItems([...items, { description: '', quantity: 1, unitPrice: 0 }]);
     };
 
     const removeItem = (index: number) => {
@@ -98,7 +98,7 @@ export default function EditInvoicePage() {
         setItems(newItems);
     };
 
-    const calculateSubtotal = () => items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const calculateSubtotal = () => items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const calculateTotal = () => calculateSubtotal();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -108,13 +108,13 @@ export default function EditInvoicePage() {
         setSubmitting(true);
         try {
             // Include ID for update
-            await api.post('/invoices/update.php', {
-                id: invoiceId,
-                client_id: clientId,
-                issue_date: issueDate,
-                due_date: dueDate,
+            await api.put(`/invoices/${invoiceId}`, {
+                clientId: clientId,
+                issueDate: new Date(issueDate).toISOString(),
+                dueDate: new Date(dueDate).toISOString(),
                 items: items,
-                notes: notes
+                notes: notes,
+                totalAmount: calculateTotal()
             });
             router.push('/dashboard/invoices');
         } catch (error) {
@@ -133,7 +133,7 @@ export default function EditInvoicePage() {
             <div className="flex justify-between items-start">
                 <div>
                     <div className="flex items-center gap-2 mb-4">
-                        <img src="/logo.png" alt="Company Logo" className="w-48 h-auto object-contain" />
+                        <span className="text-2xl font-bold tracking-tight text-emerald-600">InvoiceOS</span>
                     </div>
                     <div className="text-gray-500 space-y-0.5">
                         <p>{settings.company_address || '123 Business Rd'}</p>
@@ -178,11 +178,11 @@ export default function EditInvoicePage() {
             <div className="mt-8">
                 <table className="w-full">
                     <thead>
-                        <tr className="border-b-2 border-indigo-600">
-                            <th className="text-left py-2 font-semibold text-indigo-600">Description</th>
-                            <th className="text-right py-2 font-semibold text-indigo-600 w-16">Qty</th>
-                            <th className="text-right py-2 font-semibold text-indigo-600 w-24">Price</th>
-                            <th className="text-right py-2 font-semibold text-indigo-600 w-24">Amount</th>
+                        <tr className="border-b-2 border-emerald-600">
+                            <th className="text-left py-2 font-semibold text-emerald-600">Description</th>
+                            <th className="text-right py-2 font-semibold text-emerald-600 w-16">Qty</th>
+                            <th className="text-right py-2 font-semibold text-emerald-600 w-24">Price</th>
+                            <th className="text-right py-2 font-semibold text-emerald-600 w-24">Amount</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -190,8 +190,8 @@ export default function EditInvoicePage() {
                             <tr key={i}>
                                 <td className="py-3 text-gray-900">{item.description || <span className="text-gray-300 italic">Item description...</span>}</td>
                                 <td className="py-3 text-right text-gray-600">{item.quantity}</td>
-                                <td className="py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
-                                <td className="py-3 text-right font-medium text-gray-900">{formatCurrency(item.quantity * item.unit_price)}</td>
+                                <td className="py-3 text-right text-gray-600">{formatCurrency(item.unitPrice)}</td>
+                                <td className="py-3 text-right font-medium text-gray-900">{formatCurrency(item.quantity * item.unitPrice)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -221,7 +221,14 @@ export default function EditInvoicePage() {
         </div>
     );
 
-    if (loading) return <div className="p-10 text-center">Loading invoice...</div>;
+    if (loading) return (
+        <div className="h-screen w-full flex items-center justify-center bg-white">
+            <div className="flex flex-col items-center gap-4">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+                <p className="text-sm font-bold tracking-widest uppercase text-slate-400">Loading Engine...</p>
+            </div>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col h-screen overflow-hidden">
@@ -231,7 +238,7 @@ export default function EditInvoicePage() {
                     <Link href="/dashboard/invoices" className="text-gray-500 hover:text-gray-900 transition-colors">
                         <ArrowLeft size={20} />
                     </Link>
-                    <h1 className="text-lg font-bold text-gray-900">Edit Invoice {invoiceNumber}</h1>
+                    <h1 className="text-lg font-bold text-gray-900 uppercase tracking-tighter">Edit Invoice {invoiceNumber}</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -243,7 +250,7 @@ export default function EditInvoicePage() {
                     <button
                         onClick={handleSubmit}
                         disabled={submitting}
-                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 transition-all active:scale-95"
+                        className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50 transition-all active:scale-95"
                     >
                         {submitting ? 'Saving...' : (
                             <>
@@ -267,15 +274,15 @@ export default function EditInvoicePage() {
 
                         {/* Section: Who & When */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-                            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                                <UserIcon size={16} className="text-indigo-500" />
+                            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 uppercase tracking-widest text-[11px]">
+                                <UserIcon size={16} className="text-emerald-500" />
                                 Client Details
                             </h2>
                             <div className="grid gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Client</label>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Select Client</label>
                                     <select
-                                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5 bg-gray-50"
+                                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 bg-gray-50 font-bold"
                                         value={clientId}
                                         onChange={(e) => setClientId(e.target.value)}
                                         required
@@ -289,20 +296,20 @@ export default function EditInvoicePage() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+                                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Issue Date</label>
                                         <input
                                             type="date"
-                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5"
+                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 font-bold"
                                             value={issueDate}
                                             onChange={(e) => setIssueDate(e.target.value)}
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Due Date</label>
                                         <input
                                             type="date"
-                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5"
+                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 font-bold"
                                             value={dueDate}
                                             onChange={(e) => setDueDate(e.target.value)}
                                             required
@@ -315,54 +322,48 @@ export default function EditInvoicePage() {
                         {/* Section: Items */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                                    <FileText size={16} className="text-indigo-500" />
+                                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 uppercase tracking-widest text-[11px]">
+                                    <FileText size={16} className="text-emerald-500" />
                                     Line Items
                                 </h2>
                             </div>
 
                             <div className="space-y-4">
                                 {items.map((item, index) => (
-                                    <div key={index} className="group relative grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-gray-100 bg-gray-50 hover:border-gray-300 transition-colors">
+                                    <div key={index} className="group relative grid grid-cols-12 gap-3 items-start p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:shadow-lg transition-all">
                                         <div className="col-span-12 sm:col-span-6">
-                                            <label className="sr-only">Description</label>
                                             <input
                                                 type="text"
                                                 placeholder="Description"
-                                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5"
                                                 value={item.description}
                                                 onChange={(e) => updateItem(index, 'description', e.target.value)}
                                             />
                                         </div>
                                         <div className="col-span-3 sm:col-span-2">
-                                            <label className="sr-only">Qty</label>
                                             <input
                                                 type="number"
                                                 placeholder="Qty"
-                                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 text-center font-bold"
                                                 value={item.quantity}
                                                 onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
                                             />
                                         </div>
                                         <div className="col-span-4 sm:col-span-3">
-                                            <label className="sr-only">Price</label>
                                             <div className="relative">
-                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2">
-                                                    <span className="text-gray-500 sm:text-sm">₦</span>
-                                                </div>
                                                 <input
                                                     type="number"
                                                     placeholder="0.00"
-                                                    className="block w-full rounded-md border-gray-300 pl-6 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
-                                                    value={item.unit_price}
-                                                    onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))}
+                                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 font-bold"
+                                                    value={item.unitPrice}
+                                                    onChange={(e) => updateItem(index, 'unitPrice', Number(e.target.value))}
                                                 />
                                             </div>
                                         </div>
                                         <div className="col-span-1 sm:col-span-1 flex justify-end pt-2">
                                             <button
                                                 onClick={() => removeItem(index)}
-                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                                className="text-gray-400 hover:text-red-500 transition-colors p-1"
                                             >
                                                 <Trash size={16} />
                                             </button>
@@ -374,7 +375,7 @@ export default function EditInvoicePage() {
                             <button
                                 type="button"
                                 onClick={addItem}
-                                className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-dashed border-indigo-200 hover:border-indigo-300 transition-all"
+                                className="w-full py-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-dashed border-emerald-200 transition-all"
                             >
                                 <Plus size={16} /> Add Line Item
                             </button>
@@ -382,10 +383,10 @@ export default function EditInvoicePage() {
 
                         {/* Section: Notes */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                            <label className="block text-sm font-medium text-gray-700">Notes & Terms</label>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Notes & Terms</label>
                             <textarea
                                 rows={3}
-                                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5"
+                                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 bg-gray-50 font-medium"
                                 placeholder="Payment due within 30 days..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
@@ -396,7 +397,7 @@ export default function EditInvoicePage() {
 
                 {/* Right Panel: Live Preview */}
                 <div className={clsx(
-                    "hidden lg:flex flex-1 bg-gray-800/95 overflow-y-auto p-10 justify-center items-start shadow-inner",
+                    "hidden lg:flex flex-1 bg-slate-900 overflow-y-auto p-10 justify-center items-start shadow-inner",
                     showPreviewMobile && "!flex absolute inset-0 z-20"
                 )}>
                     <div className="scale-[0.6] sm:scale-[0.7] md:scale-[0.8] lg:scale-[0.85] xl:scale-100 origin-top transition-transform duration-300 ease-out">

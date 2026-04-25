@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import api from '@/lib/api';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
@@ -20,22 +21,11 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/backend/api';
-            const res = await fetch(`${apiUrl}/auth/login.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Login failed');
-            }
-
-            login(data.token, data.user);
+            const res = await api.post('/auth/login', { email, password });
+            const { token, user } = res.data;
+            login(token, user);
         } catch (err: any) {
-            setError(err.message || 'Invalid email or password. Please try again.');
+            setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
         } finally {
             setLoading(false);
         }

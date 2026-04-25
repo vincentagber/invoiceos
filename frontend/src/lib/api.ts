@@ -15,7 +15,7 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         // Attempt to get the token directly from localStorage
-        const token = localStorage.getItem('token');
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
         // Add Authorization header if token exists
         if (token) {
@@ -26,6 +26,22 @@ api.interceptors.request.use(
     },
     (error) => {
         console.error('API Request Error:', error);
+        return Promise.reject(error);
+    }
+);
+
+// Add a response interceptor to handle 401 errors
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        // If the error is 401 Unauthorized, redirect to login
+        if (error.response?.status === 401) {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login?error=session_expired';
+            }
+        }
         return Promise.reject(error);
     }
 );

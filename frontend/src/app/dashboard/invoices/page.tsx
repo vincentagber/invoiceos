@@ -20,7 +20,7 @@ export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [downloadingId, setDownloadingId] = useState<number | null>(null);
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
     const [settings, setSettings] = useState<any>({});
 
     useEffect(() => {
@@ -40,17 +40,19 @@ export default function InvoicesPage() {
     const fetchInvoices = async () => {
         try {
             const bizRes = await api.get('/business/me');
-            const res = await api.get(`/invoices?businessId=${bizRes.data.id}`);
-            setInvoices(res.data);
+            if (bizRes.data && bizRes.data.id) {
+                const res = await api.get(`/invoices?businessId=${bizRes.data.id}`);
+                setInvoices(res.data);
+            }
         } catch (error) {
-            console.error(error);
+            console.error("Failed to fetch invoices", error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleDownload = async (id: string) => {
-        setDownloadingId(id as any);
+        setDownloadingId(id);
         try {
             const res = await api.get(`/invoices/${id}`);
             const invoiceData = res.data;

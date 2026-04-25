@@ -12,5 +12,6 @@ router.get('/:id', invoiceController.getOne);
 router.put('/:id', invoiceController.update);
 router.patch('/:id/status', invoiceController.updateStatus);
 router.post('/:id/view', invoiceController.trackView);
+router.delete('/:id', invoiceController.remove);
 
 export default router;

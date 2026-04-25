@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 import Link from 'next/link';
 import { ArrowRight, Loader2, Mail, User, Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
@@ -56,23 +57,11 @@ export default function RegisterPage() {
         }
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/backend/api';
-            const res = await fetch(`${apiUrl}/auth/register.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Registration failed');
-            }
-
+            const res = await api.post('/auth/register', { name, email, password });
             // Success, redirect to login
             router.push('/login');
         } catch (err: any) {
-            setError(err.message || 'Registration failed. Please try again.');
+            setError(err.response?.data?.message || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }

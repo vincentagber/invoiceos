@@ -8,6 +8,7 @@ import invoiceRoutes from './routes/invoice.routes';
 import clientRoutes from './routes/client.routes';
 import businessRoutes from './routes/business.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import aiRoutes from './routes/ai.routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Socket.io Connection
 io.on('connection', (socket) => {

@@ -3,22 +3,25 @@ import autoTable from 'jspdf-autotable';
 import { formatCurrency } from './utils';
 
 interface Invoice {
-    invoice_number: string;
-    issue_date: string;
-    due_date?: string;
-    subtotal: number;
-    tax_amount: number;
-    discount: number;
-    total: number;
+    invoiceNumber: string;
+    issueDate: string;
+    dueDate?: string;
+    subtotal?: number;
+    taxRate?: number;
+    taxAmount?: number;
+    discountAmount?: number;
+    totalAmount: number;
     notes?: string;
-    client_name: string;
-    client_email?: string;
-    client_address?: string;
+    client: {
+        name: string;
+        email?: string;
+        address?: string;
+    };
     items: Array<{
         description: string;
         quantity: number;
-        unit_price: number;
-        total: number;
+        unitPrice: number;
+        total?: number; // Optional as we can calculate it
     }>;
 }
 
@@ -70,9 +73,9 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     const pageHeight = doc.internal.pageSize.height;
 
     // --- Colors ---
-    // Violet 600: #7C3AED -> [124, 58, 237]
-    const brandColor = [124, 58, 237] as [number, number, number];
-    const darkColor = [30, 41, 59] as [number, number, number]; // Slate 800
+    // Emerald 600: #059669 -> [5, 150, 105]
+    const brandColor = [5, 150, 105] as [number, number, number];
+    const darkColor = [15, 23, 42] as [number, number, number]; // Slate 900
     const lightColor = [248, 250, 252] as [number, number, number]; // Slate 50
     const grayColor = [100, 116, 139] as [number, number, number]; // Slate 500
 
@@ -85,8 +88,8 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     try {
         const logoUrl = '/logo.png'; // Enforce the new logo as requested
         const logoData = await getBase64ImageFromURL(logoUrl);
-        doc.addImage(logoData, 'PNG', 14, 10, 60, 20); // Wider for wordmark
-        logoOffset = 30; // Flag that logo is present
+        doc.addImage(logoData, 'PNG', 14, 10, 40, 15); // Properly sized for wordmark
+        logoOffset = 25; // Flag that logo is present
     } catch (e) {
         // Fallback to settings logo if exists and valid data url
         if (settings?.company_logo_url && settings.company_logo_url.startsWith('data:image')) {
@@ -108,14 +111,14 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
 
         doc.setFontSize(9);
         doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-        const tagline = "Trustworthy and Reliable";
+        const tagline = "Global Revenue Engine";
         doc.text(tagline, 14, 25);
     }
 
 
     // --- Header Services Graphic ---
-    // Top Right Violet Shape
-    doc.setFillColor(124, 58, 237); // Brand Main
+    // Top Right Emerald Shape
+    doc.setFillColor(5, 150, 105); // Brand Main
 
     // Custom shape for top right
     const headerShapeX = pageWidth - 110;
@@ -140,12 +143,12 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     const listY = 15;
     const listGap = 6;
 
-    doc.text("- Web Development", listX, listY);
-    doc.text("- Digital Marketing", listX, listY + listGap);
-    doc.text("- General IT Service", listX, listY + (listGap * 2));
+    doc.text("- Global Invoicing", listX, listY);
+    doc.text("- Tax Compliance", listX, listY + listGap);
+    doc.text("- Revenue Growth", listX, listY + (listGap * 2));
 
     // Decorative Triangles in header
-    doc.setFillColor(167, 139, 250); // Lighter violet
+    doc.setFillColor(16, 185, 129); // Lighter emerald
     // Triangle 1
     doc.triangle(pageWidth - 30, 45, pageWidth - 20, 40, pageWidth - 25, 52, 'F');
     // Triangle 2
@@ -167,20 +170,20 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(invoice.client_name, 14, startY + 6);
+    doc.text(invoice.client.name, 14, startY + 6);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
 
     let addressY = startY + 11;
-    if (invoice.client_address) {
-        const splitAddress = doc.splitTextToSize(invoice.client_address, 80);
+    if (invoice.client.address) {
+        const splitAddress = doc.splitTextToSize(invoice.client.address, 80);
         doc.text(splitAddress, 14, addressY);
         addressY += (splitAddress.length * 5);
     }
-    if (invoice.client_email) {
-        doc.text(invoice.client_email, 14, addressY);
+    if (invoice.client.email) {
+        doc.text(invoice.client.email, 14, addressY);
     }
 
 
@@ -196,14 +199,14 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     doc.text(`${type === 'quotation' ? 'Quote' : 'Invoice'}#`, metaLabelX, startY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-    doc.text(invoice.invoice_number, metaValueX, startY, { align: 'right' });
+    doc.text(invoice.invoiceNumber, metaValueX, startY, { align: 'right' });
 
     doc.setTextColor(0);
     doc.setFont("helvetica", "bold");
     doc.text("Date", metaLabelX, startY + 6);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-    doc.text(invoice.issue_date, metaValueX, startY + 6, { align: 'right' });
+    doc.text(new Date(invoice.issueDate).toLocaleDateString(), metaValueX, startY + 6, { align: 'right' });
 
 
     // --- Items Table ---
@@ -216,9 +219,9 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
         const row = [
             index + 1,
             item.description,
-            formatCurrencyPDF(item.unit_price),
+            formatCurrencyPDF(item.unitPrice),
             item.quantity,
-            formatCurrencyPDF(item.total)
+            formatCurrencyPDF(item.total || (item.unitPrice * item.quantity))
         ];
         tableRows.push(row);
     });
@@ -270,19 +273,20 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     doc.setFontSize(10);
     doc.setTextColor(0);
     doc.text("Sub Total:", totalsX, finalY);
-    doc.text(formatCurrencyPDF(invoice.subtotal), pageWidth - 14, finalY, { align: 'right' });
+    const subtotal = invoice.subtotal || invoice.items.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
+    doc.text(formatCurrencyPDF(subtotal), pageWidth - 14, finalY, { align: 'right' });
 
     // Tax (if applicable)
-    if (invoice.tax_amount > 0) {
+    if (invoice.taxAmount && invoice.taxAmount > 0) {
         finalY += 6;
         doc.text("Tax:", totalsX, finalY);
-        doc.text(formatCurrencyPDF(invoice.tax_amount), pageWidth - 14, finalY, { align: 'right' });
+        doc.text(formatCurrencyPDF(invoice.taxAmount), pageWidth - 14, finalY, { align: 'right' });
     }
     // Discount (if applicable)
-    if (invoice.discount > 0) {
+    if (invoice.discountAmount && invoice.discountAmount > 0) {
         finalY += 6;
         doc.text("Discount:", totalsX, finalY);
-        doc.text(`-${formatCurrencyPDF(invoice.discount)}`, pageWidth - 14, finalY, { align: 'right' });
+        doc.text(`-${formatCurrencyPDF(invoice.discountAmount)}`, pageWidth - 14, finalY, { align: 'right' });
     }
 
     // Grand Total Block
@@ -296,7 +300,7 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.text("Total:", totalsX + 2, finalY);
-    doc.text(`NGN ${formatCurrencyPDF(invoice.total)}`, pageWidth - 14, finalY, { align: 'right' });
+    doc.text(`NGN ${formatCurrencyPDF(invoice.totalAmount)}`, pageWidth - 14, finalY, { align: 'right' });
 
 
 
@@ -309,15 +313,15 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     doc.setTextColor(50, 50, 50);
     doc.setFontSize(9);
     doc.setFont("helvetica", "italic");
-    const thankYouMsg = "Thank you for your trust. We look forward to delivering an excellent solution that reflects your mission with excellence and innovation.";
+    const thankYouMsg = "Thank you for your business. We are committed to powering your growth with the world's most reliable revenue engine.";
     const thankYouWidth = doc.getTextWidth(thankYouMsg);
     doc.text(thankYouMsg, (pageWidth - thankYouWidth) / 2, footerY - 10);
 
     // --- Footer Graphic & Contact Info ---
 
-    // Left: Violet Blob Graphic (Fluid Organic Shape)
-    doc.setFillColor(167, 139, 250); // Violet-400
-    doc.setDrawColor(167, 139, 250);
+    // Left: Emerald Blob Graphic (Fluid Organic Shape)
+    doc.setFillColor(110, 231, 183); // Emerald-300
+    doc.setDrawColor(110, 231, 183);
     doc.setLineWidth(0.1);
 
     // Draw fluid shape path
@@ -336,7 +340,7 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     );
 
     // Decorative Triangles
-    doc.setFillColor(124, 58, 237); // Darker violet
+    doc.setFillColor(5, 150, 105); // Darker emerald
     doc.triangle(15, footerY + 15, 23, footerY + 22, 13, footerY + 26, 'F');
     doc.triangle(80, footerY + 30, 92, footerY + 22, 88, footerY + 42, 'F');
     doc.triangle(40, footerY + 42, 44, footerY + 45, 37, footerY + 45, 'F');
@@ -355,74 +359,53 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     // Helper to draw clean vector-like icons
     const drawCustomIcon = (type: 'pin' | 'mail' | 'phone' | 'fb' | 'x' | 'insta', x: number, y: number) => {
         const r = 2.5; // container radius
-        doc.setFillColor(124, 58, 237); // Brand Violet
+        doc.setFillColor(5, 150, 105); // Brand Emerald
         // Background Circle for consistency
         doc.circle(x, y - 1, r, 'F');
 
         doc.setFillColor(255, 255, 255); // White icons
 
         if (type === 'pin') {
-            // Map Pin Shape: Circle head + Triangle body pointing down
-            // Head
+            // Map Pin Shape
             doc.circle(x, y - 2, 1.2, 'F');
-            // Body (Triangle) - Manually drawing a small path
             doc.triangle(x - 1.2, y - 2, x + 1.2, y - 2, x, y + 0.5, 'F');
-            // Center hole
-            doc.setFillColor(124, 58, 237);
+            doc.setFillColor(5, 150, 105);
             doc.circle(x, y - 2, 0.4, 'F');
             doc.setFillColor(255, 255, 255);
         } else if (type === 'mail') {
-            // Envelope: Rect + Triangle flap
             const w = 3; const h = 2;
             const ex = x - 1.5; const ey = y - 2;
             doc.rect(ex, ey, w, h, 'F');
-            // Flap cutout (Inverse triangle effect by drawing violet or just white lines?)
-            // Easier: Draw white rect, then draw violet lines for flap
-            doc.setDrawColor(124, 58, 237);
+            doc.setDrawColor(5, 150, 105);
             doc.setLineWidth(0.2);
             doc.line(ex, ey, ex + w / 2, ey + h / 1.5);
             doc.line(ex + w, ey, ex + w / 2, ey + h / 1.5);
-            // Reset
-            doc.setDrawColor(167, 139, 250);
+            doc.setDrawColor(110, 231, 183);
         } else if (type === 'phone') {
-            // Handset: Diagonal rounded rects or composite
-            // Simple robust representation: Rotated rect is hard in easy-mode jsPDF
-            // Use standard rect but stylize
             doc.rect(x - 0.8, y - 2.2, 1.6, 2.4, 'F');
-            // Screen
-            doc.setFillColor(124, 58, 237);
+            doc.setFillColor(5, 150, 105);
             doc.rect(x - 0.6, y - 2, 1.2, 1.5, 'F');
-            // Button
             doc.circle(x, y - 0.2, 0.2, 'F');
             doc.setFillColor(255, 255, 255);
         } else if (type === 'fb') {
-            // Facebook 'f' - Shifted right bottom
             doc.setFontSize(8);
             doc.setFont("courier", "bold");
             doc.text("f", x - 0.5, y + 1.2);
         } else if (type === 'x') {
-            // X Logo: Two crossed bars with thickness
             doc.setLineWidth(0.4);
             doc.setDrawColor(255, 255, 255);
             doc.line(x - 1, y - 2, x + 1, y);
             doc.line(x + 1, y - 2, x - 1, y);
-            // Reset
-            doc.setDrawColor(167, 139, 250);
+            doc.setDrawColor(110, 231, 183);
         } else if (type === 'insta') {
-            // Instagram Camera: Rounded rect + Circle + Dot
             const size = 3;
             const ix = x - 1.5; const iy = y - 2.5;
-            // Main box (Stroke Only for standard Insta look? Filled white is clearer on violet)
-            // Filled white rounded rect
             doc.roundedRect(ix, iy, size, size, 0.8, 0.8, 'F');
-            // Inner violet circle
-            doc.setFillColor(124, 58, 237);
-            doc.circle(x, y - 1, 0.8, 'F'); // Lens
-            // Inner white pupil
+            doc.setFillColor(5, 150, 105);
+            doc.circle(x, y - 1, 0.8, 'F');
             doc.setFillColor(255, 255, 255);
             doc.circle(x, y - 1, 0.3, 'F');
-            // Flash dot
-            doc.setFillColor(124, 58, 237);
+            doc.setFillColor(5, 150, 105);
             doc.circle(x + 1, y - 2, 0.2, 'F');
             doc.setFillColor(255, 255, 255);
         }
@@ -431,30 +414,25 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     // 1. Address
     drawCustomIcon('pin', infoXStart, currentLineY);
     doc.setTextColor(30, 41, 59);
-    doc.text("Plot 9 Oloko Crescent, GRA Ikeja, Lagos Nigeria.", infoXStart + 8, currentLineY);
+    doc.text("GRA Ikeja, Lagos Nigeria & New York, USA", infoXStart + 8, currentLineY);
 
     // 2. Email
     currentLineY += lineHeight;
     drawCustomIcon('mail', infoXStart, currentLineY);
-    doc.text("support@invoiceos.com", infoXStart + 8, currentLineY);
+    doc.text("hello@invoiceos.com", infoXStart + 8, currentLineY);
 
     // 3. Phone
     currentLineY += lineHeight;
     drawCustomIcon('phone', infoXStart, currentLineY);
-    doc.text("+2348177148582, 09064553134", infoXStart + 8, currentLineY);
+    doc.text("+234 817 714 8582", infoXStart + 8, currentLineY);
 
     // Socials Row
-    const phoneTextWidth = doc.getTextWidth("+2348177148582, 09064553134");
-    let socialX = infoXStart + 8 + phoneTextWidth + 8;
+    const phoneTextWidth = doc.getTextWidth("+234 817 714 8582");
+    let socialX = infoXStart + 8 + phoneTextWidth + 12;
 
-    // FB
     drawCustomIcon('fb', socialX, currentLineY);
-
-    // X / Twitter
     socialX += 7;
     drawCustomIcon('x', socialX, currentLineY);
-
-    // Insta
     socialX += 7;
     drawCustomIcon('insta', socialX, currentLineY);
 
@@ -465,5 +443,5 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     doc.text("InvoiceOS.AI", socialX + 8, currentLineY);
 
     // Save
-    doc.save(`${type}_${invoice.invoice_number}.pdf`);
+    doc.save(`${type}_${invoice.invoiceNumber}.pdf`);
 };
