@@ -20,9 +20,13 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
   try {
     const { businessId, clientId, items, ...data } = req.body;
 
+    // Generate a unique invoice number if not provided
+    const invoiceNumber = data.invoiceNumber || `INV-${Date.now()}`;
+
     const invoice = await prisma.invoice.create({
       data: {
         ...data,
+        invoiceNumber,
         businessId,
         clientId,
         items: {

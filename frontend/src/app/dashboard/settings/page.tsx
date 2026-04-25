@@ -15,6 +15,7 @@ import {
     Clock
 } from 'lucide-react';
 import clsx from 'clsx';
+import { StatusModal } from '@/components/ui/StatusModal';
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<any>({
@@ -27,6 +28,8 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('branding');
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -65,10 +68,20 @@ export default function SettingsPage() {
                 customDomain: settings.custom_domain
             };
             await api.put(`/business/${settings.id}`, payload);
-            alert('InvoiceOS Configuration Saved');
+            setModalConfig({
+                title: 'Configuration Saved',
+                message: 'Your InvoiceOS instance has been successfully updated with the new parameters.',
+                type: 'success'
+            });
+            setShowModal(true);
         } catch (error) {
             console.error(error);
-            alert('Failed to save settings');
+            setModalConfig({
+                title: 'Deployment Failed',
+                message: 'We encountered an error while updating your configuration. Please verify your connection.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setSaving(false);
         }
@@ -257,6 +270,15 @@ export default function SettingsPage() {
                     )}
                 </div>
             </div>
+
+            <StatusModal 
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel="Sync Complete"
+            />
         </div>
     );
 }

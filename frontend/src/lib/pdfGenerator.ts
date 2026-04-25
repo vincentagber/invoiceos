@@ -3,7 +3,8 @@ import autoTable from 'jspdf-autotable';
 import { formatCurrency } from './utils';
 
 interface Invoice {
-    invoiceNumber: string;
+    invoiceNumber?: string;
+    quotationNumber?: string;
     issueDate: string;
     dueDate?: string;
     subtotal?: number;
@@ -199,7 +200,8 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     doc.text(`${type === 'quotation' ? 'Quote' : 'Invoice'}#`, metaLabelX, startY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-    doc.text(invoice.invoiceNumber, metaValueX, startY, { align: 'right' });
+    const displayNumber = type === 'quotation' ? (invoice.quotationNumber || 'DRAFT') : (invoice.invoiceNumber || 'DRAFT');
+    doc.text(displayNumber, metaValueX, startY, { align: 'right' });
 
     doc.setTextColor(0);
     doc.setFont("helvetica", "bold");
@@ -443,5 +445,5 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     doc.text("InvoiceOS.AI", socialX + 8, currentLineY);
 
     // Save
-    doc.save(`${type}_${invoice.invoiceNumber}.pdf`);
+    doc.save(`${type}_${displayNumber}.pdf`);
 };

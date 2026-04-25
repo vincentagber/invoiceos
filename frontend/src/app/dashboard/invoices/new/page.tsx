@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { StatusModal } from '@/components/ui/StatusModal';
 import { useRouter } from 'next/navigation';
 import { 
     Plus, 
@@ -20,7 +21,8 @@ import {
     Percent,
     ShieldCheck,
     Clock,
-    Sparkles
+    Sparkles,
+    Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
@@ -50,6 +52,8 @@ export default function NewInvoicePage() {
     const [loading, setLoading] = useState(true);
 
     const [submitting, setSubmitting] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     // Form State
     const [clientId, setClientId] = useState('');
@@ -136,9 +140,20 @@ export default function NewInvoicePage() {
             };
 
             await api.post('/invoices', payload);
-            router.push('/dashboard/invoices');
+            setModalConfig({
+                title: 'Invoice Deployed',
+                message: 'Your invoice has been successfully synchronized with the ledger and is ready for dispatch.',
+                type: 'success'
+            });
+            setShowModal(true);
         } catch (error) {
-            alert('Failed to create invoice');
+            console.error(error);
+            setModalConfig({
+                title: 'Creation Failed',
+                message: 'We encountered an error while deploying your invoice. Please check the line items and client selection.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setSubmitting(false);
         }
@@ -272,91 +287,93 @@ export default function NewInvoicePage() {
     );
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col h-screen overflow-hidden font-sans">
-            {/* Top Bar */}
-            <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-8 flex-shrink-0 z-30 shadow-sm">
-                <div className="flex items-center gap-6">
+        <div className="min-h-screen bg-[#F8FAFC] flex flex-col h-screen overflow-hidden font-sans antialiased">
+            {/* Optimized Top Bar */}
+            <header className="bg-white border-b border-slate-200/60 h-20 flex items-center justify-between px-6 sm:px-10 flex-shrink-0 z-30">
+                <div className="flex items-center gap-5">
                     <Link href="/dashboard/invoices" className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all active:scale-90">
-                        <ArrowLeft size={20} />
+                        <ArrowLeft size={18} />
                     </Link>
                     <div>
-                        <h1 className="text-lg font-black text-slate-900 tracking-tighter uppercase">Invoice Engine</h1>
-                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Drafting Phase</p>
+                        <h1 className="text-lg font-heading font-black text-slate-900 tracking-tighter uppercase leading-none">Draft Invoice</h1>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Optimization Phase</p>
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={(e) => handleSubmit(e, 'draft')}
                         disabled={submitting}
-                        className="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+                        className="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
                     >
-                        <Save size={18} />
-                        <span>Save Draft</span>
+                        <Save size={16} />
+                        Save Draft
                     </button>
 
                     <button
                         onClick={(e) => handleSubmit(e, 'sent')}
                         disabled={submitting}
-                        className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all active:scale-95 disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50"
                     >
-                        {submitting ? <Loader2 className="animate-spin" size={18} /> : (
+                        {submitting ? <Loader2 className="animate-spin" size={16} /> : (
                             <>
-                                <Send size={18} />
-                                <span>Optimize & Send</span>
+                                <Send size={16} />
+                                <span>Send Invoice</span>
                             </>
                         )}
                     </button>
                 </div>
             </header>
 
-            {/* Main Editor Area */}
-            <main className="flex-1 flex overflow-hidden">
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
                 {/* Left Panel: Form Editor */}
-                <div className="flex-1 overflow-y-auto p-8 lg:p-12 scrollbar-hide">
-                    <div className="max-w-3xl mx-auto space-y-10">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 scrollbar-hide bg-slate-50/30">
+                    <div className="max-w-4xl mx-auto space-y-8">
 
-                        {/* Intelligence Sidebar (Float right on lg) */}
-                        <div className="lg:hidden">
-                            <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} items={items} notes={notes} />
-                        </div>
-
-                        {/* Section: Client & Global Settings */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                                <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                                    <UserIcon size={16} className="text-emerald-600" />
-                                    Recipient
-                                </h2>
-                                <div className="space-y-4">
+                        {/* Responsive Section: Client & Settings */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            
+                            {/* Client Section */}
+                            <div className="bg-white p-8 rounded-[2rem] border border-slate-200/60 shadow-sm space-y-6">
+                                <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
+                                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                        <UserIcon size={16} />
+                                    </div>
+                                    <h2 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Recipient Details</h2>
+                                </div>
+                                
+                                <div className="space-y-5">
                                     <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Select Client</label>
                                         <select
-                                            className="block w-full rounded-xl border-slate-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                            className="block w-full rounded-xl border-slate-200 bg-slate-50/50 p-3.5 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none border"
                                             value={clientId}
                                             onChange={(e) => setClientId(e.target.value)}
                                         >
-                                            <option value="">Select a Client</option>
+                                            <option value="">Choose a Client...</option>
                                             {clients.map(c => (
                                                 <option key={c.id} value={c.id}>{c.name}</option>
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Issue Date</label>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Issue Date</label>
                                             <input
                                                 type="date"
-                                                className="block w-full rounded-xl border-slate-200 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                                className="block w-full rounded-xl border-slate-200 bg-slate-50/50 p-3.5 text-xs font-bold border outline-none focus:bg-white"
                                                 value={issueDate}
                                                 onChange={(e) => setIssueDate(e.target.value)}
                                             />
                                         </div>
-                                        <div className="flex-1">
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Due Date</label>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Due Date</label>
                                             <input
                                                 type="date"
-                                                className="block w-full rounded-xl border-slate-200 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                                className="block w-full rounded-xl border-slate-200 bg-slate-50/50 p-3.5 text-xs font-bold border outline-none focus:bg-white"
                                                 value={dueDate}
                                                 onChange={(e) => setDueDate(e.target.value)}
                                             />
@@ -365,133 +382,145 @@ export default function NewInvoicePage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                                <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                                    <Settings size={16} className="text-emerald-600" />
-                                    Configurations
-                                </h2>
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex-1">
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Currency</label>
-                                            <div className="relative">
-                                                <Coins className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <select
-                                                    className="block w-full rounded-xl border-slate-200 pl-10 sm:text-sm border p-3 bg-slate-50/50 font-bold"
-                                                    value={currency}
-                                                    onChange={(e) => setCurrency(e.target.value)}
-                                                >
-                                                    <option value="USD">USD ($)</option>
-                                                    <option value="EUR">EUR (€)</option>
-                                                    <option value="GBP">GBP (£)</option>
-                                                    <option value="NGN">NGN (₦)</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                            {/* Configuration Section */}
+                            <div className="bg-white p-8 rounded-[2rem] border border-slate-200/60 shadow-sm space-y-6">
+                                <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
+                                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                        <Settings size={16} />
                                     </div>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Tax (%)</label>
-                                            <div className="relative">
-                                                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <input
-                                                    type="number"
-                                                    className="block w-full rounded-xl border-slate-200 pl-10 sm:text-sm border p-3 bg-slate-50/50 font-bold"
-                                                    value={taxRate}
-                                                    onChange={(e) => setTaxRate(Number(e.target.value))}
-                                                />
-                                            </div>
+                                    <h2 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Invoice Config</h2>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Currency</label>
+                                            <select
+                                                className="block w-full rounded-xl border-slate-200 bg-slate-50/50 p-3.5 text-xs font-bold border outline-none focus:bg-white"
+                                                value={currency}
+                                                onChange={(e) => setCurrency(e.target.value)}
+                                            >
+                                                <option value="USD">USD ($)</option>
+                                                <option value="EUR">EUR (€)</option>
+                                                <option value="NGN">NGN (₦)</option>
+                                            </select>
                                         </div>
-                                        <div className="flex-1">
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Discount</label>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Tax (%)</label>
                                             <input
                                                 type="number"
-                                                className="block w-full rounded-xl border-slate-200 sm:text-sm border p-3 bg-slate-50/50 font-bold"
-                                                value={discount}
-                                                onChange={(e) => setDiscount(Number(e.target.value))}
+                                                className="block w-full rounded-xl border-slate-200 bg-slate-50/50 p-3.5 text-xs font-bold border outline-none focus:bg-white"
+                                                value={taxRate}
+                                                onChange={(e) => setTaxRate(Number(e.target.value))}
                                             />
                                         </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Discount Amount</label>
+                                        <input
+                                            type="number"
+                                            className="block w-full rounded-xl border-slate-200 bg-slate-50/50 p-3.5 text-xs font-bold border outline-none focus:bg-white"
+                                            value={discount}
+                                            onChange={(e) => setDiscount(Number(e.target.value))}
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Section: Items */}
-                        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                                    <FileText size={16} className="text-emerald-600" />
-                                    Revenue Streams
-                                </h2>
+                        {/* Revenue Streams (Line Items) */}
+                        <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden">
+                            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                        <FileText size={16} />
+                                    </div>
+                                    <h2 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Revenue Streams</h2>
+                                </div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
+                                    {items.length} Line Items
+                                </div>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="divide-y divide-slate-50">
                                 {items.map((item, index) => (
-                                    <div key={index} className="group relative flex flex-col sm:grid sm:grid-cols-12 gap-4 items-center p-6 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:shadow-lg transition-all">
-                                        <div className="w-full sm:col-span-6 flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Service or Product name"
-                                                className="block w-full rounded-xl border-slate-200 text-sm border p-3 bg-white font-medium"
-                                                value={item.description}
-                                                onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                            />
-                                            <button 
-                                                onClick={() => generateAIDescription(index)}
-                                                title="AI Magic Description"
-                                                className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-all shadow-sm"
-                                            >
-                                                <Sparkles size={18} />
-                                            </button>
-                                        </div>
-                                        <div className="flex gap-4 w-full sm:contents">
-                                            <div className="flex-1 sm:col-span-2">
-                                                <input
-                                                    type="number"
-                                                    className="block w-full rounded-xl border-slate-200 text-sm border p-3 bg-white font-bold text-center"
-                                                    value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                                />
+                                    <div key={index} className="p-6 sm:p-8 bg-white hover:bg-slate-50/30 transition-colors group">
+                                        <div className="flex flex-col md:flex-row gap-6">
+                                            <div className="flex-1 space-y-4">
+                                                <div className="flex gap-3">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="What service are you providing?"
+                                                        className="block w-full rounded-xl border-slate-200 p-3.5 text-sm font-semibold focus:ring-2 focus:ring-indigo-500/10 border outline-none transition-all"
+                                                        value={item.description}
+                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                    />
+                                                    <button 
+                                                        onClick={() => generateAIDescription(index)}
+                                                        className="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                                        title="AI Optimizer"
+                                                    >
+                                                        <Sparkles size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="flex-[1.5] sm:col-span-3">
-                                                <div className="relative">
+                                            
+                                            <div className="flex gap-4 items-end">
+                                                <div className="w-24">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Quantity</label>
                                                     <input
                                                         type="number"
-                                                        className="block w-full rounded-xl border-slate-200 pl-4 text-sm border p-3 bg-white font-bold"
+                                                        className="block w-full rounded-xl border-slate-200 p-3.5 text-sm font-bold text-center border outline-none bg-slate-50/30"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                                                    />
+                                                </div>
+                                                <div className="w-32">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Rate ({currency})</label>
+                                                    <input
+                                                        type="number"
+                                                        className="block w-full rounded-xl border-slate-200 p-3.5 text-sm font-bold border outline-none bg-slate-50/30"
                                                         value={item.unitPrice}
                                                         onChange={(e) => updateItem(index, 'unitPrice', Number(e.target.value))}
                                                     />
                                                 </div>
-                                            </div>
-                                            <div className="sm:col-span-1 flex justify-end">
-                                                <button
-                                                    onClick={() => removeItem(index)}
-                                                    className="text-slate-300 hover:text-rose-500 transition-all p-2 hover:bg-rose-50 rounded-lg"
-                                                >
-                                                    <Trash size={18} />
-                                                </button>
+                                                <div className="flex-shrink-0 mb-1.5">
+                                                    <button
+                                                        onClick={() => removeItem(index)}
+                                                        className="p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                                    >
+                                                        <Trash size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={addItem}
-                                className="w-full py-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl border-2 border-dashed border-emerald-200 transition-all active:scale-[0.99]"
-                            >
-                                <Plus size={18} /> Add Line Item
-                            </button>
+                            <div className="p-8 bg-slate-50/50">
+                                <button
+                                    type="button"
+                                    onClick={addItem}
+                                    className="w-full py-4 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-indigo-600 bg-white hover:border-indigo-200 rounded-2xl border-2 border-dashed border-slate-200 transition-all"
+                                >
+                                    <Plus size={16} /> New Revenue Stream
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Section: Notes */}
-                        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Additional Terms & Intelligence Notes</label>
+                        {/* Intelligence Notes */}
+                        <div className="bg-white p-8 rounded-[2rem] border border-slate-200/60 shadow-sm space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                                    <Zap size={16} />
+                                </div>
+                                <h2 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Additional Terms & Intelligence</h2>
+                            </div>
                             <textarea
-                                rows={4}
-                                className="block w-full rounded-2xl border-slate-200 sm:text-sm border p-4 bg-slate-50/30 font-medium"
-                                placeholder="Specify payment milestones, late fees, or special instructions..."
+                                rows={3}
+                                className="block w-full rounded-2xl border-slate-200 p-4 text-sm font-medium border outline-none bg-slate-50/30 focus:bg-white transition-all"
+                                placeholder="Add payment instructions, milestones, or late fee terms..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             />
@@ -499,14 +528,20 @@ export default function NewInvoicePage() {
                     </div>
                 </div>
 
-                {/* Right Panel: AI Sidebar + Preview */}
-                <div className="hidden lg:flex w-[460px] bg-white border-l border-slate-200 flex-col overflow-hidden">
-                    <div className="p-8 space-y-8 overflow-y-auto">
+                {/* Right Panel: Intelligence + Preview */}
+                <div className="hidden lg:flex w-[480px] bg-white border-l border-slate-200 flex-col overflow-hidden">
+                    <div className="p-10 space-y-10 overflow-y-auto scrollbar-hide">
                         <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} items={items} notes={notes} />
                         
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live Preview</h3>
-                            <div className="scale-[0.45] origin-top border border-slate-200 rounded-lg shadow-2xl overflow-hidden pointer-events-none">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dynamic Preview</h3>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Live Syncing</span>
+                                </div>
+                            </div>
+                            <div className="scale-[0.5] origin-top border border-slate-200 rounded-2xl shadow-2xl overflow-hidden pointer-events-none -mb-64">
                                 <InvoicePreview />
                             </div>
                         </div>
@@ -514,21 +549,38 @@ export default function NewInvoicePage() {
                 </div>
             </main>
 
-            {/* Mobile Preview Toggle */}
-            <button 
-                onClick={() => setShowPreviewMobile(!showPreviewMobile)}
-                className="lg:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-slate-900 text-white shadow-2xl flex items-center justify-center z-50 transition-all active:scale-90"
-            >
-                {showPreviewMobile ? <X size={24} /> : <Eye size={24} />}
-            </button>
+            {/* Mobile Floaties */}
+            <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50">
+                <button 
+                    onClick={() => setShowPreviewMobile(!showPreviewMobile)}
+                    className="h-14 px-6 rounded-full bg-slate-900 text-white shadow-2xl flex items-center gap-3 transition-all active:scale-90"
+                >
+                    {showPreviewMobile ? <X size={20} /> : <Eye size={20} />}
+                    <span className="text-xs font-black uppercase tracking-widest">{showPreviewMobile ? 'Close' : 'Preview'}</span>
+                </button>
+            </div>
 
             {showPreviewMobile && (
-                <div className="fixed inset-0 z-40 bg-slate-900/90 backdrop-blur-md p-6 overflow-y-auto flex items-start justify-center">
-                    <div className="w-full mt-12 animate-in slide-in-from-bottom-10 duration-500">
+                <div className="fixed inset-0 z-[60] bg-slate-900/90 backdrop-blur-md p-4 sm:p-10 overflow-y-auto flex items-start justify-center">
+                    <div className="w-full max-w-2xl mt-12 mb-20 animate-in slide-in-from-bottom-10 duration-500">
                         <InvoicePreview />
                     </div>
                 </div>
             )}
+
+            <StatusModal 
+                isOpen={showModal}
+                onClose={() => {
+                    setShowModal(false);
+                    if (modalConfig.type === 'success') {
+                        router.push('/dashboard/invoices');
+                    }
+                }}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel={modalConfig.type === 'success' ? 'View All Invoices' : 'Close'}
+            />
         </div>
     );
 }

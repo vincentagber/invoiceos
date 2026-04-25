@@ -5,8 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -35,6 +35,7 @@ model Business {
   invoices        Invoice[]
   templates       InvoiceTemplate[]
   automationRules AutomationRule[]
+  quotations      Quotation[]
   
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -48,7 +49,9 @@ model Client {
   email      String
   address    String?
   phone      String?
+  taxId      String?
   invoices   Invoice[]
+  quotations Quotation[]
   
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -88,6 +91,39 @@ model InvoiceItem {
   id          String   @id @default(cuid())
   invoiceId   String
   invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  unitPrice   Float
+}
+
+model Quotation {
+  id              String          @id @default(cuid())
+  quotationNumber String
+  businessId      String
+  business        Business        @relation(fields: [businessId], references: [id])
+  clientId        String
+  client          Client          @relation(fields: [clientId], references: [id])
+  
+  status          QuotationStatus @default(DRAFT)
+  currency        String          @default("USD")
+  issueDate       DateTime        @default(now())
+  expiryDate      DateTime
+  
+  items           QuotationItem[]
+  taxRate         Float           @default(0)
+  discountAmount  Float           @default(0)
+  totalAmount     Float
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([businessId, quotationNumber])
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   description String
   quantity    Float
   unitPrice   Float
@@ -136,6 +172,15 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  REJECTED
+  EXPIRED
 }
 
 enum PaymentMethod {
