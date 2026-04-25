@@ -139,27 +139,27 @@ export default function NewInvoicePage() {
             <div className="flex justify-between items-start border-b border-slate-100 pb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-6">
-                        <span className="text-2xl font-black tracking-tighter text-indigo-600">InvoiceOS</span>
+                        <span className="text-2xl font-bold tracking-tight text-indigo-600">InvoiceOS</span>
                     </div>
-                    <div className="text-slate-500 space-y-0.5 text-[10px] sm:text-xs">
-                        <p className="font-bold text-slate-900">{settings.company_name || "InvoiceOS User"}</p>
+                    <div className="text-slate-500 space-y-0.5 text-[11px] leading-relaxed">
+                        <p className="font-semibold text-slate-900 text-base">{settings.company_name || "InvoiceOS User"}</p>
                         {settings.company_address && <p>{settings.company_address}</p>}
                         {settings.company_email && <p>{settings.company_email}</p>}
                     </div>
                 </div>
                 <div className="text-right">
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter">INVOICE</h1>
-                    <p className="text-slate-400 font-medium"># {issueDate.replace(/-/g, '')}-DRAFT</p>
+                    <h1 className="text-2xl font-bold text-slate-900">INVOICE</h1>
+                    <p className="text-slate-500 font-medium text-[11px]"># {issueDate.replace(/-/g, '')}-DRAFT</p>
                 </div>
             </div>
 
             {/* Bill To & Dates */}
             <div className="mt-8 grid grid-cols-2 gap-8">
                 <div>
-                    <h3 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">Billed To</h3>
+                    <h3 className="text-[13px] font-semibold text-slate-400 mb-2 leading-tight">Billed To</h3>
                     {clientDetails ? (
-                        <div className="space-y-1">
-                            <p className="font-bold text-slate-900 text-base">{clientDetails.name}</p>
+                        <div className="space-y-1 text-[11px] leading-relaxed">
+                            <p className="font-semibold text-slate-900 text-[14px]">{clientDetails.name}</p>
                             <p className="text-slate-500">{clientDetails.email}</p>
                             <p className="text-slate-500 whitespace-pre-line max-w-[200px]">{clientDetails.address}</p>
                         </div>
@@ -167,15 +167,15 @@ export default function NewInvoicePage() {
                         <p className="text-slate-300 italic">No client selected...</p>
                     )}
                 </div>
-                <div className="flex flex-col items-end gap-3">
+                <div className="flex flex-col items-end gap-3 text-[11px]">
                     <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">Issue Date</p>
-                        <p className="font-bold text-slate-900">{issueDate}</p>
+                        <p className="text-[13px] font-semibold text-slate-400 mb-0.5 leading-tight">Issue Date</p>
+                        <p className="font-semibold text-slate-900">{issueDate}</p>
                     </div>
                     {dueDate && (
                         <div className="text-right">
-                            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">Due Date</p>
-                            <p className="font-bold text-indigo-600">{dueDate}</p>
+                            <p className="text-[13px] font-semibold text-slate-400 mb-0.5 leading-tight">Due Date</p>
+                            <p className="font-semibold text-indigo-600">{dueDate}</p>
                         </div>
                     )}
                 </div>
@@ -186,19 +186,19 @@ export default function NewInvoicePage() {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-200">
-                            <th className="text-left py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest">Description</th>
-                            <th className="text-right py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest w-16">Qty</th>
-                            <th className="text-right py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest w-32">Price</th>
-                            <th className="text-right py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest w-32">Amount</th>
+                            <th className="text-left py-3 font-semibold text-slate-400 text-[13px] leading-tight">Description</th>
+                            <th className="text-right py-3 font-semibold text-slate-400 text-[13px] leading-tight w-16">Qty</th>
+                            <th className="text-right py-3 font-semibold text-slate-400 text-[13px] leading-tight w-32">Price</th>
+                            <th className="text-right py-3 font-semibold text-slate-400 text-[13px] leading-tight w-32">Amount</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {items.map((item, i) => (
                             <tr key={i}>
-                                <td className="py-4 text-slate-900 font-medium">{item.description || <span className="text-slate-300 italic">Item...</span>}</td>
-                                <td className="py-4 text-right text-slate-600">{item.quantity}</td>
-                                <td className="py-4 text-right text-slate-600">{formatCurrency(item.unitPrice, currency)}</td>
-                                <td className="py-4 text-right font-bold text-slate-900">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
+                                <td className="py-4 text-slate-900 text-[11px] leading-snug">{item.description || <span className="text-slate-300 italic">Item...</span>}</td>
+                                <td className="py-4 text-right text-slate-600 text-[11px] leading-snug tabular-nums">{item.quantity}</td>
+                                <td className="py-4 text-right text-slate-600 text-[11px] leading-snug tabular-nums">{formatCurrency(item.unitPrice, currency)}</td>
+                                <td className="py-4 text-right font-semibold text-slate-900 text-[11px] leading-snug tabular-nums">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -207,7 +207,7 @@ export default function NewInvoicePage() {
 
             {/* Summary */}
             <div className="mt-8 flex justify-end">
-                <div className="w-64 space-y-3 text-right">
+                <div className="w-64 space-y-3 text-right text-[11px] leading-relaxed tabular-nums">
                     <div className="flex justify-between text-slate-500 font-medium">
                         <span>Subtotal</span>
                         <span>{formatCurrency(subtotal, currency)}</span>
@@ -224,7 +224,7 @@ export default function NewInvoicePage() {
                             <span>-{formatCurrency(discountAmount, currency)}</span>
                         </div>
                     )}
-                    <div className="flex justify-between font-black text-slate-900 text-xl border-t-2 border-slate-900 pt-4">
+                    <div className="flex justify-between font-bold text-slate-900 text-[14px] border-t-2 border-slate-900 pt-4 mt-2">
                         <span>Total Due</span>
                         <span>{formatCurrency(total, currency)}</span>
                     </div>
@@ -235,8 +235,8 @@ export default function NewInvoicePage() {
             <div className="mt-16 pt-8 border-t border-slate-100 space-y-6">
                 {notes && (
                     <div>
-                        <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 text-left">Notes & Terms</h4>
-                        <p className="text-slate-500 text-xs leading-relaxed whitespace-pre-wrap text-left">{notes}</p>
+                        <h4 className="text-[13px] font-semibold text-slate-400 mb-2 leading-tight text-left">Notes & Terms</h4>
+                        <p className="text-slate-500 text-[11px] leading-relaxed whitespace-pre-wrap text-left">{notes}</p>
                     </div>
                 )}
                 <div className="flex items-center justify-center gap-6 py-4 bg-slate-50 rounded-xl">
