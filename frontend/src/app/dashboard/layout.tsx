@@ -86,8 +86,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}>
                 <div className="flex h-20 items-center px-6 border-b border-slate-200/60">
                     <div className="flex items-center gap-3">
-                        {/* Logo visible on light/off-white background */}
-                        <img src="/logo.png" alt="Superlink" className="w-39 h-auto object-contain" />
+                        <Link href="/dashboard" className="flex items-center gap-3">
+                            <img src="/logo.png" alt="InvoiceOS" className="h-16 w-auto object-contain" />
+                        </Link>
                     </div>
                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-400 hover:text-slate-600 transition-colors">
                         <X size={20} />
@@ -203,14 +204,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Mobile Header */}
-                <div className="lg:hidden flex items-center h-16 bg-white border-b border-gray-200 px-4">
-                    <button onClick={() => setSidebarOpen(true)} className="text-gray-500">
-                        <Menu size={24} />
-                    </button>
-                    <span className="ml-4 text-lg font-semibold text-gray-900">Superlink Invoice</span>
-                </div>
+            <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50">
+                {/* Top Navbar */}
+                <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="text-slate-500 lg:hidden"
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <h1 className="text-xl font-semibold text-slate-800">Dashboard</h1>
+                    </div>
+
+                    <div className="flex items-center gap-3 sm:gap-6">
+                        <button className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
+                            <span className="sr-only">View notifications</span>
+                            <div className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></div>
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31c.51-.183.683-.483.683-.73 0-.371-.365-.703-.956-.963a15.354 15.354 0 01-3.098-1.884l-.53-.414a16.55 16.55 0 01-1.637-1.523l-.138-.15c-.482-.544-.73-1.258-.73-1.954V10.5c0-2.139-1.318-3.928-3.136-4.422A3.001 3.001 0 0011 3.5a3.001 3.001 0 00-2.864 2.578C6.318 6.572 5 8.361 5 10.5v1.446c0 .696-.248 1.41-.73 1.954l-.138.15a16.55 16.55 0 01-1.637 1.523l-.53.414a15.354 15.354 0 01-3.098 1.884c-.591.26-.956.592-.956.963 0 .247.173.547.683.73a24.016 24.016 0 005.454 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                            </svg>
+                        </button>
+
+                        <Link
+                            href="/dashboard/invoices/new"
+                            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all active:scale-95"
+                        >
+                            <span className="hidden sm:inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-xs">+</span>
+                            New Invoice
+                        </Link>
+                    </div>
+                </header>
 
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                     {children}

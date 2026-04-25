@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const USE_NODE = process.env.NEXT_PUBLIC_USE_NODE === 'true';
+
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/backend/api', // PHP Backend
+    baseURL: USE_NODE 
+        ? (process.env.NEXT_PUBLIC_NODE_API_URL || 'http://localhost:4000/api')
+        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/backend/api'),
     headers: {
         'Content-Type': 'application/json',
     },

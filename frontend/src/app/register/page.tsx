@@ -104,7 +104,7 @@ export default function RegisterPage() {
                 <div className="relative z-20 flex flex-col justify-between p-12 w-full h-full">
                     <div className="flex items-center gap-3 animate-in slide-in-from-left-4 fade-in duration-700">
                         <div className="bg-white p-3 rounded-xl shadow-lg">
-                            <img src="/logo.png" alt="Superlink" className="h-10 w-auto object-contain" />
+                            <img src="/logo.png" alt="InvoiceOS" className="h-16 w-auto object-contain" />
                         </div>
                     </div>
 
@@ -118,7 +118,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="flex items-center gap-4 text-sm text-slate-400 animate-in fade-in duration-1000 delay-500">
-                        <p>© 2025 Superlink Invoice. All rights reserved.</p>
+                        <p>© 2025 InvoiceOS Engine. All rights reserved.</p>
                     </div>
                 </div>
             </div>
@@ -217,7 +217,7 @@ export default function RegisterPage() {
                                 <div className="w-full border-t border-gray-200" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="bg-white lg:bg-transparent px-2 text-gray-500">Secured by Superlink</span>
+                                <span className="bg-white lg:bg-transparent px-2 text-gray-500">Secured by InvoiceOS</span>
                             </div>
                         </div>
                     </form>

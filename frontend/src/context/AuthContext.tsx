@@ -5,11 +5,11 @@ import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
     role: string;
-    profile_picture?: string;
+    profilePicture?: string;
 }
 
 interface AuthContextType {

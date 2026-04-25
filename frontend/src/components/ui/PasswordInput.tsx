@@ -13,7 +13,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         return (
             <Input
                 type={showPassword ? 'text' : 'password'}
-                icon={<Lock size={18} />}
+                icon={props.icon === undefined ? <Lock size={18} /> : props.icon}
                 rightElement={
                     <button
                         type="button"

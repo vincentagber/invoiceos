@@ -4,12 +4,29 @@ import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash, Save, ArrowLeft, Eye, User as UserIcon, FileText, Send, Share2, Mail, MessageCircle, Copy, Check, X } from 'lucide-react';
+import { 
+    Plus, 
+    Trash, 
+    Save, 
+    ArrowLeft, 
+    Eye, 
+    User as UserIcon, 
+    FileText, 
+    Send, 
+    Check, 
+    X,
+    Settings,
+    Coins,
+    Percent,
+    ShieldCheck,
+    Clock
+} from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { ConversionIntelligence } from './components/ConversionIntelligence';
 
 interface Client {
-    id: number;
+    id: string;
     name: string;
     email?: string;
     address?: string;
@@ -18,8 +35,12 @@ interface Client {
 interface InvoiceItem {
     description: string;
     quantity: number;
-    unit_price: number;
+    unitPrice: number;
 }
+
+const Loader2 = ({ className, size }: { className?: string, size?: number }) => (
+    <Clock className={clsx("animate-spin", className)} size={size} />
+);
 
 export default function NewInvoicePage() {
     const router = useRouter();
@@ -28,29 +49,29 @@ export default function NewInvoicePage() {
     const [loading, setLoading] = useState(true);
 
     const [submitting, setSubmitting] = useState(false);
-    const [showShareModal, setShowShareModal] = useState(false);
-    const [createdId, setCreatedId] = useState<string | null>(null);
-    const [copySuccess, setCopySuccess] = useState(false);
 
-    // Form Stats
+    // Form State
     const [clientId, setClientId] = useState('');
     const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
     const [dueDate, setDueDate] = useState('');
-    const [items, setItems] = useState<InvoiceItem[]>([{ description: 'Professional Services', quantity: 1, unit_price: 150.00 }]);
+    const [items, setItems] = useState<InvoiceItem[]>([{ description: 'Professional Services', quantity: 1, unitPrice: 150.00 }]);
     const [notes, setNotes] = useState('');
+    const [currency, setCurrency] = useState('NGN');
+    const [taxRate, setTaxRate] = useState(0);
+    const [discount, setDiscount] = useState(0);
 
-    // Preview toggle for mobile
+    // UI state
     const [showPreviewMobile, setShowPreviewMobile] = useState(false);
 
     useEffect(() => {
         const init = async () => {
             try {
-                const [clientsRes, settingsRes] = await Promise.all([
-                    api.get('/clients/read.php'),
-                    api.get('/settings/read.php?all=true')
+                const [bizRes, clientsRes] = await Promise.all([
+                    api.get('/business/me'),
+                    api.get('/clients') // Backend will handle business filtering via auth context
                 ]);
-                setClients(clientsRes.data);
-                if (settingsRes.data) setSettings(settingsRes.data);
+                setClients(clientsRes.data || []);
+                if (bizRes.data) setSettings(bizRes.data);
             } catch (error) {
                 console.error(error);
             } finally {
@@ -61,7 +82,7 @@ export default function NewInvoicePage() {
     }, []);
 
     const addItem = () => {
-        setItems([...items, { description: '', quantity: 1, unit_price: 0 }]);
+        setItems([...items, { description: '', quantity: 1, unitPrice: 0 }]);
     };
 
     const removeItem = (index: number) => {
@@ -75,8 +96,11 @@ export default function NewInvoicePage() {
         setItems(newItems);
     };
 
-    const calculateSubtotal = () => items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    const calculateTotal = () => calculateSubtotal(); // Add tax logic later if needed
+    const calculateSubtotal = () => items.reduce((sum, item) => sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0);
+    const subtotal = calculateSubtotal();
+    const taxAmount = (subtotal * (Number(taxRate) || 0)) / 100;
+    const discountAmount = Number(discount) || 0;
+    const total = subtotal + taxAmount - discountAmount;
 
     const handleSubmit = async (e: React.FormEvent | null, status: 'draft' | 'sent' = 'draft') => {
         if (e) e.preventDefault();
@@ -84,378 +108,345 @@ export default function NewInvoicePage() {
 
         setSubmitting(true);
         try {
+            const bizRes = await api.get('/business/me');
             const payload = {
-                client_id: clientId,
-                issue_date: issueDate,
-                due_date: dueDate,
+                businessId: bizRes.data.id,
+                clientId: clientId,
+                issueDate: issueDate,
+                dueDate: dueDate,
+                currency,
+                taxRate: taxRate,
+                discount: discount,
                 items: items,
                 notes: notes,
-                status: status
+                status: status.toUpperCase()
             };
 
-            // Fixed: api.post returns the response object, so we likely need res.data or just res if the interceptor handles it.
-            // Assuming res.data contains { id: ... } or similar based on typical patterns
-            const res = await api.post('/invoices/create.php', payload);
-
-            // Check if response has data and id
-            const newId = res.data?.id || res.data?.invoice_id; // Adjust based on actual API response
-
-            if (status === 'sent') {
-                if (newId) setCreatedId(newId.toString());
-                setShowShareModal(true);
-            } else {
-                router.push('/dashboard/invoices');
-            }
+            await api.post('/invoices', payload);
+            router.push('/dashboard/invoices');
         } catch (error) {
             alert('Failed to create invoice');
-            console.error(error);
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleCopyLink = () => {
-        // Mock link for now, in real app this would be the public invoice URL
-        const textToCopy = `Here is your invoice from ${settings.company_name || 'us'}. Total: ${formatCurrency(calculateTotal())}`;
-        navigator.clipboard.writeText(textToCopy);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
-    };
-
     const clientDetails = clients.find(c => c.id.toString() === clientId);
 
-    // Live Preview Component
     const InvoicePreview = () => (
-        <div className="bg-white shadow-lg rounded-none sm:rounded-lg aspect-[1/1.414] w-full max-w-[210mm] mx-auto p-[10mm] text-xs sm:text-sm leading-relaxed border border-gray-200">
+        <div className="bg-white shadow-2xl rounded-lg w-full max-w-[210mm] mx-auto p-[12mm] text-xs sm:text-sm leading-relaxed border border-slate-200">
             {/* Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start border-b border-slate-100 pb-8">
                 <div>
-                    {/* Logo handling simplified for preview */}
-                    {/* Logo handling simplified for preview */}
-                    <div className="flex items-center gap-2 mb-4">
-                        <img src="/logo.png" alt="Company Logo" className="w-48 h-auto object-contain" />
+                    <div className="flex items-center gap-2 mb-6">
+                        <span className="text-2xl font-black tracking-tighter text-indigo-600">InvoiceOS</span>
                     </div>
-                    <div className="text-gray-500 space-y-0.5">
+                    <div className="text-slate-500 space-y-0.5 text-[10px] sm:text-xs">
+                        <p className="font-bold text-slate-900">{settings.company_name || "InvoiceOS User"}</p>
                         {settings.company_address && <p>{settings.company_address}</p>}
                         {settings.company_email && <p>{settings.company_email}</p>}
                     </div>
                 </div>
                 <div className="text-right">
-                    <h1 className="text-2xl font-bold text-gray-900">INVOICE</h1>
-                    <p className="text-gray-500"># DRAFT</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter">INVOICE</h1>
+                    <p className="text-slate-400 font-medium"># {issueDate.replace(/-/g, '')}-DRAFT</p>
                 </div>
             </div>
 
             {/* Bill To & Dates */}
-            <div className="mt-8 flex justify-between">
+            <div className="mt-8 grid grid-cols-2 gap-8">
                 <div>
-                    <h3 className="text-gray-500 font-medium mb-1">Bill To:</h3>
+                    <h3 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">Billed To</h3>
                     {clientDetails ? (
-                        <div className="font-semibold text-gray-900">
-                            <p>{clientDetails.name}</p>
-                            <p className="font-normal text-gray-500">{clientDetails.email}</p>
-                            <p className="font-normal text-gray-500 whitespace-pre-line max-w-[200px]">{clientDetails.address}</p>
+                        <div className="space-y-1">
+                            <p className="font-bold text-slate-900 text-base">{clientDetails.name}</p>
+                            <p className="text-slate-500">{clientDetails.email}</p>
+                            <p className="text-slate-500 whitespace-pre-line max-w-[200px]">{clientDetails.address}</p>
                         </div>
                     ) : (
-                        <p className="text-gray-300 italic">Select a client...</p>
+                        <p className="text-slate-300 italic">No client selected...</p>
                     )}
                 </div>
-                <div className="text-right space-y-1">
-                    <div>
-                        <span className="text-gray-500 mr-4">Issue Date:</span>
-                        <span className="font-medium">{issueDate}</span>
+                <div className="flex flex-col items-end gap-3">
+                    <div className="text-right">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">Issue Date</p>
+                        <p className="font-bold text-slate-900">{issueDate}</p>
                     </div>
                     {dueDate && (
-                        <div>
-                            <span className="text-gray-500 mr-4">Due Date:</span>
-                            <span className="font-medium">{dueDate}</span>
+                        <div className="text-right">
+                            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">Due Date</p>
+                            <p className="font-bold text-indigo-600">{dueDate}</p>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Items Table */}
-            <div className="mt-8">
+            <div className="mt-10">
                 <table className="w-full">
                     <thead>
-                        <tr className="border-b-2 border-indigo-600">
-                            <th className="text-left py-2 font-semibold text-indigo-600">Description</th>
-                            <th className="text-right py-2 font-semibold text-indigo-600 w-16">Qty</th>
-                            <th className="text-right py-2 font-semibold text-indigo-600 w-24">Price</th>
-                            <th className="text-right py-2 font-semibold text-indigo-600 w-24">Amount</th>
+                        <tr className="border-b border-slate-200">
+                            <th className="text-left py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest">Description</th>
+                            <th className="text-right py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest w-16">Qty</th>
+                            <th className="text-right py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest w-32">Price</th>
+                            <th className="text-right py-3 font-bold text-slate-400 text-[10px] uppercase tracking-widest w-32">Amount</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100">
                         {items.map((item, i) => (
                             <tr key={i}>
-                                <td className="py-3 text-gray-900">{item.description || <span className="text-gray-300 italic">Item description...</span>}</td>
-                                <td className="py-3 text-right text-gray-600">{item.quantity}</td>
-                                <td className="py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
-                                <td className="py-3 text-right font-medium text-gray-900">{formatCurrency(item.quantity * item.unit_price)}</td>
+                                <td className="py-4 text-slate-900 font-medium">{item.description || <span className="text-slate-300 italic">Item...</span>}</td>
+                                <td className="py-4 text-right text-slate-600">{item.quantity}</td>
+                                <td className="py-4 text-right text-slate-600">{formatCurrency(item.unitPrice, currency)}</td>
+                                <td className="py-4 text-right font-bold text-slate-900">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
 
-            {/* Totals */}
-            <div className="mt-6 flex justify-end">
-                <div className="w-48 space-y-2">
-                    <div className="flex justify-between text-gray-500">
+            {/* Summary */}
+            <div className="mt-8 flex justify-end">
+                <div className="w-64 space-y-3 text-right">
+                    <div className="flex justify-between text-slate-500 font-medium">
                         <span>Subtotal</span>
-                        <span>{formatCurrency(calculateSubtotal())}</span>
+                        <span>{formatCurrency(subtotal, currency)}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-gray-900 text-lg border-t pt-2 border-gray-200">
-                        <span>Total</span>
-                        <span>{formatCurrency(calculateTotal())}</span>
+                    {taxRate > 0 && (
+                        <div className="flex justify-between text-slate-500 font-medium">
+                            <span>Tax ({taxRate}%)</span>
+                            <span>{formatCurrency(taxAmount, currency)}</span>
+                        </div>
+                    )}
+                    {discount > 0 && (
+                        <div className="flex justify-between text-emerald-600 font-medium">
+                            <span>Discount</span>
+                            <span>-{formatCurrency(discountAmount, currency)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between font-black text-slate-900 text-xl border-t-2 border-slate-900 pt-4">
+                        <span>Total Due</span>
+                        <span>{formatCurrency(total, currency)}</span>
                     </div>
                 </div>
             </div>
 
             {/* Footer */}
-            {(notes || settings.footer_note) && (
-                <div className="mt-12 pt-4 border-t border-gray-100 text-gray-500 text-sm">
-                    {notes && <p className="whitespace-pre-wrap">{notes}</p>}
+            <div className="mt-16 pt-8 border-t border-slate-100 space-y-6">
+                {notes && (
+                    <div>
+                        <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 text-left">Notes & Terms</h4>
+                        <p className="text-slate-500 text-xs leading-relaxed whitespace-pre-wrap text-left">{notes}</p>
+                    </div>
+                )}
+                <div className="flex items-center justify-center gap-6 py-4 bg-slate-50 rounded-xl">
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <ShieldCheck size={14} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Secured by InvoiceOS</span>
+                    </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 
-    if (loading) return <div>Loading editor...</div>;
+    if (loading) return (
+        <div className="h-screen w-full flex items-center justify-center bg-white">
+            <div className="flex flex-col items-center gap-4">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                <p className="text-sm font-bold tracking-widest uppercase text-slate-400">Booting Invoice Engine...</p>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col h-screen overflow-hidden">
+        <div className="min-h-screen bg-[#F8FAFC] flex flex-col h-screen overflow-hidden font-sans">
             {/* Top Bar */}
-            <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 flex-shrink-0 z-30">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/invoices" className="text-gray-500 hover:text-gray-900 transition-colors">
+            <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-8 flex-shrink-0 z-30 shadow-sm">
+                <div className="flex items-center gap-6">
+                    <Link href="/dashboard/invoices" className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all active:scale-90">
                         <ArrowLeft size={20} />
                     </Link>
-                    <h1 className="text-lg font-bold text-gray-900">New Invoice</h1>
+                    <div>
+                        <h1 className="text-lg font-black text-slate-900 tracking-tighter uppercase">Invoice Engine</h1>
+                        <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Drafting Phase</p>
+                    </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        className="lg:hidden text-gray-600"
-                        onClick={() => setShowPreviewMobile(!showPreviewMobile)}
-                    >
-                        <Eye size={20} />
-                    </button>
-
-                    {/* Save as Draft Button */}
+                
+                <div className="flex items-center gap-4">
                     <button
                         onClick={(e) => handleSubmit(e, 'draft')}
                         disabled={submitting}
-                        className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 disabled:opacity-50 transition-all active:scale-95"
+                        className="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
                     >
-                        <Save size={16} />
-                        <span>Save as Draft</span>
+                        <Save size={18} />
+                        <span>Save Draft</span>
                     </button>
 
-                    {/* Send Invoice Button */}
                     <button
                         onClick={(e) => handleSubmit(e, 'sent')}
                         disabled={submitting}
-                        className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 transition-all active:scale-95"
+                        className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50"
                     >
-                        {submitting ? <React.Fragment>Processing...</React.Fragment> : (
+                        {submitting ? <Loader2 className="animate-spin" size={18} /> : (
                             <>
-                                <Send size={16} />
-                                <span>Send Invoice</span>
+                                <Send size={18} />
+                                <span>Optimize & Send</span>
                             </>
                         )}
                     </button>
                 </div>
             </header>
 
-            {/* Share Modal */}
-            {showShareModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-gray-900">Invoice Created!</h3>
-                            <button onClick={() => router.push('/dashboard/invoices')} className="text-gray-400 hover:text-gray-500">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-6">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Check size={32} />
-                                </div>
-                                <p className="text-gray-600">Your invoice has been successfully created and saved.</p>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4">
-                                <a
-                                    href={`mailto:${clientDetails?.email}?subject=Invoice form ${settings.company_name}&body=Please find attached invoice.`}
-                                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group cursor-pointer"
-                                >
-                                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <Mail size={20} />
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-700">Email</span>
-                                </a>
-
-                                <a
-                                    href={`https://wa.me/?text=Here is your invoice from ${settings.company_name}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all group cursor-pointer"
-                                >
-                                    <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <MessageCircle size={20} />
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-700">WhatsApp</span>
-                                </a>
-
-                                <button
-                                    onClick={handleCopyLink}
-                                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-gray-500 hover:bg-gray-50 transition-all group cursor-pointer"
-                                >
-                                    <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        {copySuccess ? <Check size={20} className="text-green-600" /> : <Copy size={20} />}
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-700">{copySuccess ? 'Copied!' : 'Copy'}</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div className="p-4 bg-gray-50 text-center">
-                            <button
-                                onClick={() => router.push('/dashboard/invoices')}
-                                className="text-sm font-medium text-gray-500 hover:text-gray-900"
-                            >
-                                Return to Dashboard
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Main Editor Area */}
-            <main className="flex-1 flex overflow-hidden relative">
+            <main className="flex-1 flex overflow-hidden">
 
                 {/* Left Panel: Form Editor */}
-                <div className={clsx(
-                    "flex-1 overflow-y-auto p-6 lg:p-10 transition-all duration-300",
-                    showPreviewMobile ? "hidden lg:block w-full lg:w-1/2" : "w-full lg:w-1/2"
-                )}>
-                    <div className="max-w-2xl mx-auto space-y-8">
+                <div className="flex-1 overflow-y-auto p-8 lg:p-12 scrollbar-hide">
+                    <div className="max-w-3xl mx-auto space-y-10">
 
-                        {/* Section: Who & When */}
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-                            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                                <UserIcon size={16} className="text-indigo-500" />
-                                Client Details
-                            </h2>
-                            <div className="grid gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Client</label>
-                                    <select
-                                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5 bg-gray-50"
-                                        value={clientId}
-                                        onChange={(e) => setClientId(e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Choose a client...</option>
-                                        {clients.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                    <div className="mt-2 text-right">
-                                        <Link href="/dashboard/clients/new" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
-                                            + Create New Client
-                                        </Link>
-                                    </div>
-                                </div>
+                        {/* Intelligence Sidebar (Float right on lg) */}
+                        <div className="lg:hidden">
+                            <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} />
+                        </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                        {/* Section: Client & Global Settings */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                                <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
+                                    <UserIcon size={16} className="text-indigo-600" />
+                                    Recipient
+                                </h2>
+                                <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
-                                        <div className="relative">
+                                        <select
+                                            className="block w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                            value={clientId}
+                                            onChange={(e) => setClientId(e.target.value)}
+                                        >
+                                            <option value="">Select a Client</option>
+                                            {clients.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex-1">
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Issue Date</label>
                                             <input
                                                 type="date"
-                                                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5"
+                                                className="block w-full rounded-xl border-slate-200 sm:text-sm border p-3 bg-slate-50/50 font-bold"
                                                 value={issueDate}
                                                 onChange={(e) => setIssueDate(e.target.value)}
-                                                required
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Due Date</label>
+                                            <input
+                                                type="date"
+                                                className="block w-full rounded-xl border-slate-200 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                                value={dueDate}
+                                                onChange={(e) => setDueDate(e.target.value)}
                                             />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                                        <input
-                                            type="date"
-                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5"
-                                            value={dueDate}
-                                            onChange={(e) => setDueDate(e.target.value)}
-                                            required
-                                        />
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                                <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
+                                    <Settings size={16} className="text-indigo-600" />
+                                    Configurations
+                                </h2>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1">
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Currency</label>
+                                            <div className="relative">
+                                                <Coins className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <select
+                                                    className="block w-full rounded-xl border-slate-200 pl-10 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                                    value={currency}
+                                                    onChange={(e) => setCurrency(e.target.value)}
+                                                >
+                                                    <option value="USD">USD ($)</option>
+                                                    <option value="EUR">EUR (€)</option>
+                                                    <option value="GBP">GBP (£)</option>
+                                                    <option value="NGN">NGN (₦)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex-1">
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Tax (%)</label>
+                                            <div className="relative">
+                                                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <input
+                                                    type="number"
+                                                    className="block w-full rounded-xl border-slate-200 pl-10 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                                    value={taxRate}
+                                                    onChange={(e) => setTaxRate(Number(e.target.value))}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Discount</label>
+                                            <input
+                                                type="number"
+                                                className="block w-full rounded-xl border-slate-200 sm:text-sm border p-3 bg-slate-50/50 font-bold"
+                                                value={discount}
+                                                onChange={(e) => setDiscount(Number(e.target.value))}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Section: Items */}
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
+                        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                                    <FileText size={16} className="text-indigo-500" />
-                                    Line Items
+                                <h2 className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
+                                    <FileText size={16} className="text-indigo-600" />
+                                    Revenue Streams
                                 </h2>
                             </div>
 
                             <div className="space-y-4">
                                 {items.map((item, index) => (
-                                    <div key={index} className="group relative flex flex-col sm:grid sm:grid-cols-12 gap-3 items-start p-4 rounded-lg border border-gray-100 bg-gray-50 hover:border-gray-300 transition-colors">
+                                    <div key={index} className="group relative flex flex-col sm:grid sm:grid-cols-12 gap-4 items-center p-6 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:shadow-lg transition-all">
                                         <div className="w-full sm:col-span-6">
-                                            <label className="text-xs font-medium text-gray-500 mb-1 block sm:hidden">Description</label>
                                             <input
                                                 type="text"
-                                                placeholder="Description"
-                                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                                placeholder="Service or Product name"
+                                                className="block w-full rounded-xl border-slate-200 text-sm border p-3 bg-white font-medium"
                                                 value={item.description}
                                                 onChange={(e) => updateItem(index, 'description', e.target.value)}
                                             />
                                         </div>
-                                        <div className="flex gap-3 w-full sm:contents">
+                                        <div className="flex gap-4 w-full sm:contents">
                                             <div className="flex-1 sm:col-span-2">
-                                                <label className="text-xs font-medium text-gray-500 mb-1 block sm:hidden">Qty</label>
                                                 <input
                                                     type="number"
-                                                    placeholder="Qty"
-                                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                                    className="block w-full rounded-xl border-slate-200 text-sm border p-3 bg-white font-bold text-center"
                                                     value={item.quantity}
                                                     onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
                                                 />
                                             </div>
                                             <div className="flex-[1.5] sm:col-span-3">
-                                                <label className="text-xs font-medium text-gray-500 mb-1 block sm:hidden">Price</label>
                                                 <div className="relative">
-                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2">
-                                                        <span className="text-gray-500 sm:text-sm">₦</span>
-                                                    </div>
                                                     <input
                                                         type="number"
-                                                        placeholder="0.00"
-                                                        className="block w-full rounded-md border-gray-300 pl-6 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
-                                                        value={item.unit_price}
-                                                        onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))}
+                                                        className="block w-full rounded-xl border-slate-200 pl-4 text-sm border p-3 bg-white font-bold"
+                                                        value={item.unitPrice}
+                                                        onChange={(e) => updateItem(index, 'unitPrice', Number(e.target.value))}
                                                     />
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        {/* Mobile Footer: Total + Delete */}
-                                        <div className="flex w-full items-center justify-between sm:contents">
-                                            {/* Mobile Total Helper */}
-                                            <p className="sm:hidden text-sm font-medium text-gray-900">
-                                                {formatCurrency(item.quantity * item.unit_price)}
-                                            </p>
-
-                                            <div className="sm:col-span-1 flex justify-end pt-0 sm:pt-2">
+                                            <div className="sm:col-span-1 flex justify-end">
                                                 <button
                                                     onClick={() => removeItem(index)}
-                                                    className="text-gray-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                                                    className="text-slate-300 hover:text-rose-500 transition-all p-2 hover:bg-rose-50 rounded-lg"
                                                 >
                                                     <Trash size={18} />
                                                 </button>
@@ -468,19 +459,19 @@ export default function NewInvoicePage() {
                             <button
                                 type="button"
                                 onClick={addItem}
-                                className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-dashed border-indigo-200 hover:border-indigo-300 transition-all"
+                                className="w-full py-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-2xl border-2 border-dashed border-indigo-200 transition-all active:scale-[0.99]"
                             >
-                                <Plus size={16} /> Add Line Item
+                                <Plus size={18} /> Add Line Item
                             </button>
                         </div>
 
                         {/* Section: Notes */}
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                            <label className="block text-sm font-medium text-gray-700">Notes & Terms</label>
+                        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Additional Terms & Intelligence Notes</label>
                             <textarea
-                                rows={3}
-                                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2.5"
-                                placeholder="Payment due within 30 days..."
+                                rows={4}
+                                className="block w-full rounded-2xl border-slate-200 sm:text-sm border p-4 bg-slate-50/30 font-medium"
+                                placeholder="Specify payment milestones, late fees, or special instructions..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             />
@@ -488,16 +479,36 @@ export default function NewInvoicePage() {
                     </div>
                 </div>
 
-                {/* Right Panel: Live Preview */}
-                <div className={clsx(
-                    "hidden lg:flex flex-1 bg-gray-800/95 overflow-y-auto p-10 justify-center items-start shadow-inner",
-                    showPreviewMobile && "!flex absolute inset-0 z-20"
-                )}>
-                    <div className="scale-[0.6] sm:scale-[0.7] md:scale-[0.8] lg:scale-[0.85] xl:scale-100 origin-top transition-transform duration-300 ease-out">
-                        <InvoicePreview />
+                {/* Right Panel: AI Sidebar + Preview */}
+                <div className="hidden lg:flex w-[460px] bg-white border-l border-slate-200 flex-col overflow-hidden">
+                    <div className="p-8 space-y-8 overflow-y-auto">
+                        <ConversionIntelligence total={total} clientName={clientDetails?.name} dueDate={dueDate} />
+                        
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live Preview</h3>
+                            <div className="scale-[0.45] origin-top border border-slate-200 rounded-lg shadow-2xl overflow-hidden pointer-events-none">
+                                <InvoicePreview />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
+
+            {/* Mobile Preview Toggle */}
+            <button 
+                onClick={() => setShowPreviewMobile(!showPreviewMobile)}
+                className="lg:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-slate-900 text-white shadow-2xl flex items-center justify-center z-50 transition-all active:scale-90"
+            >
+                {showPreviewMobile ? <X size={24} /> : <Eye size={24} />}
+            </button>
+
+            {showPreviewMobile && (
+                <div className="fixed inset-0 z-40 bg-slate-900/90 backdrop-blur-md p-6 overflow-y-auto flex items-start justify-center">
+                    <div className="w-full mt-12 animate-in slide-in-from-bottom-10 duration-500">
+                        <InvoicePreview />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

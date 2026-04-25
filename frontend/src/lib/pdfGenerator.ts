@@ -104,7 +104,7 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     if (logoOffset === 0) {
         doc.setFontSize(18);
         doc.setTextColor(0);
-        doc.text(settings?.company_name || "Superlink I.T", 14, 20);
+        doc.text(settings?.company_name || "InvoiceOS", 14, 20);
 
         doc.setFontSize(9);
         doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
@@ -436,7 +436,7 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     // 2. Email
     currentLineY += lineHeight;
     drawCustomIcon('mail', infoXStart, currentLineY);
-    doc.text("Superlinkresources@gmail.com", infoXStart + 8, currentLineY);
+    doc.text("support@invoiceos.com", infoXStart + 8, currentLineY);
 
     // 3. Phone
     currentLineY += lineHeight;
@@ -458,10 +458,11 @@ export const generateInvoicePDF = async (invoice: Invoice, settings?: CompanySet
     socialX += 7;
     drawCustomIcon('insta', socialX, currentLineY);
 
-    // Superlink.IT text
+    // InvoiceOS.AI text
     doc.setTextColor(30, 41, 59);
     doc.setFont("helvetica", "bold");
-    doc.text("Superlink.IT", socialX + 8, currentLineY);
+    doc.setFontSize(10);
+    doc.text("InvoiceOS.AI", socialX + 8, currentLineY);
 
     // Save
     doc.save(`${type}_${invoice.invoice_number}.pdf`);

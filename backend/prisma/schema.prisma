@@ -1,0 +1,152 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  password      String
+  name          String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  businesses    Business[]
+}
+
+model Business {
+  id              String           @id @default(cuid())
+  name            String
+  ownerId         String
+  owner           User             @relation(fields: [ownerId], references: [id])
+  
+  // White-labeling
+  logo            String?
+  brandColor      String?          @default("#4F46E5")
+  customDomain    String?          @unique
+  smtpConfig      Json?            // Stores SMTP settings
+  
+  clients         Client[]
+  invoices        Invoice[]
+  templates       InvoiceTemplate[]
+  automationRules AutomationRule[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Client {
+  id         String    @id @default(cuid())
+  businessId String
+  business   Business  @relation(fields: [businessId], references: [id])
+  name       String
+  email      String
+  address    String?
+  phone      String?
+  invoices   Invoice[]
+  
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String
+  businessId      String
+  business        Business      @relation(fields: [businessId], references: [id])
+  clientId        String
+  client          Client        @relation(fields: [clientId], references: [id])
+  
+  status          InvoiceStatus @default(DRAFT)
+  currency        String        @default("USD")
+  issueDate       DateTime      @default(now())
+  dueDate         DateTime
+  
+  items           InvoiceItem[]
+  taxRate         Float         @default(0)
+  discountAmount  Float         @default(0)
+  totalAmount     Float
+  
+  // Interaction tracking
+  viewCount       Int           @default(0)
+  lastViewedAt    DateTime?
+  
+  payments        Payment[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([businessId, invoiceNumber])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  unitPrice   Float
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id])
+  amount        Float
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+  paidAt        DateTime?
+  
+  createdAt     DateTime      @default(now())
+}
+
+model InvoiceTemplate {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  name       String
+  config     Json     // Stores layout/style config
+  
+  createdAt  DateTime @default(now())
+}
+
+model AutomationRule {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  trigger    String   // e.g., "ON_OVERDUE", "ON_OPEN"
+  action     String   // e.g., "SEND_EMAIL", "APPLY_DISCOUNT"
+  delayDays  Int      @default(0)
+  isActive   Boolean  @default(true)
+  
+  createdAt  DateTime @default(now())
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIAL
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  CRYPTO
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
