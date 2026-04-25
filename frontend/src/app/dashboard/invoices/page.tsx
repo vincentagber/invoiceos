@@ -8,12 +8,12 @@ import { generateInvoicePDF } from '@/lib/pdfGenerator';
 import { formatCurrency } from '@/lib/utils';
 
 interface Invoice {
-    id: number;
-    invoice_number: string;
-    issue_date: string;
-    total: number;
+    id: string;
+    invoiceNumber: string;
+    issueDate: string;
+    totalAmount: number;
     status: string;
-    client_name: string;
+    client: { name: string };
 }
 
 export default function InvoicesPage() {
@@ -30,7 +30,7 @@ export default function InvoicesPage() {
 
     const fetchSettings = async () => {
         try {
-            const res = await api.get('/settings/read.php?all=true');
+            const res = await api.get('/business/me');
             if (res.data) setSettings(res.data);
         } catch (e) {
             console.error("Failed to fetch settings", e);
@@ -39,7 +39,8 @@ export default function InvoicesPage() {
 
     const fetchInvoices = async () => {
         try {
-            const res = await api.get('/invoices/read.php');
+            const bizRes = await api.get('/business/me');
+            const res = await api.get(`/invoices?businessId=${bizRes.data.id}`);
             setInvoices(res.data);
         } catch (error) {
             console.error(error);
@@ -48,12 +49,11 @@ export default function InvoicesPage() {
         }
     };
 
-    const handleDownload = async (id: number) => {
-        setDownloadingId(id);
+    const handleDownload = async (id: string) => {
+        setDownloadingId(id as any);
         try {
-            const res = await api.get(`/invoices/read.php?id=${id}`);
+            const res = await api.get(`/invoices/${id}`);
             const invoiceData = res.data;
-            // Pass fetched settings
             await generateInvoicePDF(invoiceData, settings);
         } catch (error) {
             console.error("Failed to download PDF", error);
@@ -63,11 +63,11 @@ export default function InvoicesPage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
 
         try {
-            await api.post('/invoices/delete.php', { id });
+            await api.delete(`/invoices/${id}`);
             // Remove from local state
             setInvoices(invoices.filter(inv => inv.id !== id));
         } catch (error) {
@@ -77,8 +77,8 @@ export default function InvoicesPage() {
     };
 
     const filteredInvoices = invoices.filter(inv =>
-        inv.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        inv.client_name.toLowerCase().includes(searchTerm.toLowerCase())
+        inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inv.client?.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -129,16 +129,16 @@ export default function InvoicesPage() {
                                     <tr key={inv.id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">
                                             <Link href={`/dashboard/invoices/${inv.id}/edit`} className="hover:underline">
-                                                {inv.invoice_number}
+                                                {inv.invoiceNumber}
                                             </Link>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.client_name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.issue_date}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(inv.total)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.client?.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.issueDate}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(inv.totalAmount)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full 
-                                                ${inv.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                    inv.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                                                ${inv.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                                                    inv.status === 'OVERDUE' ? 'bg-red-100 text-red-800' :
                                                         'bg-yellow-100 text-yellow-800'}`}>
                                                 {inv.status}
                                             </span>
@@ -197,21 +197,21 @@ export default function InvoicesPage() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <Link href={`/dashboard/invoices/${inv.id}/edit`} className="text-sm font-bold text-indigo-600 hover:underline block">
-                                        {inv.invoice_number}
+                                        {inv.invoiceNumber}
                                     </Link>
-                                    <p className="text-sm font-medium text-gray-900 mt-0.5">{inv.client_name}</p>
+                                    <p className="text-sm font-medium text-gray-900 mt-0.5">{inv.client?.name}</p>
                                 </div>
                                 <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full 
-                                    ${inv.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                        inv.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                                    ${inv.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                                        inv.status === 'OVERDUE' ? 'bg-red-100 text-red-800' :
                                             'bg-yellow-100 text-yellow-800'}`}>
                                     {inv.status}
                                 </span>
                             </div>
 
                             <div className="flex justify-between items-center text-sm text-gray-500">
-                                <span>{inv.issue_date}</span>
-                                <span className="font-bold text-gray-900">{formatCurrency(inv.total)}</span>
+                                <span>{inv.issueDate}</span>
+                                <span className="font-bold text-gray-900">{formatCurrency(inv.totalAmount)}</span>
                             </div>
 
                             <div className="pt-3 border-t border-gray-50 flex justify-end gap-4">

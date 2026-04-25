@@ -6,12 +6,12 @@ import Link from 'next/link';
 import { Plus, Edit, Trash, Search, Mail, Phone, Users, MoreHorizontal } from 'lucide-react';
 
 interface Client {
-    id: number;
+    id: string;
     name: string;
     email: string;
     phone: string;
     address: string;
-    tax_id: string;
+    taxId: string;
 }
 
 export default function ClientsPage() {
@@ -25,7 +25,7 @@ export default function ClientsPage() {
 
     const fetchClients = async () => {
         try {
-            const res = await api.get('/clients/read.php');
+            const res = await api.get('/clients');
             if (Array.isArray(res.data)) {
                 setClients(res.data);
             } else {
@@ -39,10 +39,10 @@ export default function ClientsPage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this client?')) return;
         try {
-            await api.delete('/clients/delete.php', { data: { id } });
+            await api.delete(`/clients/${id}`);
             setClients(clients.filter(c => c.id !== id));
         } catch (error) {
             alert('Failed to delete client');
@@ -134,7 +134,7 @@ export default function ClientsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {client.tax_id || '-'}
+                                            {client.taxId || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex items-center justify-end gap-2">
