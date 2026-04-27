@@ -76,8 +76,7 @@ export default function LoginPage() {
             <main className="w-full max-w-[440px] relative z-10 flex flex-col items-center">
                 {/* Brand Header */}
                 <div className="flex items-center gap-2 mb-8">
-                    <span className="material-symbols-outlined text-black text-[32px] font-fill">account_balance</span>
-                    <span className="font-bold text-2xl tracking-tight text-black">InvoiceOS</span>
+                    <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto object-contain" />
                 </div>
 
                 {/* Auth Card */}

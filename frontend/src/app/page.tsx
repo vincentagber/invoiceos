@@ -37,7 +37,9 @@ export default function LandingPage() {
             <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 docked full-width top-0 sticky z-50">
                 <nav className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
                     <div className="flex items-center gap-10">
-                        <Link href="/" className="text-xl font-bold tracking-tighter text-slate-900">InvoiceOS</Link>
+                        <Link href="/" className="flex items-center gap-2">
+                            <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
+                        </Link>
                         <div className="hidden md:flex gap-8">
                             <Link href="#" className="font-medium text-sm tracking-tight text-black border-b-2 border-black pb-1">Product</Link>
                             <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Features</Link>
@@ -392,7 +394,9 @@ export default function LandingPage() {
             <footer className="bg-slate-50 border-t border-slate-200 w-full">
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 px-10 py-16 max-w-7xl mx-auto">
                     <div className="col-span-2">
-                        <span className="text-lg font-bold text-slate-900 mb-6 block">InvoiceOS</span>
+                        <div className="mb-6 block">
+                            <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
+                        </div>
                         <p className="text-slate-500 text-sm leading-6 max-w-xs">The precision engine for multi-jurisdictional financial operations between Africa and the West.</p>
                     </div>
                     <div>

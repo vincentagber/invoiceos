@@ -77,8 +77,7 @@ export default function RegisterPage() {
                     {/* Header */}
                     <div className="text-center mb-10">
                         <div className="flex justify-center items-center gap-2 mb-4">
-                            <span className="material-symbols-outlined text-black text-3xl font-fill">account_balance</span>
-                            <h1 className="text-2xl font-bold tracking-tight text-black">InvoiceOS</h1>
+                            <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto object-contain" />
                         </div>
                         <h2 className="text-xl font-semibold text-[#0b1c30] mb-2">Create your account</h2>
                         <p className="text-sm text-[#45464d]">Institutional Grade Finance. Secured.</p>
