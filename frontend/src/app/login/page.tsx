@@ -18,10 +18,19 @@ export default function LoginPage() {
     const { session } = useAuth();
     const router = useRouter();
 
-    // Redirect if already logged in
+    // Redirect if already logged in and handle errors
     React.useEffect(() => {
         if (session) {
             router.push('/dashboard');
+        }
+        
+        // Handle error parameters from URL
+        const params = new URLSearchParams(window.location.search);
+        const errorParam = params.get('error');
+        if (errorParam === 'session_expired') {
+            setError('Your session has expired. Please sign in again.');
+        } else if (errorParam) {
+            setError(errorParam.replace(/_/g, ' '));
         }
     }, [session, router]);
 

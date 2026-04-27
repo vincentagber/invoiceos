@@ -14,7 +14,9 @@ import {
     BarChart3,
     X,
     Smartphone,
-    Menu
+    Menu,
+    Rocket,
+    ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { RevenueChart } from './components/RevenueChart';
@@ -72,8 +74,15 @@ export default function DashboardPage() {
             setLoadingStats(false);
             return;
         }
+
+        // If user is logged in but has no organization, we can't fetch data
+        if (user && user.organizations.length === 0) {
+            setLoadingStats(false);
+            return;
+        }
+
         fetchDashboardData();
-    }, [authLoading, token]);
+    }, [authLoading, token, user]);
 
     useEffect(() => {
         if (!socket) return;
@@ -107,7 +116,44 @@ export default function DashboardPage() {
         );
     }
 
-    if (!stats) return <div className="p-10 text-rose-500 font-black uppercase text-xs">System Offline. Check Connection.</div>;
+    if (user && user.organizations.length === 0) {
+        return (
+            <div className="max-w-2xl mx-auto py-20 text-center space-y-8">
+                <div className="h-24 w-24 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm">
+                    <Rocket size={40} />
+                </div>
+                <div className="space-y-3">
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Initialize Your Workspace</h2>
+                    <p className="text-slate-500 max-w-md mx-auto">Welcome to InvoiceOS. To begin generating revenue and tracking intelligence, you first need to establish your business profile.</p>
+                </div>
+                <Link 
+                    href="/dashboard/settings" 
+                    className="inline-flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95"
+                >
+                    Create Business Profile
+                    <ArrowRight size={16} />
+                </Link>
+            </div>
+        );
+    }
+
+    if (!stats) return (
+        <div className="max-w-xl mx-auto py-20 text-center space-y-6">
+            <div className="h-16 w-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto">
+                <AlertCircle size={32} />
+            </div>
+            <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">System Offline</h3>
+                <p className="text-xs text-slate-500 font-medium">We encountered a synchronization error with the ledger. Please check your network connection or verify your organization settings.</p>
+            </div>
+            <button 
+                onClick={() => window.location.reload()}
+                className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+            >
+                Retry Synchronization
+            </button>
+        </div>
+    );
 
     const kpiCards = [
         {
