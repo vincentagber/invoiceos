@@ -15,6 +15,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     session: any | null;
+    token: string | null;
     logout: () => void;
     loading: boolean;
 }
@@ -24,32 +25,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<any | null>(null);
+    const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
         // 1. Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            if (session?.user) {
-                mapSupabaseUser(session.user);
-            }
+            handleSessionUpdate(session);
             setLoading(false);
         });
 
         // 2. Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            if (session?.user) {
-                mapSupabaseUser(session.user);
-            } else {
-                setUser(null);
-            }
+            handleSessionUpdate(session);
             setLoading(false);
         });
 
         return () => subscription.unsubscribe();
     }, []);
+
+    const handleSessionUpdate = (session: any) => {
+        setSession(session);
+        if (session?.user) {
+            const newToken = session.access_token;
+            setToken(newToken);
+            localStorage.setItem('token', newToken); // Sync for axios interceptor
+            mapSupabaseUser(session.user);
+        } else {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('token');
+        }
+    };
 
     const mapSupabaseUser = (sbUser: SupabaseUser) => {
         setUser({
@@ -62,11 +70,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logout = async () => {
         await supabase.auth.signOut();
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         router.push('/login');
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, logout, loading }}>
+        <AuthContext.Provider value={{ user, session, token, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

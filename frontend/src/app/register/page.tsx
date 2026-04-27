@@ -115,12 +115,12 @@ export default function RegisterPage() {
             <div className="w-full max-w-[520px] bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 space-y-8 animate-in fade-in zoom-in-95 duration-700">
                 
                 {/* Logo & Heading */}
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="h-16 flex items-center justify-center bg-indigo-50 rounded-2xl p-4">
+                <div className="flex flex-col items-center space-y-6">
+                    <div className="h-20 w-20 flex items-center justify-center bg-white rounded-3xl p-4 shadow-xl shadow-indigo-500/10 border border-slate-50">
                         <img 
                             src="/logo.png" 
                             alt="InvoiceOS" 
-                            className="h-full w-auto object-contain"
+                            className="h-full w-full object-contain"
                         />
                     </div>
                     <div className="text-center space-y-2">
