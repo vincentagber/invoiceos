@@ -5,15 +5,14 @@ export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role?: string; // Role within the context of the current organization
+    role?: string;
   };
 }
 
 /**
  * Optimized Auth Middleware
- * Verifies Supabase JWT and attaches user to request
  */
-export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Authentication required' });
@@ -22,14 +21,13 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   const token = authHeader.split(' ')[1];
 
   try {
-    // 1. Verify token with Supabase (Edge-ready: uses Supabase Auth)
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
 
-    req.user = {
+    (req as AuthRequest).user = {
       id: user.id,
       email: user.email || '',
     };
@@ -42,19 +40,18 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
 /**
  * RBAC Middleware: Organization Level
- * Ensures the user belongs to the organization and has the required role
  */
 export const checkRole = (allowedRoles: string[]) => {
-  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const authReq = req as AuthRequest;
       const organizationId = req.query.businessId || req.body.businessId || req.params.businessId;
-      const userId = req.user?.id;
+      const userId = authReq.user?.id;
 
       if (!organizationId || !userId) {
         return res.status(400).json({ message: 'Organization context missing' });
       }
 
-      // Check membership and role in Supabase
       const { data: member, error } = await supabase
         .from('organization_members')
         .select('role')
@@ -63,16 +60,14 @@ export const checkRole = (allowedRoles: string[]) => {
         .single();
 
       if (error || !member) {
-        return res.status(403).json({ message: 'Unauthorized: Not a member of this organization' });
+        return res.status(403).json({ message: 'Unauthorized: Not a member' });
       }
 
       if (!allowedRoles.includes(member.role)) {
-        return res.status(403).json({ message: `Unauthorized: Requires one of roles: ${allowedRoles.join(', ')}` });
+        return res.status(403).json({ message: 'Unauthorized: Insufficient permissions' });
       }
 
-      // Attach role to user object for downstream use
-      req.user!.role = member.role;
-      
+      authReq.user!.role = member.role;
       next();
     } catch (error) {
       next(error);

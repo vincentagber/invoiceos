@@ -1,14 +1,59 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
+export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { 
+      businessId, 
+      clientId, 
+      status, 
+      startDate, 
+      endDate,
+      page = 1,
+      limit = 20,
+      sortBy = 'created_at',
+      sortOrder = 'desc'
+    } = req.query;
 
-export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const from = (Number(page) - 1) * Number(limit);
+    const to = from + Number(limit) - 1;
+
+    let query = supabase
+      .from('invoices')
+      .select('*, client:clients(id, name, email), items:invoice_items(*)', { count: 'exact' })
+      .eq('organization_id', businessId as string);
+
+    if (clientId) query = query.eq('client_id', clientId as string);
+    if (status) query = query.eq('status', status as string);
+    if (startDate) query = query.gte('created_at', startDate as string);
+    if (endDate) query = query.lte('created_at', endDate as string);
+
+    const { data: invoices, count, error } = await query
+      .order(sortBy as string, { ascending: sortOrder === 'asc' })
+      .range(from, to);
+
+    if (error) throw error;
+
+    res.json({
+      data: invoices,
+      pagination: {
+        total: count,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil((count || 0) / Number(limit))
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { businessId, clientId, items, ...data } = req.body;
     const invoiceNumber = data.invoiceNumber || `INV-${Date.now()}`;
 
-    // 1. Insert Invoice
     const { data: invoice, error: invError } = await supabase
       .from('invoices')
       .insert({
@@ -22,7 +67,6 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 
     if (invError) throw invError;
 
-    // 2. Insert Items
     if (items && items.length > 0) {
       const { error: itemsError } = await supabase
         .from('invoice_items')
@@ -33,14 +77,12 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
       if (itemsError) throw itemsError;
     }
 
-    // 3. Log Event
     await supabase.from('invoice_events').insert({
       invoice_id: invoice.id,
       event_type: 'CREATED',
       metadata: { items_count: items?.length }
     });
 
-    // Notify clients via Socket.io
     const io = req.app.get('io');
     io.to(businessId).emit('invoice-created', invoice);
 
@@ -50,7 +92,7 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
   }
 };
 
-export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getOne = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { data: invoice, error } = await supabase
       .from('invoices')
@@ -67,7 +109,7 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
   }
 };
 
-export const updateStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status } = req.body;
     const { data: invoice, error } = await supabase
@@ -79,7 +121,6 @@ export const updateStatus = async (req: AuthRequest, res: Response, next: NextFu
 
     if (error) throw error;
 
-    // Log Event
     await supabase.from('invoice_events').insert({
       invoice_id: invoice.id,
       event_type: status === 'SENT' ? 'SENT' : 'STATUS_UPDATED',
@@ -99,7 +140,7 @@ export const updateStatus = async (req: AuthRequest, res: Response, next: NextFu
   }
 };
 
-export const trackView = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const trackView = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { data: currentInvoice, error: fetchError } = await supabase
       .from('invoices')
@@ -122,7 +163,6 @@ export const trackView = async (req: AuthRequest, res: Response, next: NextFunct
 
     if (error) throw error;
 
-    // Log Event
     await supabase.from('invoice_events').insert({
       invoice_id: invoice.id,
       event_type: 'VIEWED',
@@ -142,12 +182,11 @@ export const trackView = async (req: AuthRequest, res: Response, next: NextFunct
   }
 };
 
-export const addPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const addPayment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { amount, method, transactionId } = req.body;
     const invoiceId = req.params.id as string;
 
-    // 1. Insert Payment
     const { data: payment, error: payError } = await supabase
       .from('payments')
       .insert({
@@ -163,7 +202,6 @@ export const addPayment = async (req: AuthRequest, res: Response, next: NextFunc
 
     if (payError) throw payError;
 
-    // 2. Update Invoice Status
     const { data: allPayments } = await supabase
       .from('payments')
       .select('amount')
@@ -178,7 +216,6 @@ export const addPayment = async (req: AuthRequest, res: Response, next: NextFunc
       .update({ status: newStatus })
       .eq('id', invoiceId);
 
-    // 3. Log Event
     await supabase.from('invoice_events').insert({
       invoice_id: invoiceId,
       event_type: 'PAYMENT_COMPLETED',
@@ -199,11 +236,10 @@ export const addPayment = async (req: AuthRequest, res: Response, next: NextFunc
   }
 };
 
-export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const update = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { items, ...data } = req.body;
     
-    // 1. Update main invoice
     const { data: invoice, error: invError } = await supabase
       .from('invoices')
       .update(data)
@@ -213,7 +249,6 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
     if (invError) throw invError;
 
-    // 2. Replace items if provided
     if (items) {
       await supabase.from('invoice_items').delete().eq('invoice_id', req.params.id as string);
       const { error: itemsError } = await supabase
@@ -231,7 +266,7 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
   }
 };
 
-export const triggerReminder = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const triggerReminder = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { data: invoice, error } = await supabase
       .from('invoices')
@@ -241,7 +276,6 @@ export const triggerReminder = async (req: AuthRequest, res: Response, next: Nex
 
     if (error || !invoice) return res.status(404).json({ message: 'Invoice not found' });
 
-    // Log Event
     await supabase.from('invoice_events').insert({
       invoice_id: invoice.id,
       event_type: 'REMINDER_SENT'
@@ -260,7 +294,7 @@ export const triggerReminder = async (req: AuthRequest, res: Response, next: Nex
   }
 };
 
-export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const sendInvoice = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { data: invoice, error } = await supabase
       .from('invoices')
@@ -271,7 +305,6 @@ export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFun
 
     if (error) throw error;
 
-    // Log Event
     await supabase.from('invoice_events').insert({
       invoice_id: invoice.id,
       event_type: 'SENT'
@@ -289,7 +322,7 @@ export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const remove = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { error } = await supabase
       .from('invoices')
