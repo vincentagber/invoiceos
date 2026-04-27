@@ -34,12 +34,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // If the error is 401 Unauthorized, redirect to login
+        // If the error is 401 Unauthorized, notify the AuthContext
         if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/login?error=session_expired';
+                // Dispatch a custom event that AuthContext will listen for
+                window.dispatchEvent(new CustomEvent('invoiceos-logout', { 
+                    detail: { reason: 'session_expired' } 
+                }));
             }
         }
         return Promise.reject(error);

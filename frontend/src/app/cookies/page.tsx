@@ -3,30 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function CookiePolicyPage() {
     return (
         <div className="bg-[#f8f9ff] text-[#0b1c30] min-h-screen flex flex-col font-sans selection:bg-[#6cf8bb] selection:text-[#00714d]">
-            {/* Top Navigation */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 docked full-width top-0 sticky z-50">
-                <nav className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-                    <div className="flex items-center gap-10">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
-                        </Link>
-                        <div className="hidden md:flex gap-8">
-                            <Link href="/" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Platform</Link>
-                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Solutions</Link>
-                            <Link href="/#pricing" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Pricing</Link>
-                            <Link href="/contact" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Resources</Link>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link href="/login" className="text-sm font-medium tracking-tight text-slate-600 hover:text-black transition-colors px-4 py-2">Log In</Link>
-                        <Link href="/register" className="bg-black text-white text-sm font-medium tracking-tight px-6 py-2.5 rounded-lg active:scale-95 transition-all duration-200 shadow-lg shadow-black/10">Get Started</Link>
-                    </div>
-                </nav>
-            </header>
+            <Header />
 
             <main className="flex-grow pt-32 pb-24 px-6 lg:px-8 max-w-7xl mx-auto w-full">
                 {/* Header Section */}
@@ -195,22 +178,7 @@ export default function CookiePolicyPage() {
                 </motion.div>
             </main>
 
-            {/* Footer */}
-            <footer className="bg-white border-t border-slate-200 w-full mt-auto">
-                <div className="max-w-7xl mx-auto py-16 px-10 flex flex-col md:flex-row justify-between items-center gap-10">
-                    <div className="flex flex-col gap-3">
-                        <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto object-contain mb-2" />
-                        <span className="text-slate-500 text-xs font-medium">© 2026 InvoiceOS Precision. Institutional trust and financial transparency.</span>
-                    </div>
-                    <div className="flex flex-wrap justify-center md:justify-end gap-8">
-                        <Link className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-black transition-colors" href="/privacy">Privacy Policy</Link>
-                        <Link className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-black transition-colors" href="/privacy">Terms of Service</Link>
-                        <Link className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-black transition-colors" href="/security">Security Overview</Link>
-                        <Link className="text-xs font-black uppercase tracking-widest text-slate-900" href="/cookies">Cookie Policy</Link>
-                        <Link className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-black transition-colors" href="#">Compliance Hub</Link>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }

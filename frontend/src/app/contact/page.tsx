@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function ContactPage() {
     const [formData, setFormData] = useState({
@@ -25,26 +27,7 @@ export default function ContactPage() {
 
     return (
         <div className="bg-[#f8f9ff] text-[#0b1c30] min-h-screen flex flex-col font-sans selection:bg-[#6cf8bb] selection:text-[#00714d]">
-            {/* Top Navigation */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 docked full-width top-0 sticky z-50">
-                <nav className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-                    <div className="flex items-center gap-10">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
-                        </Link>
-                        <div className="hidden md:flex gap-8">
-                            <Link href="/" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Platform</Link>
-                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Solutions</Link>
-                            <Link href="/#pricing" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Pricing</Link>
-                            <Link href="/contact" className="font-medium text-sm tracking-tight text-black border-b-2 border-black pb-1">Resources</Link>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link href="/login" className="text-sm font-medium tracking-tight text-slate-600 hover:text-black transition-colors px-4 py-2">Log In</Link>
-                        <Link href="/register" className="bg-black text-white text-sm font-medium tracking-tight px-6 py-2.5 rounded-lg active:scale-95 transition-all duration-200 shadow-lg shadow-black/10">Get Started</Link>
-                    </div>
-                </nav>
-            </header>
+            <Header />
 
             <main className="flex-grow w-full max-w-7xl mx-auto px-6 md:px-8 py-20">
                 {/* Hero Section */}
@@ -224,23 +207,8 @@ export default function ContactPage() {
                 </div>
             </main>
 
-            {/* Footer */}
-            <footer className="bg-white border-t border-slate-200 w-full">
-                <div className="w-full px-10 py-16 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
-                    <div>
-                        <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto object-contain mb-4" />
-                        <p className="text-slate-500 text-sm">© 2026 InvoiceOS Precision. All rights reserved. Built for institutional reliability.</p>
-                    </div>
-                    <div className="flex flex-wrap justify-center md:justify-end gap-8">
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Privacy Policy</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Terms of Service</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Compliance</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/security">Security</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/cookies">Cookie Policy</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/contact">API Documentation</Link>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
+
         </div>
     );
 }
