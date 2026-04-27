@@ -44,7 +44,7 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loadingStats, setLoadingStats] = useState(true);
     const [showInstallBanner, setShowInstallBanner] = useState(true);
-    const { token, loading: authLoading } = useAuth();
+    const { user, token, loading: authLoading } = useAuth();
     const { socket } = useSocket();
 
     const fetchDashboardData = async () => {

@@ -104,10 +104,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        className={clsx(
+                                         className={clsx(
                                             "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative",
                                             isActive
-                                                ? "bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200"
+                                                ? "bg-white text-[#5E6AD2] shadow-sm ring-1 ring-slate-200"
                                                 : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm hover:ring-1 hover:ring-slate-200"
                                         )}
                                     >
@@ -133,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         className={clsx(
                                             "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
                                             isActive
-                                                ? "bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200"
+                                                ? "bg-white text-[#5E6AD2] shadow-sm ring-1 ring-slate-200"
                                                 : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm hover:ring-1 hover:ring-slate-200"
                                         )}
                                     >
@@ -159,7 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         className={clsx(
                                             "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
                                             isActive
-                                                ? "bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200"
+                                                ? "bg-white text-[#5E6AD2] shadow-sm ring-1 ring-slate-200"
                                                 : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm hover:ring-1 hover:ring-slate-200"
                                         )}
                                     >
@@ -177,14 +177,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </div>
                             <Link
                                 href="/blog"
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-500 hover:bg-white hover:text-emerald-600 hover:shadow-sm hover:ring-1 hover:ring-slate-200 transition-all"
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-500 hover:bg-white hover:text-[#5E6AD2] hover:shadow-sm hover:ring-1 hover:ring-slate-200 transition-all"
                             >
                                 <LayoutDashboard size={18} className="text-slate-400" />
                                 Blog
                             </Link>
                             <Link
                                 href="/tools/invoice-generator"
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-500 hover:bg-white hover:text-emerald-600 hover:shadow-sm hover:ring-1 hover:ring-slate-200 transition-all"
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-500 hover:bg-white hover:text-[#5E6AD2] hover:shadow-sm hover:ring-1 hover:ring-slate-200 transition-all"
                             >
                                 <FileText size={18} className="text-slate-400" />
                                 Free Tools
@@ -194,7 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <div className="p-4 border-t border-slate-200/60 bg-slate-50">
                         <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white border border-slate-200 shadow-sm">
-                            <div className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-inner bg-emerald-600 overflow-hidden">
+                            <div className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-inner bg-[#5E6AD2] overflow-hidden">
                                 {user?.name ? user.name.charAt(0) : 'U'}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -232,9 +232,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                         <Link
                             href="/dashboard/invoices/new"
-                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 transition-all active:scale-95"
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#5E6AD2] border-t border-white/20 px-4 py-2.5 text-sm font-black uppercase tracking-widest text-white shadow-[0_10px_20px_-5px_rgba(94,106,210,0.3)] hover:bg-[#4E5AC2] transition-all active:scale-95 lustre"
                         >
-                            <span className="hidden sm:inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-xs">+</span>
+                            <span className="hidden sm:inline-flex h-4 w-4 items-center justify-center rounded-lg bg-white/20 text-[10px]">+</span>
                             New Invoice
                         </Link>
                     </div>
