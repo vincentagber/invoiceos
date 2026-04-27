@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { ArrowRight, Loader2, Mail, User, Check, X } from 'lucide-react';
+import { ArrowRight, Loader2, Mail, User, Check } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { clsx } from 'clsx';
@@ -35,7 +35,6 @@ export default function RegisterPage() {
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setEmail(val);
-        // Simple regex for basic format
         setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || val === '');
     };
 
@@ -57,11 +56,26 @@ export default function RegisterPage() {
         }
 
         try {
-            const res = await api.post('/auth/register', { name, email, password });
-            // Success, redirect to login
-            router.push('/login');
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: name,
+                    }
+                }
+            });
+
+            if (error) throw error;
+            
+            // Redirect to login or check email
+            if (data.user && data.session === null) {
+                setError("Please check your email to confirm your account.");
+            } else {
+                router.push('/dashboard');
+            }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Registration failed. Please try again.');
+            setError(err.message || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }

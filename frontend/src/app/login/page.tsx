@@ -2,18 +2,27 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { session } = useAuth();
+    const router = useRouter();
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (session) {
+            router.push('/dashboard');
+        }
+    }, [session, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,13 +30,33 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const res = await api.post('/auth/login', { email, password });
-            const { token, user } = res.data;
-            login(token, user);
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) throw error;
+            
+            // On success, AuthContext handles state, we just redirect
+            router.push('/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
+            setError(err.message || 'Invalid email or password. Please try again.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/dashboard`
+                }
+            });
+            if (error) throw error;
+        } catch (err: any) {
+            setError(err.message);
         }
     };
 
@@ -37,7 +66,7 @@ export default function LoginPage() {
                 
                 {/* Logo & Heading */}
                 <div className="flex flex-col items-center space-y-4">
-                    <div className="h-16 flex items-center justify-center">
+                    <div className="h-16 flex items-center justify-center bg-indigo-50 rounded-2xl p-4">
                         <img 
                             src="/logo.png" 
                             alt="InvoiceOS" 
@@ -107,6 +136,7 @@ export default function LoginPage() {
 
                     <button
                         type="button"
+                        onClick={handleGoogleLogin}
                         className="w-full flex items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all active:scale-[0.98]"
                     >
                         <img src="/google-logo.png" alt="Google" className="w-6 h-6" />
@@ -126,4 +156,3 @@ export default function LoginPage() {
         </div>
     );
 }
-
