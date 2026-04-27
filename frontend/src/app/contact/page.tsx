@@ -231,12 +231,12 @@ export default function ContactPage() {
                         <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto object-contain mb-4" />
                         <p className="text-slate-500 text-sm">© 2026 InvoiceOS Precision. All rights reserved. Built for institutional reliability.</p>
                     </div>
-                    <div className="flex flex-wrap gap-8 md:justify-end">
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">Privacy Policy</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">Terms of Service</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">Compliance</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">Security</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">API Documentation</Link>
+                    <div className="flex flex-wrap justify-center md:justify-end gap-8">
+                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Privacy Policy</Link>
+                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Terms of Service</Link>
+                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Compliance</Link>
+                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Security</Link>
+                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/contact">API Documentation</Link>
                     </div>
                 </div>
             </footer>
