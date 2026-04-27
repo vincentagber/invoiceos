@@ -50,7 +50,9 @@ export const AddClientModal = ({ isOpen, onClose, onSuccess }: AddClientModalPro
 
         try {
             const businessId = user?.organizations?.[0]?.id;
-            if (!businessId) throw new Error('No active organization found');
+            if (!businessId) {
+                throw new Error('No active organization found');
+            }
 
             const res = await api.post('/clients', {
                 name,
@@ -68,8 +70,9 @@ export const AddClientModal = ({ isOpen, onClose, onSuccess }: AddClientModalPro
             setEmail('');
             setPhone('');
             setAddress('');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to create customer');
+        } catch (err) {
+            const errorMessage = (err as any).response?.data?.message || (err as any).message || 'Failed to create customer';
+            setError(errorMessage);
         } finally {
             setSubmitting(false);
         }
