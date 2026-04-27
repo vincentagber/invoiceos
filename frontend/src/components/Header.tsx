@@ -25,7 +25,7 @@ export default function Header() {
                 {/* Brand */}
                 <div className="flex-shrink-0">
                     <Link href="/" className="flex items-center gap-2">
-                        <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
+                        <img src="/logo.png" alt="InvoiceOS" className="h-11 w-auto object-contain" />
                     </Link>
                 </div>
 

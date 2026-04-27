@@ -86,7 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="flex h-20 items-center px-6 border-b border-slate-200/60">
                     <div className="flex items-center gap-3">
                         <Link href="/dashboard" className="flex items-center gap-3">
-                            <img src="/logo.png" alt="InvoiceOS" className="h-16 w-auto object-contain" />
+                            <img src="/logo.png" alt="InvoiceOS" className="h-20 w-auto object-contain" />
                         </Link>
                     </div>
                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-400 hover:text-slate-600 transition-colors">
