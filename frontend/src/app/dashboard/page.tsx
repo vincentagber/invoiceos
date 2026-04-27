@@ -18,7 +18,8 @@ import {
     Rocket,
     ArrowRight,
     Sparkles,
-    ShieldCheck
+    ShieldCheck,
+    Building2
 } from 'lucide-react';
 import Link from 'next/link';
 import { RevenueChart } from './components/RevenueChart';
@@ -120,54 +121,68 @@ export default function DashboardPage() {
 
     if (user && user.organizations.length === 0) {
         return (
-            <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
-                <div className="w-full max-w-2xl relative">
-                    {/* Architectural Background Glows */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+            <div className="min-h-[70vh] flex flex-col items-center justify-center">
+                <div className="w-full max-w-3xl space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
                     
-                    <div className="relative bg-white/[0.7] backdrop-blur-2xl rounded-[3rem] border border-white p-12 sm:p-16 text-center space-y-10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.06)] overflow-hidden">
-                        {/* Subtle Top Accent */}
-                        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
+                    {/* Minimalist State Header */}
+                    <div className="space-y-6 text-center">
+                        <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-slate-900 text-[10px] font-black uppercase tracking-[0.25em] text-white">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                            </span>
+                            System Ready
+                        </div>
                         
-                        <div className="space-y-8 relative">
-                            {/* Animated Icon Cluster */}
-                            <div className="relative mx-auto w-32 h-32">
-                                <div className="absolute inset-0 bg-indigo-600/10 rounded-[2.5rem] animate-pulse" />
-                                <div className="relative h-full w-full bg-white rounded-[2.5rem] shadow-[0_12px_24px_-8px_rgba(79,70,229,0.15)] border border-indigo-50 flex items-center justify-center text-indigo-600">
-                                    <Rocket size={48} strokeWidth={1.5} className="animate-bounce-subtle" />
+                        <div className="space-y-4">
+                            <h2 className="text-5xl sm:text-6xl font-black text-slate-900 tracking-[-0.05em] leading-[0.9]">
+                                Workspace <br />
+                                <span className="text-slate-300">Initialization</span>
+                            </h2>
+                            <p className="text-slate-500 text-lg font-medium max-w-md mx-auto leading-relaxed">
+                                Establish your professional identity. Your business profile serves as the core intelligence layer for all financial operations.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Elite Setup Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
+                        {[
+                            { title: 'Identity', desc: 'Legal entity name & brand assets', icon: Building2 },
+                            { title: 'Compliance', desc: 'Tax identifiers & regional settings', icon: ShieldCheck },
+                            { title: 'Financials', desc: 'Currency defaults & bank bridges', icon: Wallet },
+                        ].map((step, i) => (
+                            <div key={i} className="bg-white border border-slate-200 p-8 space-y-4 hover:bg-slate-50 transition-colors duration-300 first:rounded-l-[2rem] last:rounded-r-[2rem]">
+                                <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
+                                    <step.icon size={20} strokeWidth={1.5} />
                                 </div>
-                                <div className="absolute -top-2 -right-2 h-10 w-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg border-2 border-white animate-in zoom-in duration-500 delay-300">
-                                    <Sparkles size={18} />
+                                <div className="space-y-1">
+                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">{step.title}</h4>
+                                    <p className="text-[11px] text-slate-400 font-medium leading-normal">{step.desc}</p>
                                 </div>
                             </div>
+                        ))}
+                    </div>
 
-                            <div className="space-y-4">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/50">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">Onboarding Sequence 01</span>
-                                </div>
-                                <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-[-0.04em] leading-[0.95]">
-                                    Initialize Your <br />
-                                    <span className="text-indigo-600">Workspace</span>
-                                </h2>
-                                <p className="text-sm sm:text-base text-slate-500 max-w-sm mx-auto font-medium leading-relaxed">
-                                    Welcome to the command center. To begin generating revenue and tracking financial intelligence, establish your business profile.
-                                </p>
+                    {/* Action Layer */}
+                    <div className="flex flex-col items-center gap-6 pt-4">
+                        <Link 
+                            href="/dashboard/settings" 
+                            className="group relative flex items-center gap-6 px-12 py-6 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:bg-indigo-600 transition-all duration-500 active:scale-[0.98]"
+                        >
+                            <span>Initialize Profile</span>
+                            <div className="w-8 h-px bg-white/20 group-hover:w-12 transition-all duration-500" />
+                            <ArrowRight size={16} className="opacity-50 group-hover:opacity-100 transition-opacity" />
+                        </Link>
+                        
+                        <div className="flex items-center gap-8">
+                            <div className="flex items-center gap-2">
+                                <div className="h-1 w-1 rounded-full bg-emerald-500" />
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Encrypted</span>
                             </div>
-
-                            <div className="pt-4">
-                                <Link 
-                                    href="/dashboard/settings" 
-                                    className="group relative inline-flex items-center gap-4 px-10 py-5 bg-[#5E6AD2] text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_-12px_rgba(79,70,229,0.4)] hover:bg-[#4E5AC2] hover:shadow-[0_25px_50px_-12px_rgba(79,70,229,0.5)] transition-all active:scale-[0.98] lustre"
-                                >
-                                    <span>Setup Business Profile</span>
-                                    <ArrowRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
-                                </Link>
-                                
-                                <p className="mt-8 text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                                    <ShieldCheck size={12} className="text-indigo-500" />
-                                    Secure Enterprise Environment
-                                </p>
+                            <div className="flex items-center gap-2">
+                                <div className="h-1 w-1 rounded-full bg-emerald-500" />
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Ready for Scale</span>
                             </div>
                         </div>
                     </div>
