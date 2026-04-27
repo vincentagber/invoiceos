@@ -215,6 +215,67 @@ export const addPayment = async (req: AuthRequest, res: Response, next: NextFunc
   }
 };
 
+export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { items, ...data } = req.body;
+    
+    // 1. Update main invoice
+    const { data: invoice, error: invError } = await supabase
+      .from('invoices')
+      .update(data)
+      .eq('id', req.params.id as string)
+      .select()
+      .single();
+
+    if (invError) throw invError;
+
+    // 2. Replace items if provided
+    if (items) {
+      await supabase.from('invoice_items').delete().eq('invoice_id', req.params.id as string);
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .insert(items.map((item: any) => ({
+          ...item,
+          invoice_id: invoice.id
+        })));
+      if (itemsError) throw itemsError;
+    }
+
+    res.json(invoice);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const triggerReminder = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { data: invoice, error } = await supabase
+      .from('invoices')
+      .select('*, client:clients(*)')
+      .eq('id', req.params.id as string)
+      .single();
+
+    if (error || !invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    // Log Event
+    await supabase.from('invoice_events').insert({
+      invoice_id: invoice.id,
+      event_type: 'REMINDER_SENT'
+    });
+
+    const io = req.app.get('io');
+    io.to(invoice.organization_id).emit('notification', {
+      title: 'Reminder Sent',
+      message: `Overdue reminder sent to ${invoice.client.name} for Invoice #${invoice.invoice_number}`,
+      type: 'info'
+    });
+
+    res.json({ success: true, message: 'Reminder triggered' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { data: invoice, error } = await supabase
