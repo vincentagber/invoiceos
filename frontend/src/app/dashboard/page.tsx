@@ -167,7 +167,7 @@ export default function DashboardPage() {
                     {/* Action Layer */}
                     <div className="flex flex-col items-center gap-6 pt-4">
                         <Link 
-                            href="/dashboard/setup/financials" 
+                            href="/dashboard/setup/branding" 
                             className="group relative flex items-center gap-6 px-12 py-6 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:bg-indigo-600 transition-all duration-500 active:scale-[0.98]"
                         >
                             <span>Initialize Profile</span>
