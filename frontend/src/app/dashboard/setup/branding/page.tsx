@@ -24,10 +24,13 @@ export default function BrandingSetupPage() {
     const [businessName, setBusinessName] = useState('');
     const [website, setWebsite] = useState('');
     const [primaryColor, setPrimaryColor] = useState('#5E6AD2');
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
     
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const { user, refreshUser } = useAuth();
     const router = useRouter();
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const steps = [
         { id: 1, name: 'ENTITY', status: 'current' },
@@ -35,6 +38,35 @@ export default function BrandingSetupPage() {
         { id: 3, name: 'FINANCIALS', status: 'upcoming' },
         { id: 4, name: 'REVIEW', status: 'upcoming' },
     ];
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `${user?.id}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('logos')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage
+                .from('logos')
+                .getPublicUrl(filePath);
+
+            setLogoUrl(data.publicUrl);
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            alert('Failed to upload logo. Make sure you created the "logos" bucket in Supabase Storage.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleSubmit = async () => {
         if (!businessName) {
@@ -51,7 +83,8 @@ export default function BrandingSetupPage() {
                     name: businessName,
                     owner_id: user?.id,
                     website: website,
-                    primary_color: primaryColor
+                    primary_color: primaryColor,
+                    logo_url: logoUrl
                 })
                 .select()
                 .single();
@@ -146,9 +179,31 @@ export default function BrandingSetupPage() {
                             <div className="space-y-6">
                                 <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest block">Business Logo</label>
                                 <div className="flex items-center gap-10">
-                                    <div className="h-24 w-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer group">
-                                        <Upload size={24} className="group-hover:scale-110 transition-transform" />
-                                        <span className="text-[8px] font-black uppercase mt-2">Upload</span>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef}
+                                        onChange={handleFileUpload}
+                                        accept="image/*"
+                                        className="hidden"
+                                    />
+                                    <div 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="h-24 w-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer group overflow-hidden relative"
+                                    >
+                                        {logoUrl ? (
+                                            <img src={logoUrl} alt="Logo Preview" className="h-full w-full object-contain p-2" />
+                                        ) : (
+                                            <>
+                                                {uploading ? (
+                                                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+                                                ) : (
+                                                    <>
+                                                        <Upload size={24} className="group-hover:scale-110 transition-transform" />
+                                                        <span className="text-[8px] font-black uppercase mt-2">Upload</span>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
                                     <div className="flex-1 space-y-1">
                                         <p className="text-sm font-bold text-slate-800">Company Brand Asset</p>
@@ -245,10 +300,10 @@ export default function BrandingSetupPage() {
                                 </Link>
                                 <button 
                                     onClick={handleSubmit}
-                                    disabled={loading}
+                                    disabled={loading || uploading}
                                     className={clsx(
                                         "bg-black text-white px-8 py-4 rounded-lg text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-lg active:scale-[0.98] transition-all",
-                                        loading && "opacity-50 cursor-not-allowed"
+                                        (loading || uploading) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {loading ? 'Saving...' : 'Save & Continue'}
