@@ -449,6 +449,7 @@ export default function LandingPage() {
                         <ul className="space-y-3">
                             <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/contact">API Docs</Link></li>
                             <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/security">Security</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/cookies">Cookies</Link></li>
                         </ul>
                     </div>
                 </div>
