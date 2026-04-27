@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function LandingPage() {
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -35,25 +37,7 @@ export default function LandingPage() {
     return (
         <div className="bg-[#f8f9ff] text-[#0b1c30] font-sans selection:bg-[#6cf8bb] selection:text-[#00714d]">
             {/* Top Navigation */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 docked full-width top-0 sticky z-50">
-                <nav className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-                    <div className="flex items-center gap-10">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
-                        </Link>
-                        <div className="hidden md:flex gap-8">
-                            <Link href="#" className="font-medium text-sm tracking-tight text-black border-b-2 border-black pb-1">Product</Link>
-                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Features</Link>
-                            <Link href="#pricing" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Pricing</Link>
-                            <Link href="/contact" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Resources</Link>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link href="/login" className="text-sm font-medium tracking-tight text-slate-600 hover:text-black transition-colors px-4 py-2">Log In</Link>
-                        <Link href="/register" className="bg-black text-white text-sm font-medium tracking-tight px-6 py-2.5 rounded-lg active:scale-95 transition-all duration-200 shadow-lg shadow-black/10">Get Started</Link>
-                    </div>
-                </nav>
-            </header>
+            <Header />
 
             <main>
                 {/* Hero Section */}
@@ -294,7 +278,7 @@ export default function LandingPage() {
                                 </Link>
                             </div>
                             {/* Enterprise */}
-                            <div className="border-2 border-black rounded-xl p-10 flex flex-col relative scale-105 bg-white shadow-xl">
+                            <div className="border-2 border-black rounded-xl p-10 flex flex-col relative md:scale-105 bg-white shadow-xl">
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold tracking-widest uppercase px-4 py-1 rounded-full">Most Popular</div>
                                 <h5 className="text-lg font-bold mb-2">Enterprise</h5>
                                 <p className="text-sm text-[#45464d] mb-6">For multi-national operations</p>
@@ -414,53 +398,7 @@ export default function LandingPage() {
                 </section>
             </main>
 
-            {/* Footer */}
-            <footer className="bg-slate-50 border-t border-slate-200 w-full">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 px-10 py-16 max-w-7xl mx-auto">
-                    <div className="col-span-2">
-                        <div className="mb-6 block">
-                            <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
-                        </div>
-                        <p className="text-slate-500 text-sm leading-6 max-w-xs">The precision engine for multi-jurisdictional financial operations between Africa and the West.</p>
-                    </div>
-                    <div>
-                        <h6 className="text-slate-900 font-bold text-sm mb-4">Company</h6>
-                        <ul className="space-y-3">
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">About</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Careers</Link></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h6 className="text-slate-900 font-bold text-sm mb-4">Product</h6>
-                        <ul className="space-y-3">
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Intelligence</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Compliance</Link></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h6 className="text-slate-900 font-bold text-sm mb-4">Legal</h6>
-                        <ul className="space-y-3">
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/privacy">Privacy</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/privacy">Terms</Link></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h6 className="text-slate-900 font-bold text-sm mb-4">Support</h6>
-                        <ul className="space-y-3">
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/contact">API Docs</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/security">Security</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/cookies">Cookies</Link></li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="max-w-7xl mx-auto px-10 py-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-slate-500 text-xs">© 2026 InvoiceOS Precision. All rights reserved. Financial services provided by partner banks.</p>
-                    <div className="flex gap-6">
-                        <Link className="text-slate-400 hover:text-black transition-colors" href="#"><span className="material-symbols-outlined text-lg">brand_awareness</span></Link>
-                        <Link className="text-slate-400 hover:text-black transition-colors" href="#"><span className="material-symbols-outlined text-lg">public</span></Link>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }

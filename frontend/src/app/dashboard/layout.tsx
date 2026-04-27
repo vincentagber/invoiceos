@@ -43,8 +43,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
     }, [user, loading, router]);
 
-    if (loading) {
-        return <div className="flex h-screen items-center justify-center p-4">Loading...</div>;
+    if (loading || (!user && !pathname.includes('login'))) {
+        return (
+            <div className="flex h-screen items-center justify-center p-4 bg-white">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                    <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Verifying Institutional Access...</p>
+                </div>
+            </div>
+        );
     }
 
     if (!user) {
@@ -54,10 +61,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Invoices', href: '/dashboard/invoices', icon: FileText },
-        { name: 'Quotations', href: '/dashboard/quotations', icon: FileText },
-        { name: 'Expenses', href: '/dashboard/expenses', icon: Wallet },
-        { name: 'Taxes', href: '/dashboard/taxes', icon: Landmark },
+        { name: 'Payments', href: '/dashboard/expenses', icon: CreditCard },
         { name: 'Clients', href: '/dashboard/clients', icon: Users },
+        { name: 'Support', href: '/dashboard/support', icon: Landmark },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
         { name: 'Subscription', href: '/dashboard/subscription', icon: Crown },
     ];
@@ -107,11 +113,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                          className={clsx(
                                             "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative",
                                             isActive
-                                                ? "bg-white text-[#5E6AD2] shadow-sm ring-1 ring-slate-200"
+                                                ? "bg-white text-[#006c49] shadow-sm ring-1 ring-slate-200"
                                                 : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm hover:ring-1 hover:ring-slate-200"
                                         )}
                                     >
-                                        <Icon size={18} className={clsx("transition-transform group-hover:scale-105", isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600")} />
+                                        <Icon size={18} className={clsx("transition-transform group-hover:scale-105", isActive ? "text-[#006c49]" : "text-slate-400 group-hover:text-slate-600")} />
                                         {item.name}
                                     </Link>
                                 );
@@ -123,7 +129,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <div className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                                 Management
                             </div>
-                            {navigation.filter(item => ['Invoices', 'Quotations', 'Expenses', 'Clients'].includes(item.name)).map((item) => {
+                            {navigation.filter(item => ['Invoices', 'Payments', 'Clients'].includes(item.name)).map((item) => {
                                 const Icon = item.icon;
                                 const isActive = pathname === item.href;
                                 return (
@@ -133,11 +139,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         className={clsx(
                                             "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
                                             isActive
-                                                ? "bg-white text-[#5E6AD2] shadow-sm ring-1 ring-slate-200"
+                                                ? "bg-white text-[#006c49] shadow-sm ring-1 ring-slate-200"
                                                 : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm hover:ring-1 hover:ring-slate-200"
                                         )}
                                     >
-                                        <Icon size={18} className={clsx("transition-transform group-hover:scale-105", isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600")} />
+                                        <Icon size={18} className={clsx("transition-transform group-hover:scale-105", isActive ? "text-[#006c49]" : "text-slate-400 group-hover:text-slate-600")} />
                                         {item.name}
                                     </Link>
                                 );
@@ -149,7 +155,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <div className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                                 System
                             </div>
-                            {navigation.filter(item => ['Settings', 'Subscription'].includes(item.name)).map((item) => {
+                            {navigation.filter(item => ['Settings', 'Subscription', 'Support'].includes(item.name)).map((item) => {
                                 const Icon = item.icon;
                                 const isActive = pathname === item.href;
                                 return (
@@ -159,11 +165,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         className={clsx(
                                             "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
                                             isActive
-                                                ? "bg-white text-[#5E6AD2] shadow-sm ring-1 ring-slate-200"
+                                                ? "bg-white text-[#006c49] shadow-sm ring-1 ring-slate-200"
                                                 : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm hover:ring-1 hover:ring-slate-200"
                                         )}
                                     >
-                                        <Icon size={18} className={clsx("transition-transform group-hover:scale-105", isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600")} />
+                                        <Icon size={18} className={clsx("transition-transform group-hover:scale-105", isActive ? "text-[#006c49]" : "text-slate-400 group-hover:text-slate-600")} />
                                         {item.name}
                                     </Link>
                                 );
@@ -208,11 +214,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
 
                     <div className="flex items-center gap-3 sm:gap-6">
-                        <NotificationCenter />
+                        <Link 
+                            href="/dashboard/support"
+                            className="p-2 text-slate-400 hover:text-black transition-colors rounded-xl hover:bg-slate-50"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">help</span>
+                        </Link>
 
                         <Link
                             href="/dashboard/invoices/new"
-                            className="inline-flex items-center gap-2 rounded-xl bg-[#5E6AD2] border-t border-white/20 px-4 py-2.5 text-sm font-black uppercase tracking-widest text-white shadow-[0_10px_20px_-5px_rgba(94,106,210,0.3)] hover:bg-[#4E5AC2] transition-all active:scale-95 lustre"
+                            className="inline-flex items-center gap-2 rounded-xl bg-black border-t border-white/20 px-4 py-2.5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-black/10 hover:bg-slate-900 transition-all active:scale-95 lustre"
                         >
                             <span className="hidden sm:inline-flex h-4 w-4 items-center justify-center rounded-lg bg-white/20 text-[10px]">+</span>
                             New Invoice

@@ -55,7 +55,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             handleSessionUpdate(session);
         });
 
-        return () => subscription.unsubscribe();
+        // 3. Listen for global logout events (from API interceptor)
+        const handleGlobalLogout = (e: any) => {
+            const reason = e.detail?.reason || 'session_expired';
+            logout(reason);
+        };
+        window.addEventListener('invoiceos-logout', handleGlobalLogout);
+
+        return () => {
+            subscription.unsubscribe();
+            window.removeEventListener('invoiceos-logout', handleGlobalLogout);
+        };
     }, []);
 
     const handleSessionUpdate = async (session: any) => {
@@ -113,11 +123,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
     };
 
-    const logout = async () => {
+    const logout = async (reason?: string) => {
         await supabase.auth.signOut();
         localStorage.removeItem('token');
         setUser(null);
-        router.push('/login');
+        setToken(null);
+        setSession(null);
+        
+        const redirectUrl = reason ? `/login?error=${reason}` : '/login';
+        router.push(redirectUrl);
     };
 
     return (
