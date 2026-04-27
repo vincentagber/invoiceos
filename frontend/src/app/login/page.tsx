@@ -87,10 +87,10 @@ export default function LoginPage() {
                                 <img src="/logo.png" alt="InvoiceOS" className="h-full w-full object-contain" />
                             </motion.div>
                             <div className="text-center space-y-1.5">
-                                <h1 className="text-3xl font-black text-slate-900 tracking-[-0.03em] uppercase leading-none">Command Center</h1>
+                                <h1 className="text-3xl font-black text-slate-900 tracking-[-0.03em] uppercase leading-none">Welcome back</h1>
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                                     <ShieldCheck size={12} className="text-indigo-500" />
-                                    Secure Revenue Access
+                                    Secure sign in
                                 </p>
                             </div>
                         </div>
@@ -114,9 +114,9 @@ export default function LoginPage() {
                             <div className="space-y-4">
                                 <div className="group/field">
                                     <Input
-                                        label="Corporate Identity (Email)"
+                                        label="Email Address"
                                         type="email"
-                                        placeholder="name@company.com"
+                                        placeholder="Enter your email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -126,11 +126,11 @@ export default function LoginPage() {
 
                                 <div className="space-y-2 group/field">
                                     <div className="flex justify-between items-center px-1">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Access Token (Password)</label>
-                                        <Link href="#" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-wider transition-colors">Recover</Link>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Password</label>
+                                        <Link href="#" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-wider transition-colors">Forgot?</Link>
                                     </div>
                                     <PasswordInput
-                                        placeholder="••••••••"
+                                        placeholder="Enter your password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
@@ -148,7 +148,7 @@ export default function LoginPage() {
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : (
                                     <>
-                                        Initialize Session
+                                        Sign In
                                         <ArrowRight size={14} className="opacity-50 group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
@@ -156,7 +156,7 @@ export default function LoginPage() {
 
                             <div className="relative py-2">
                                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100" /></div>
-                                <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.2em]"><span className="bg-white/0 px-4 text-slate-300">Third-Party Auth</span></div>
+                                <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.2em]"><span className="bg-white/0 px-4 text-slate-300">Or continue with</span></div>
                             </div>
 
                             <motion.button
@@ -171,14 +171,14 @@ export default function LoginPage() {
                                     <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.712s.102-1.172.282-1.712V4.956H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.044l3.007-2.332z" fill="#fbbc05"/>
                                     <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.956l3.007 2.332C4.672 5.164 6.656 3.58 9 3.58z" fill="#ea4335"/>
                                 </svg>
-                                Authenticate with Google
+                                Google
                             </motion.button>
                         </form>
 
                         <div className="text-center pt-4 border-t border-slate-50">
                             <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-                                New to the ecosystem?{' '}
-                                <Link href="/register" className="text-indigo-600 hover:text-indigo-500 transition-colors">Join Infrastructure</Link>
+                                New here?{' '}
+                                <Link href="/register" className="text-indigo-600 hover:text-indigo-500 transition-colors">Create an account</Link>
                             </p>
                         </div>
                     </div>

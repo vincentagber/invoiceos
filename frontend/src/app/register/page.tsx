@@ -139,10 +139,10 @@ export default function RegisterPage() {
                                 <img src="/logo.png" alt="InvoiceOS" className="h-full w-full object-contain" />
                             </motion.div>
                             <div className="text-center space-y-1.5">
-                                <h1 className="text-3xl font-black text-slate-900 tracking-[-0.03em] uppercase leading-none">Join Infrastructure</h1>
+                                <h1 className="text-3xl font-black text-slate-900 tracking-[-0.03em] uppercase leading-none">Get Started</h1>
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                                     <ShieldPlus size={12} className="text-indigo-500" />
-                                    Initialize Revenue Protocol
+                                    Create your account
                                 </p>
                             </div>
                         </div>
@@ -167,8 +167,8 @@ export default function RegisterPage() {
 
                             <div className="space-y-4">
                                 <Input
-                                    label="Operator Full Name"
-                                    placeholder="John Doe"
+                                    label="Full Name"
+                                    placeholder="Enter your name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     required
@@ -176,21 +176,21 @@ export default function RegisterPage() {
                                 />
 
                                 <Input
-                                    label="Organization Email"
+                                    label="Email Address"
                                     type="email"
-                                    placeholder="you@company.com"
+                                    placeholder="Enter your email"
                                     value={email}
                                     onChange={handleEmailChange}
                                     required
                                     className="h-14 rounded-2xl border-slate-200/60 bg-slate-50/30 px-5 text-sm font-medium focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
-                                    error={!emailValid && email.length > 0 ? "Invalid signature" : undefined}
+                                    error={!emailValid && email.length > 0 ? "Check email format" : undefined}
                                     rightElement={emailValid && email.length > 0 ? <Check size={16} className="text-emerald-500" /> : undefined}
                                 />
 
                                 <div className="space-y-3">
                                     <PasswordInput
-                                        label="System Password"
-                                        placeholder="••••••••"
+                                        label="Create Password"
+                                        placeholder="Choose a password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
@@ -201,7 +201,7 @@ export default function RegisterPage() {
                                     {/* Elite Strength Meter */}
                                     <div className="px-1 space-y-2">
                                         <div className="flex justify-between text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
-                                            <span>Security Tier</span>
+                                            <span>Password Strength</span>
                                             <span className={clsx(
                                                 passwordStrength <= 2 ? 'text-rose-500' : 'text-emerald-500'
                                             )}>{getStrengthText()}</span>
@@ -229,7 +229,7 @@ export default function RegisterPage() {
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : (
                                     <>
-                                        Initialize Deployment
+                                        Create Account
                                         <ArrowRight size={14} className="opacity-50 group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
@@ -237,7 +237,7 @@ export default function RegisterPage() {
 
                             <div className="relative py-2">
                                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100" /></div>
-                                <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.2em]"><span className="bg-white/0 px-4 text-slate-300">Third-Party Init</span></div>
+                                <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.2em]"><span className="bg-white/0 px-4 text-slate-300">Or sign up with</span></div>
                             </div>
 
                             <motion.button
@@ -252,14 +252,14 @@ export default function RegisterPage() {
                                     <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.712s.102-1.172.282-1.712V4.956H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.044l3.007-2.332z" fill="#fbbc05"/>
                                     <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.956l3.007 2.332C4.672 5.164 6.656 3.58 9 3.58z" fill="#ea4335"/>
                                 </svg>
-                                Authenticate via Google
+                                Google
                             </motion.button>
                         </form>
 
                         <div className="text-center pt-4 border-t border-slate-50">
                             <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-                                Already deployed?{' '}
-                                <Link href="/login" className="text-indigo-600 hover:text-indigo-500 transition-colors">Access Session</Link>
+                                Already have an account?{' '}
+                                <Link href="/login" className="text-indigo-600 hover:text-indigo-500 transition-colors">Sign in</Link>
                             </p>
                         </div>
                     </div>
