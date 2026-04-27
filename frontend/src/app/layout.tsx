@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CollaborationProvider } from "@/context/CollaborationContext";
+import { SocketProvider } from "@/context/SocketContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap' });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", weight: ['400', '500', '600', '700', '800'], display: 'swap' });
@@ -49,9 +50,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable} font-sans tabular-nums bg-slate-50 text-slate-900 antialiased`}>
         <AuthProvider>
-          <CollaborationProvider>
-            {children}
-          </CollaborationProvider>
+          <SocketProvider>
+            <CollaborationProvider>
+              {children}
+            </CollaborationProvider>
+          </SocketProvider>
         </AuthProvider>
       </body>
     </html>

@@ -93,9 +93,77 @@ export const updateStatus = async (req: AuthRequest, res: Response, next: NextFu
     });
 
     const io = req.app.get('io');
-    io.to(invoice.businessId).emit('invoice-status-updated', { id: invoice.id, status });
+    io.to(invoice.businessId).emit('invoice-status-updated', { id: invoice.id, status, invoiceNumber: invoice.invoiceNumber });
+
+    if (status === 'PAID') {
+      io.to(invoice.businessId).emit('payment-received', { id: invoice.id, amount: invoice.totalAmount, invoiceNumber: invoice.invoiceNumber });
+    }
 
     res.json(invoice);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const invoice = await prisma.invoice.update({
+      where: { id: req.params.id as string },
+      data: { status: 'SENT' },
+    });
+
+    const io = req.app.get('io');
+    io.to(invoice.businessId).emit('invoice-sent', { id: invoice.id, invoiceNumber: invoice.invoiceNumber });
+
+    res.json({ success: true, message: 'Invoice sent successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { amount, method, transactionId } = req.body;
+    const invoiceId = req.params.id as string;
+
+    const payment = await prisma.payment.create({
+      data: {
+        invoiceId,
+        amount,
+        method,
+        transactionId,
+        status: 'SUCCESS',
+        paidAt: new Date(),
+      },
+      include: { invoice: true }
+    });
+
+    // Check if invoice is fully paid
+    const allPayments = await prisma.payment.findMany({
+      where: { invoiceId, status: 'SUCCESS' }
+    });
+    const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+    
+    let newStatus: any = 'PARTIAL';
+    if (totalPaid >= payment.invoice.totalAmount) {
+      newStatus = 'PAID';
+    }
+
+    await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { status: newStatus }
+    });
+
+    const io = req.app.get('io');
+    io.to(payment.invoice.businessId).emit('payment-received', { 
+      id: payment.invoice.id, 
+      amount, 
+      invoiceNumber: payment.invoice.invoiceNumber,
+      fullAmount: payment.invoice.totalAmount,
+      totalPaid 
+    });
+
+    res.status(201).json(payment);
   } catch (error) {
     next(error);
   }
@@ -145,6 +213,28 @@ export const remove = async (req: AuthRequest, res: Response, next: NextFunction
     });
 
     res.json({ success: true, message: 'Invoice deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const triggerReminder = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: req.params.id as string },
+      include: { client: true }
+    });
+
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    const io = req.app.get('io');
+    io.to(invoice.businessId).emit('notification', {
+      title: 'Reminder Sent',
+      message: `Overdue reminder sent to ${invoice.client.name} for Invoice #${invoice.invoiceNumber}`,
+      type: 'info'
+    });
+
+    res.json({ success: true, message: 'Reminder triggered' });
   } catch (error) {
     next(error);
   }
