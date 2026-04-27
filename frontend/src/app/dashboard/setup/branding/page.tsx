@@ -15,12 +15,19 @@ import {
     Info
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 
 export default function BrandingSetupPage() {
-    const [primaryColor, setPrimaryColor] = useState('#5E6AD2');
     const [businessName, setBusinessName] = useState('');
     const [website, setWebsite] = useState('');
+    const [primaryColor, setPrimaryColor] = useState('#5E6AD2');
+    
+    const [loading, setLoading] = useState(false);
+    const { user, refreshUser } = useAuth();
+    const router = useRouter();
 
     const steps = [
         { id: 1, name: 'ENTITY', status: 'current' },
@@ -28,6 +35,52 @@ export default function BrandingSetupPage() {
         { id: 3, name: 'FINANCIALS', status: 'upcoming' },
         { id: 4, name: 'REVIEW', status: 'upcoming' },
     ];
+
+    const handleSubmit = async () => {
+        if (!businessName) {
+            alert("Please enter your business name.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // 1. Create the Organization
+            const { data: org, error: orgError } = await supabase
+                .from('organizations')
+                .insert({
+                    name: businessName,
+                    owner_id: user?.id,
+                    website: website,
+                    primary_color: primaryColor
+                })
+                .select()
+                .single();
+
+            if (orgError) throw orgError;
+
+            // 2. Create the Owner Membership
+            const { error: memError } = await supabase
+                .from('organization_members')
+                .insert({
+                    organization_id: org.id,
+                    user_id: user?.id,
+                    role: 'OWNER'
+                });
+
+            if (memError) throw memError;
+
+            // 3. Refresh user state
+            await refreshUser();
+
+            // 4. Move to next step
+            router.push('/dashboard/setup/financials');
+        } catch (error: any) {
+            console.error('Branding Setup Error:', error);
+            alert(error.message || "Failed to create business profile");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const colorOptions = [
         '#5E6AD2', '#10B981', '#F59E0B', '#EF4444', '#000000', '#6366F1'
@@ -190,13 +243,17 @@ export default function BrandingSetupPage() {
                                     <ChevronLeft size={16} />
                                     Exit to Dashboard
                                 </Link>
-                                <Link 
-                                    href="/dashboard/setup/financials"
-                                    className="bg-black text-white px-8 py-4 rounded-lg text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-lg active:scale-[0.98] transition-all"
+                                <button 
+                                    onClick={handleSubmit}
+                                    disabled={loading}
+                                    className={clsx(
+                                        "bg-black text-white px-8 py-4 rounded-lg text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-lg active:scale-[0.98] transition-all",
+                                        loading && "opacity-50 cursor-not-allowed"
+                                    )}
                                 >
-                                    Save & Continue
-                                    <ArrowRight size={16} />
-                                </Link>
+                                    {loading ? 'Saving...' : 'Save & Continue'}
+                                    {!loading && <ArrowRight size={16} />}
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -16,13 +16,22 @@ import {
     DollarSign
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 
 export default function FinancialSetupPage() {
+    const [taxId, setTaxId] = useState('');
+    const [currency, setCurrency] = useState('USD — United States Dollar');
     const [bankTransfer, setBankTransfer] = useState(true);
     const [creditCard, setCreditCard] = useState(true);
     const [stripeConnect, setStripeConnect] = useState(false);
     const [paypalBusiness, setPaypalBusiness] = useState(false);
+    
+    const [loading, setLoading] = useState(false);
+    const { user, refreshUser } = useAuth();
+    const router = useRouter();
 
     const steps = [
         { id: 1, name: 'ENTITY', status: 'complete' },
@@ -30,6 +39,47 @@ export default function FinancialSetupPage() {
         { id: 3, name: 'FINANCIALS', status: 'current' },
         { id: 4, name: 'REVIEW', status: 'upcoming' },
     ];
+
+    const handleSubmit = async () => {
+        if (!user || user.organizations.length === 0) {
+            alert("Please complete the Branding step first.");
+            router.push('/dashboard/setup/branding');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const orgId = user.organizations[0].id;
+
+            // Save financial settings to organizations table
+            const { error } = await supabase
+                .from('organizations')
+                .update({
+                    tax_id: taxId,
+                    currency: currency.split(' — ')[0],
+                    payment_methods: {
+                        bank_transfer: bankTransfer,
+                        credit_card: creditCard,
+                        stripe_connect: stripeConnect,
+                        paypal: paypalBusiness
+                    }
+                })
+                .eq('id', orgId);
+
+            if (error) throw error;
+
+            // Refresh user session to reflect new business data
+            await refreshUser();
+            
+            // Success! Redirect to dashboard
+            router.push('/dashboard?setup=complete');
+        } catch (error: any) {
+            console.error('Finalization Error:', error);
+            alert(error.message || "Failed to finalize setup");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#F8F9FB] flex flex-col font-sans text-slate-900">
@@ -95,6 +145,8 @@ export default function FinancialSetupPage() {
                                         <input 
                                             type="text" 
                                             placeholder="XX-XXXXXXX"
+                                            value={taxId}
+                                            onChange={(e) => setTaxId(e.target.value)}
                                             className="w-full h-14 bg-white border border-slate-200 rounded-lg px-4 text-sm font-medium text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-slate-400 transition-all placeholder:text-slate-300"
                                         />
                                         <Info size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" />
@@ -104,7 +156,11 @@ export default function FinancialSetupPage() {
                                 <div>
                                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 block">Default Currency</label>
                                     <div className="relative">
-                                        <select className="w-full h-14 bg-white border border-slate-200 rounded-lg px-4 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-slate-400 transition-all appearance-none">
+                                        <select 
+                                            value={currency}
+                                            onChange={(e) => setCurrency(e.target.value)}
+                                            className="w-full h-14 bg-white border border-slate-200 rounded-lg px-4 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-slate-400 transition-all appearance-none"
+                                        >
                                             <option>USD — United States Dollar</option>
                                             <option>NGN — Nigerian Naira</option>
                                             <option>EUR — Euro</option>
@@ -229,9 +285,16 @@ export default function FinancialSetupPage() {
                                     <ChevronLeft size={16} />
                                     Back
                                 </Link>
-                                <button className="bg-black text-white px-8 py-4 rounded-lg text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-lg active:scale-[0.98] transition-all">
-                                    Next: Finalize
-                                    <ArrowRight size={16} />
+                                <button 
+                                    onClick={handleSubmit}
+                                    disabled={loading}
+                                    className={clsx(
+                                        "bg-black text-white px-8 py-4 rounded-lg text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-lg active:scale-[0.98] transition-all",
+                                        loading && "opacity-50 cursor-not-allowed"
+                                    )}
+                                >
+                                    {loading ? 'Finalizing...' : 'Next: Finalize'}
+                                    {!loading && <ArrowRight size={16} />}
                                 </button>
                             </div>
                         </div>
