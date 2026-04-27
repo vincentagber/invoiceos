@@ -7,6 +7,7 @@ import clsx from 'clsx';
 
 export default function LandingPage() {
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
+    const [isYearly, setIsYearly] = useState(false);
 
     const faqs = [
         { 
@@ -248,11 +249,17 @@ export default function LandingPage() {
                         <div className="text-center mb-16">
                             <h2 className="text-4xl font-bold tracking-tight mb-4">Transparent Institutional Pricing</h2>
                             <div className="flex items-center justify-center gap-4 mt-8">
-                                <span className="text-sm font-bold">Monthly</span>
-                                <div className="w-12 h-6 bg-[#e5eeff] rounded-full relative p-1 cursor-pointer">
-                                    <div className="w-4 h-4 bg-black rounded-full"></div>
-                                </div>
-                                <span className="text-sm text-[#45464d]">Yearly (Save 20%)</span>
+                                <span className={clsx("text-sm transition-colors", !isYearly ? "font-bold text-black" : "text-slate-400")}>Monthly</span>
+                                <button 
+                                    onClick={() => setIsYearly(!isYearly)}
+                                    className="w-12 h-6 bg-[#e5eeff] rounded-full relative p-1 transition-all duration-300"
+                                >
+                                    <div className={clsx(
+                                        "w-4 h-4 bg-black rounded-full transition-transform duration-300",
+                                        isYearly ? "translate-x-6" : "translate-x-0"
+                                    )}></div>
+                                </button>
+                                <span className={clsx("text-sm transition-colors", isYearly ? "font-bold text-black" : "text-slate-400")}>Yearly (Save 20%)</span>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -261,8 +268,9 @@ export default function LandingPage() {
                                 <h5 className="text-lg font-bold mb-2">Professional</h5>
                                 <p className="text-sm text-[#45464d] mb-6">For growing digital agencies</p>
                                 <div className="mb-8">
-                                    <span className="text-4xl font-bold">₦3,000</span>
+                                    <span className="text-4xl font-bold">₦{isYearly ? '2,400' : '3,000'}</span>
                                     <span className="text-[#45464d]">/mo</span>
+                                    {isYearly && <p className="text-[10px] text-[#006c49] font-bold mt-1">Billed ₦28,800 annually</p>}
                                 </div>
                                 <ul className="space-y-4 mb-10 flex-grow">
                                     <li className="flex items-center gap-3 text-sm">
@@ -279,7 +287,7 @@ export default function LandingPage() {
                                     </li>
                                 </ul>
                                 <Link 
-                                    href="/register?plan=professional" 
+                                    href={`/register?plan=professional&cycle=${isYearly ? 'yearly' : 'monthly'}`} 
                                     className="w-full py-3 rounded-lg border border-black text-black font-bold hover:bg-[#e5eeff] transition-all text-center"
                                 >
                                     Choose Professional
@@ -291,8 +299,9 @@ export default function LandingPage() {
                                 <h5 className="text-lg font-bold mb-2">Enterprise</h5>
                                 <p className="text-sm text-[#45464d] mb-6">For multi-national operations</p>
                                 <div className="mb-8">
-                                    <span className="text-4xl font-bold">₦7,500</span>
+                                    <span className="text-4xl font-bold">₦{isYearly ? '6,000' : '7,500'}</span>
                                     <span className="text-[#45464d]">/mo</span>
+                                    {isYearly && <p className="text-[10px] text-[#006c49] font-bold mt-1">Billed ₦72,000 annually</p>}
                                 </div>
                                 <ul className="space-y-4 mb-10 flex-grow">
                                     <li className="flex items-center gap-3 text-sm font-semibold">
@@ -313,7 +322,7 @@ export default function LandingPage() {
                                     </li>
                                 </ul>
                                 <Link 
-                                    href="/register?plan=enterprise" 
+                                    href={`/register?plan=enterprise&cycle=${isYearly ? 'yearly' : 'monthly'}`} 
                                     className="w-full py-3 rounded-lg bg-black text-white font-bold hover:opacity-90 transition-all text-center"
                                 >
                                     Choose Enterprise
