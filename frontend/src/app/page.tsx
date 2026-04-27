@@ -43,7 +43,7 @@ export default function LandingPage() {
                         <div className="hidden md:flex gap-8">
                             <Link href="#" className="font-medium text-sm tracking-tight text-black border-b-2 border-black pb-1">Product</Link>
                             <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Features</Link>
-                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Pricing</Link>
+                            <Link href="#pricing" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Pricing</Link>
                             <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Resources</Link>
                         </div>
                     </div>
@@ -243,7 +243,7 @@ export default function LandingPage() {
                 </section>
 
                 {/* Pricing Section */}
-                <section className="py-24 bg-white">
+                <section id="pricing" className="py-24 bg-white">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center mb-16">
                             <h2 className="text-4xl font-bold tracking-tight mb-4">Transparent Institutional Pricing</h2>
