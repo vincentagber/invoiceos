@@ -1,88 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F8FAFC;
-  --foreground: #0F172A;
+  /* Base Foundations */
+  --background: #f8f9ff;
+  --foreground: #0b1c30;
   
-  /* Modern Typography Scale */
-  --text-xs: 0.75rem;     /* 12px */
-  --text-sm: 0.875rem;    /* 14px */
-  --text-base: 1rem;      /* 16px */
-  --text-lg: 1.125rem;    /* 18px */
-  --text-xl: 1.25rem;     /* 20px */
-  --text-2xl: 1.5rem;     /* 24px */
-  --text-3xl: 1.875rem;   /* 30px */
-  --text-4xl: 2.25rem;    /* 36px */
-  --text-5xl: 3rem;       /* 48px */
+  /* Core Brand Colors (InvoiceOS Precision) */
+  --primary: #0b1c30;          /* Institutional Navy */
+  --on-primary: #ffffff;
+  --secondary: #10B981;        /* Surgical Emerald */
+  --on-secondary: #ffffff;
+  
+  /* Surface Containers */
+  --surface: #f8f9ff;
+  --surface-variant: #d3e4fe;
+  --surface-container-low: #eff4ff;
+  --surface-container: #e5eeff;
+  --surface-container-high: #dce9ff;
 }
 
 @theme inline {
+  /* Color Palette Overrides */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-surface: var(--surface);
   
   /* Font Families */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-outfit), var(--font-inter), sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --font-sans: "Inter", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Inter", var(--font-inter), sans-serif;
+  --font-mono: "Inter", monospace;
 
-  /* Refined Letter Spacing */
-  --letter-spacing-tighter: -0.05em;
-  --letter-spacing-tight: -0.02em;
-  --letter-spacing-normal: 0em;
-  --letter-spacing-wide: 0.025em;
+  /* Corner Radius Precision */
+  --radius-sm: 2px;
+  --radius-default: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
-  /* Brand Overrides (Indigo -> Modern Violet/Indigo Hybrid) */
-  --color-indigo-50: #f5f3ff;
-  --color-indigo-100: #ede9fe;
-  --color-indigo-500: #6366f1;
-  --color-indigo-600: #4f46e5;
-  --color-indigo-700: #4338ca;
-  --color-indigo-900: #312e81;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #F8FAFC;
-  }
+  /* Shadow Precision (Ambient institutional shadows) */
+  --shadow-sm: 0 1px 2px 0 rgba(11, 28, 48, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(11, 28, 48, 0.05), 0 2px 4px -2px rgba(11, 28, 48, 0.05);
+  --shadow-lg: 0 12px 20px -5px rgba(11, 28, 48, 0.04), 0 8px 10px -6px rgba(11, 28, 48, 0.04);
 }
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--background);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  line-height: 1.6;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
 }
 
+/* Institutional Typography Utilities */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  color: #0f172a; /* Navy Slate */
   font-weight: 700;
-  letter-spacing: var(--letter-spacing-tight);
-  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
-/* Premium Typography Utilities */
-.heading-hero {
-  font-size: var(--text-5xl);
-  font-weight: 800;
-  letter-spacing: var(--letter-spacing-tighter);
-  line-height: 1.1;
+.lustre {
+  position: relative;
+  overflow: hidden;
 }
 
-.heading-section {
-  font-size: var(--text-3xl);
-  font-weight: 700;
-  letter-spacing: var(--letter-spacing-tight);
+.lustre::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
 }
 
-.text-premium {
-  color: #64748b;
-  font-size: var(--text-base);
-  line-height: 1.7;
+/* Custom Animation for Institutional Feel */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 3s ease-in-out infinite;
 }
 
