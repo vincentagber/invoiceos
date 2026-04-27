@@ -193,7 +193,7 @@ export default function LoginPage() {
 
             {/* Footer Copy (Small) */}
             <div className="absolute bottom-8 text-[11px] text-slate-400 font-medium">
-                © 2024 InvoiceOS Precision. Institutional Grade Finance.
+                © 2026 InvoiceOS Precision. All rights reserved.
             </div>
 
             <style jsx>{`

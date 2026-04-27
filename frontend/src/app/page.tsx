@@ -429,7 +429,7 @@ export default function LandingPage() {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto px-10 py-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-slate-500 text-xs">© 2024 InvoiceOS Precision. All rights reserved. Financial services provided by partner banks.</p>
+                    <p className="text-slate-500 text-xs">© 2026 InvoiceOS Precision. All rights reserved. Financial services provided by partner banks.</p>
                     <div className="flex gap-6">
                         <Link className="text-slate-400 hover:text-black transition-colors" href="#"><span className="material-symbols-outlined text-lg">brand_awareness</span></Link>
                         <Link className="text-slate-400 hover:text-black transition-colors" href="#"><span className="material-symbols-outlined text-lg">public</span></Link>
