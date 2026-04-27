@@ -217,7 +217,7 @@ export default function RegisterPage() {
 
             {/* Footer */}
             <footer className="bg-white text-[#0b1c30] text-sm py-12 mt-auto border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6 px-6 lg:px-12 max-w-[1440px] mx-auto w-full z-10 relative">
-                <div className="text-center md:text-left text-[#45464d]">© 2024 InvoiceOS Precision. Institutional Grade Security.</div>
+                <div className="text-center md:text-left text-[#45464d]">© 2026 InvoiceOS Precision. All rights reserved.</div>
                 <nav className="flex flex-wrap justify-center md:justify-end gap-6">
                     <Link className="text-[#45464d] hover:text-black transition-colors" href="#">Privacy Policy</Link>
                     <Link className="text-[#45464d] hover:text-black transition-colors" href="#">Terms of Service</Link>
