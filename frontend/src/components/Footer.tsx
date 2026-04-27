@@ -9,7 +9,7 @@ export default function Footer() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 px-10 py-16 max-w-7xl mx-auto">
                 <div className="col-span-2">
                     <div className="mb-6 block">
-                        <img src="/logo.png" alt="InvoiceOS" className="h-8 w-auto object-contain" />
+                        <img src="/logo.png" alt="InvoiceOS" className="h-12 w-auto object-contain" />
                     </div>
                     <p className="text-slate-500 text-sm leading-6 max-w-xs">The precision engine for multi-jurisdictional financial operations between Africa and the West.</p>
                 </div>
