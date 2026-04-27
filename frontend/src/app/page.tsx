@@ -2,391 +2,407 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { 
-    Check, 
-    ArrowRight, 
-    ChevronRight, 
-    Plus, 
-    Play, 
-    FileText, 
-    CreditCard, 
-    BarChart, 
-    Users, 
-    Shield, 
-    Zap,
-    Star,
-    LayoutDashboard,
-    Minus,
-    Wand2,
-    Building2,
-    Calculator,
-    Palette,
-    Mail,
-    FileCheck,
-    Clock,
-    BarChart3,
-    Smartphone
-} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-
-import SiteNavbar from '@/components/SiteNavbar';
-import SiteFooter from '@/components/SiteFooter';
 
 export default function LandingPage() {
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
+    const faqs = [
+        { 
+            q: "How does InvoiceOS handle dual-jurisdiction compliance (FIRS and IRS)?", 
+            a: "InvoiceOS operates a dual-ledger system. For Nigerian entities, we automate FIRS-compliant VAT (7.5%) and WHT deductions with automated credit note generation. For US entities, we manage W-9 collection, 1099 reporting, and IRS-ready transactional records, ensuring you stay compliant in both regions simultaneously." 
+        },
+        { 
+            q: "Can I automate Withholding Tax (WHT) calculations?", 
+            a: "Yes. Our system automatically calculates the appropriate WHT rate based on the vendor type and service category. We generate the necessary documentation for your accounting team to reconcile with the FIRS portal, reducing manual errors by 98%." 
+        },
+        { 
+            q: "Is my financial data secure and SOC2 compliant?", 
+            a: "Security is our highest priority. InvoiceOS is SOC2 Type II compliant and utilizes bank-grade AES-256 encryption. We undergo regular third-party security audits and maintain strict data residency protocols to protect your institutional financial records." 
+        },
+        { 
+            q: "Does InvoiceOS support multi-business switching for agencies?", 
+            a: "Absolutely. Our 'Institutional Switcher' allows you to manage multiple legal entities, subsidiaries, or client accounts from a single dashboard. Each entity maintains its own isolated ledger, tax settings, and multi-currency balances." 
+        },
+        { 
+            q: "Can I white-label my invoices with custom domains?", 
+            a: "Yes, our Enterprise plan includes full white-labeling capabilities. You can host the payment portal on your own subdomain (e.g., billing.yourcompany.com) and connect your SMTP server to ensure all financial communications come directly from your brand's email address." 
+        }
+    ];
+
     return (
-        <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
-            <SiteNavbar />
+        <div className="bg-[#f8f9ff] text-[#0b1c30] font-sans selection:bg-[#6cf8bb] selection:text-[#00714d]">
+            {/* Top Navigation */}
+            <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 docked full-width top-0 sticky z-50">
+                <nav className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+                    <div className="flex items-center gap-10">
+                        <Link href="/" className="text-xl font-bold tracking-tighter text-slate-900">InvoiceOS</Link>
+                        <div className="hidden md:flex gap-8">
+                            <Link href="#" className="font-medium text-sm tracking-tight text-black border-b-2 border-black pb-1">Product</Link>
+                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Features</Link>
+                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Pricing</Link>
+                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Resources</Link>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <Link href="/login" className="text-sm font-medium tracking-tight text-slate-600 hover:text-black transition-colors px-4 py-2">Log In</Link>
+                        <Link href="/register" className="bg-black text-white text-sm font-medium tracking-tight px-6 py-2.5 rounded-lg active:scale-95 transition-all duration-200 shadow-lg shadow-black/10">Get Started</Link>
+                    </div>
+                </nav>
+            </header>
 
             <main>
                 {/* Hero Section */}
-                <section className="relative pt-32 pb-32 bg-slate-900 overflow-hidden">
-                    {/* Background Accents */}
-                    <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-500/10 rounded-full blur-[120px] -mr-40 -mt-40" />
-                    <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] -ml-20 -mb-20" />
-
-                    <div className="max-w-7xl mx-auto px-6 relative z-10">
-                        <div className="grid lg:grid-cols-2 gap-20 items-center">
-                            <div className="space-y-10">
-                                <motion.div 
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="space-y-6"
-                                >
-                                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                                        <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
-                                        <span className="text-xs font-bold text-indigo-200 uppercase tracking-widest">The Future of Billing</span>
-                                    </div>
-                                    
-                                    <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight">
-                                        Professional Invoicing <br /> 
-                                        <span className="text-indigo-400 italic">for Global Teams</span>
-                                    </h1>
-                                    
-                                    <p className="text-xl text-slate-400 max-w-xl leading-relaxed">
-                                        The most elegant invoicing solution for Nigerian and US businesses. 
-                                        Compliant with IRS and FIRS regulations out of the box.
-                                    </p>
-
-                                    <div className="flex flex-wrap items-center gap-6 pt-4">
-                                        <Link href="/register" className="px-10 py-5 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 shadow-2xl shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-3 group">
-                                            Start Free Trial
-                                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                        </Link>
-                                        <Link href="#how-it-works" className="px-10 py-5 bg-white/5 text-white font-bold rounded-2xl hover:bg-white/10 border border-white/10 active:scale-95 transition-all flex items-center gap-3">
-                                            <Play className="w-5 h-5 text-indigo-400 fill-indigo-400" />
-                                            Watch Demo
-                                        </Link>
-                                    </div>
-
-                                    <div className="pt-10 flex items-center gap-6">
-                                        <div className="flex -space-x-4">
-                                            {[1, 2, 3, 4].map(i => (
-                                                <div key={i} className="h-14 w-14 rounded-full border-4 border-slate-900 overflow-hidden bg-slate-800 shadow-xl relative z-[10] hover:z-20 hover:scale-110 transition-all duration-300">
-                                                    <img src={`/av-${i}.png`} alt={`User ${i}`} className="h-full w-full object-cover" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-1 text-yellow-400">
-                                                {[1, 2, 3, 4, 5].map(s => <Star key={s} size={14} fill="currentColor" />)}
-                                            </div>
-                                            <p className="text-sm font-bold text-white uppercase tracking-wider">
-                                                25,707 + <span className="text-slate-500 font-medium">Trusted Users</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </div>
-
-                            <motion.div 
-                                initial={{ opacity: 0, x: 50 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.2 }}
-                                className="relative"
-                            >
-                                <div className="relative z-10 bg-slate-800/50 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 p-4 shadow-2xl overflow-hidden">
-                                    <img 
-                                        src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426" 
-                                        alt="Dashboard Preview" 
-                                        className="w-full h-auto rounded-[1.5rem] shadow-2xl"
-                                    />
-                                    {/* Floating Card */}
-                                    <div className="absolute -left-10 bottom-10 bg-white p-6 rounded-3xl shadow-2xl hidden md:block border border-slate-100 max-w-[240px] animate-bounce-subtle">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                                                <div className="h-6 w-6 rounded-lg bg-indigo-600" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Recent Payment</p>
-                                                <p className="text-lg font-black text-slate-900">₦1,450,000</p>
-                                            </div>
-                                        </div>
-                                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full w-2/3 bg-indigo-600 rounded-full" />
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {/* Decorative elements */}
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl animate-pulse" />
-                                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl animate-pulse" />
-                            </motion.div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Institutional Compliance Section */}
-                <section className="py-32 bg-white relative overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-6 relative z-10">
-                        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24">
-                            <div className="space-y-6 max-w-3xl">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100">
-                                    <Shield size={14} className="text-indigo-600" />
-                                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Cross-Border Compliance</span>
-                                </div>
-                                <h2 className="text-5xl md:text-6xl font-heading font-black text-slate-900 tracking-tighter leading-[1.1]">
-                                    Global Standards. <br />
-                                    <span className="text-slate-400">Local Precision.</span>
-                                </h2>
-                                <p className="text-xl text-slate-500 leading-relaxed font-medium">
-                                    InvoiceOS handles the complexity of local tax laws so you don't have to. Built for IRS (US) and FIRS (Nigeria) standards.
-                                </p>
-                            </div>
-                            
-                            <div className="flex flex-wrap gap-4">
-                                <div className="px-6 py-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
-                                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">IRS Validated</span>
-                                </div>
-                                <div className="px-6 py-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
-                                    <div className="h-2 w-2 rounded-full bg-indigo-500" />
-                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">FIRS Validated</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-10">
-                            {/* USA Block */}
-                            <div className="group p-12 rounded-[3.5rem] bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-all duration-700 hover:shadow-[0_40px_80px_-20px_rgba(79,70,229,0.1)] relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <Shield size={200} />
-                                </div>
-                                <div className="relative space-y-10">
-                                    <div className="space-y-4">
-                                        <div className="h-14 w-14 rounded-2xl bg-white shadow-xl flex items-center justify-center text-indigo-600">
-                                            <img src="https://upload.wikimedia.org/wikipedia/en/a/a4/Flag_of_the_United_States.svg" className="w-8 h-auto" alt="USA" />
-                                        </div>
-                                        <h4 className="text-3xl font-heading font-black text-slate-900 tracking-tight">United States</h4>
-                                    </div>
-                                    <ul className="space-y-6">
-                                        {[
-                                            'IRS-ready reporting and W-9 collection',
-                                            'Sales tax automation for all 50 states',
-                                            'Professional 1099-NEC tracking'
-                                        ].map((item, idx) => (
-                                            <li key={idx} className="flex items-start gap-4 text-slate-500 font-bold text-sm leading-tight group/item">
-                                                <div className="mt-1 h-5 w-5 rounded-full bg-white shadow-md flex items-center justify-center text-indigo-600 group-hover/item:bg-indigo-600 group-hover/item:text-white transition-all">
-                                                    <Check size={12} strokeWidth={4} />
-                                                </div>
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-
-                            {/* Nigeria Block */}
-                            <div className="group p-12 rounded-[3.5rem] bg-slate-900 text-white border border-slate-800 hover:border-indigo-500/50 transition-all duration-700 hover:shadow-[0_40px_80px_-20px_rgba(79,70,229,0.2)] relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <Shield size={200} />
-                                </div>
-                                <div className="relative space-y-10">
-                                    <div className="space-y-4">
-                                        <div className="h-14 w-14 rounded-2xl bg-white/10 shadow-xl flex items-center justify-center text-indigo-400">
-                                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/79/Flag_of_Nigeria.svg" className="w-8 h-auto" alt="Nigeria" />
-                                        </div>
-                                        <h4 className="text-3xl font-heading font-black text-white tracking-tight">Nigeria</h4>
-                                    </div>
-                                    <ul className="space-y-6">
-                                        {[
-                                            'VAT-compliant invoices matching FIRS regulations',
-                                            'WHT (Withholding Tax) calculations automated',
-                                            'CAC registered business information support'
-                                        ].map((item, idx) => (
-                                            <li key={idx} className="flex items-start gap-4 text-slate-400 font-bold text-sm leading-tight group/item">
-                                                <div className="mt-1 h-5 w-5 rounded-full bg-white/10 flex items-center justify-center text-emerald-400 group-hover/item:bg-emerald-500 group-hover/item:text-white transition-all">
-                                                    <Check size={12} strokeWidth={4} />
-                                                </div>
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-
-                {/* Advanced Features Grid */}
-                <section id="features" className="py-32 bg-white relative">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="text-center space-y-4 mb-24">
-                            <h2 className="text-5xl font-heading font-black text-slate-900 tracking-tighter">Everything you need to bill like a pro</h2>
-                            <p className="text-lg text-slate-500 max-w-3xl mx-auto font-medium">
-                                Say goodbye to generic invoices that advertise someone else's platform. Elevate your brand with complete customization.
+                <section className="relative pt-24 pb-32 overflow-hidden hero-gradient">
+                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        <motion.div 
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            className="z-10"
+                        >
+                            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#dce9ff] text-[#000000] text-xs font-bold tracking-widest uppercase mb-6">
+                                Institutional Grade
+                            </span>
+                            <h1 className="text-5xl md:text-6xl font-bold tracking-tighter text-[#0b1c30] leading-[1.1] mb-8">
+                                Institutional Grade Invoicing for Nigeria & the US.
+                            </h1>
+                            <p className="text-lg md:text-xl text-[#45464d] leading-relaxed mb-10 max-w-xl">
+                                Seamlessly navigate cross-border financial operations. Fully automated FIRS compliance for Nigerian firms and IRS-ready reporting for US entities. One ledger, two jurisdictions.
                             </p>
-                        </div>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Link href="/register" className="bg-black text-white px-8 py-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
+                                    Start Free Trial
+                                    <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                                </Link>
+                                <button className="bg-white border border-[#c6c6cd] text-[#0b1c30] px-8 py-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#eff4ff] transition-all">
+                                    Book a Demo
+                                </button>
+                            </div>
+                        </motion.div>
+                        <motion.div 
+                            initial={{ opacity: 0, x: 20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            className="relative"
+                        >
+                            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 p-4 relative z-10">
+                                <img 
+                                    alt="Dashboard Preview" 
+                                    className="rounded-lg w-full h-auto" 
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVU4d-zYyxc9Y8q0J_V-DzY4NKYpDyvvwJ2T-TytuneMhKH74Rj8JWkNQEPYvMcFEYi-c4I9X-il7eBzF09Gdmzr0Un1RLSwQMi8ut2uVkdPVkEV0WhxvfkML-eSWrkhs6rIySeTO7SB9IFH3iSub0vBVSlUq2Fp5dfIMg5yhf2OUhnQ_56KPP81Vf_skcw_4MjoFwdb6T2Iznlq3LBf7pl3cFDll5llRP0rfUMDI0gKYAPZ3nNh-_i_eQ3QYdcJJs4qOhB9Wc6Og"
+                                />
+                            </div>
+                            <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#6cf8bb]/20 rounded-full blur-3xl -z-10"></div>
+                            <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-[#d3e4fe]/30 rounded-full blur-3xl -z-10"></div>
+                        </motion.div>
+                    </div>
+                </section>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {advancedFeatures.map((feature, i) => (
-                                <div 
-                                    key={i} 
-                                    className={clsx(
-                                        "group p-10 rounded-[2.5rem] border transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] flex flex-col items-start text-left",
-                                        feature.featured 
-                                            ? "bg-slate-50/50 border-indigo-100 shadow-[0_20px_40px_rgba(79,70,229,0.05)]" 
-                                            : "bg-white border-slate-100 hover:border-indigo-100"
-                                    )}
-                                >
-                                    <div className={clsx(
-                                        "h-12 w-12 rounded-2xl flex items-center justify-center mb-8 transition-transform duration-500 group-hover:scale-110",
-                                        feature.iconBg || "bg-slate-50 text-slate-400"
-                                    )}>
-                                        <feature.icon size={24} strokeWidth={1.5} />
-                                    </div>
-                                    <h4 className="text-xl font-heading font-bold text-slate-900 mb-4 tracking-tight">{feature.title}</h4>
-                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                        {feature.desc}
-                                    </p>
+                {/* Trust Logos */}
+                <section className="py-12 bg-white border-y border-slate-100">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <p className="text-center text-xs font-bold tracking-widest text-[#76777d] uppercase mb-8">Trusted by institutions using</p>
+                        <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                            <span className="font-black text-2xl tracking-tighter">Paystack</span>
+                            <span className="font-black text-2xl tracking-tighter">Flutterwave</span>
+                            <span className="font-black text-2xl tracking-tighter">Stripe</span>
+                            <span className="font-black text-2xl tracking-tighter font-serif">BREX</span>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Dual Jurisdiction Bento Grid */}
+                <section className="py-24 max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        {/* Nigeria Card */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="md:col-span-7 bg-white rounded-xl border border-slate-200 p-8 flex flex-col justify-between overflow-hidden relative group"
+                        >
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <span className="w-10 h-6 bg-emerald-700 rounded-sm"></span>
+                                    <span className="text-sm font-bold tracking-tight text-[#0b1c30]">Nigeria Regional Compliance</span>
                                 </div>
+                                <h3 className="text-3xl font-bold tracking-tight mb-4">FIRS VAT & WHT Automation</h3>
+                                <p className="text-[#45464d] mb-8 max-w-md">Automatically calculate and file Withholding Tax and Value Added Tax. Support for CAC documentation and e-invoicing mandates.</p>
+                                <ul className="space-y-3 mb-8">
+                                    <li className="flex items-center gap-3 text-sm font-medium">
+                                        <span className="material-symbols-outlined text-[#006c49] text-lg">check_circle</span>
+                                        Auto-generated VAT invoices (7.5%)
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm font-medium">
+                                        <span className="material-symbols-outlined text-[#006c49] text-lg">check_circle</span>
+                                        WHT credit note reconciliation
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="mt-4 translate-x-12 translate-y-8 group-hover:translate-x-8 group-hover:translate-y-4 transition-transform duration-500">
+                                <img alt="Nigeria Compliance" className="rounded-xl w-full h-48 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfWhAiRseuxMmc_4vwZVhomXLhhttBeF0K7XX2jGk518kW2YmAJ41Fv3HWrcknKkL_1Ai13od2eFeSqmppVfcHX94-vQ9ujHS-k6zdlIedVheLGZ-lVulBq_CPX57ZYAgyCEeAU5TNavTdacVihgMg02bY4pwAcodW2GmgCKqPvSPc3Awj3jykru1rQPU2ASQ8pvHNSkIlerku5TsYEHm_uvxn-Y-C6ofr4T78jyiTiRvrZ0uvvJ2dnGrXYuFvq8xy3553kZsUxzg" />
+                            </div>
+                        </motion.div>
+                        {/* Global Card */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="md:col-span-5 bg-[#131b2e] text-white rounded-xl p-8 flex flex-col justify-between relative overflow-hidden"
+                        >
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <span className="w-10 h-6 bg-blue-600 rounded-sm flex items-center justify-center text-[10px] text-white">★</span>
+                                    <span className="text-sm font-bold tracking-tight text-[#7c839b]">Global Operations</span>
+                                </div>
+                                <h3 className="text-3xl font-bold tracking-tight mb-4">IRS Compliance & USD Settlements</h3>
+                                <p className="text-[#7c839b] mb-8">Full 1099 reporting and multi-currency support. Settle in USD via Stripe or ACH with automatic FX adjustment.</p>
+                                <div className="bg-white/5 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
+                                    <code className="text-xs text-[#6ffbbe]">settlement_mode: "ACH_INSTANT"</code>
+                                    <div className="h-px bg-white/10 my-2"></div>
+                                    <code className="text-xs text-[#6ffbbe]">compliance_status: "IRS_W9_VERIFIED"</code>
+                                </div>
+                            </div>
+                            <div className="absolute bottom-0 right-0 p-8 opacity-10">
+                                <span className="material-symbols-outlined text-9xl">public</span>
+                            </div>
+                        </motion.div>
+                    </div>
+                </section>
+
+                {/* Feature Clusters */}
+                <section className="py-24 bg-[#eff4ff]">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-20">
+                            <h2 className="text-4xl font-bold tracking-tight mb-4">Built for Financial Precision</h2>
+                            <p className="text-[#45464d] max-w-2xl mx-auto">Enterprise-grade tools designed to handle millions in transaction volume without missing a kobo or a cent.</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {[
+                                { icon: 'analytics', title: 'Intelligence', desc: 'AI-powered accounts receivable automation. Predictive cash flow insights based on payment patterns.', list: ['Smart Late-Fee Calculations', 'Revenue Projection AI'] },
+                                { icon: 'brush', title: 'Customization', desc: 'Complete white-label capabilities. Connect your own SMTP for personalized invoice delivery.', list: ['Custom Domain & CSS', 'Branded SMTP Server'] },
+                                { icon: 'hub', title: 'Operations', desc: 'Institutional switcher for managing multiple entities and collaboration tools for accounting teams.', list: ['Multi-Entity Switcher', 'Role-Based Access'] }
+                            ].map((cluster, i) => (
+                                <motion.div 
+                                    key={i}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: i * 0.1 }}
+                                    className="bg-white p-8 rounded-xl border border-slate-200"
+                                >
+                                    <div className="w-12 h-12 bg-[#e5eeff] rounded-lg flex items-center justify-center mb-6">
+                                        <span className="material-symbols-outlined text-[#000000]">{cluster.icon}</span>
+                                    </div>
+                                    <h4 className="text-xl font-bold mb-3">{cluster.title}</h4>
+                                    <p className="text-sm text-[#45464d] leading-relaxed mb-6">{cluster.desc}</p>
+                                    <ul className="space-y-2 text-sm font-medium">
+                                        {cluster.list.map((item, j) => (
+                                            <li key={j} className="flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 bg-black rounded-full"></span> {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </motion.div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                {/* Features Section (Legacy Small Icons) */}
-                <section id="products" className="py-32 bg-slate-50">
+                {/* Pricing Section */}
+                <section className="py-24 bg-white">
                     <div className="max-w-7xl mx-auto px-6">
-                        <div className="grid lg:grid-cols-4 gap-12">
-                            {featureIcons.map((feature, i) => (
-                                <div key={i} className="space-y-6 group">
-                                    <div className="h-14 w-14 rounded-2xl bg-white shadow-xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                                        <feature.icon size={24} />
-                                    </div>
-                                    <h4 className="text-xl font-bold text-slate-900">{feature.title}</h4>
-                                    <p className="text-slate-500 leading-relaxed font-medium">{feature.desc}</p>
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl font-bold tracking-tight mb-4">Transparent Institutional Pricing</h2>
+                            <div className="flex items-center justify-center gap-4 mt-8">
+                                <span className="text-sm font-bold">Monthly</span>
+                                <div className="w-12 h-6 bg-[#e5eeff] rounded-full relative p-1 cursor-pointer">
+                                    <div className="w-4 h-4 bg-black rounded-full"></div>
                                 </div>
-                            ))}
+                                <span className="text-sm text-[#45464d]">Yearly (Save 20%)</span>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* Professional */}
+                            <div className="border border-slate-200 rounded-xl p-10 flex flex-col hover:border-black transition-colors">
+                                <h5 className="text-lg font-bold mb-2">Professional</h5>
+                                <p className="text-sm text-[#45464d] mb-6">For growing digital agencies</p>
+                                <div className="mb-8">
+                                    <span className="text-4xl font-bold">$49</span>
+                                    <span className="text-[#45464d]">/mo</span>
+                                </div>
+                                <ul className="space-y-4 mb-10 flex-grow">
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Unlimited Invoices & Clients
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        FIRS & IRS Automation
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Multi-currency (NGN/USD)
+                                    </li>
+                                </ul>
+                                <button className="w-full py-3 rounded-lg border border-black text-black font-bold hover:bg-[#e5eeff] transition-all">Choose Professional</button>
+                            </div>
+                            {/* Enterprise */}
+                            <div className="border-2 border-black rounded-xl p-10 flex flex-col relative scale-105 bg-white shadow-xl">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold tracking-widest uppercase px-4 py-1 rounded-full">Most Popular</div>
+                                <h5 className="text-lg font-bold mb-2">Enterprise</h5>
+                                <p className="text-sm text-[#45464d] mb-6">For multi-national operations</p>
+                                <div className="mb-8">
+                                    <span className="text-4xl font-bold">$199</span>
+                                    <span className="text-[#45464d]">/mo</span>
+                                </div>
+                                <ul className="space-y-4 mb-10 flex-grow">
+                                    <li className="flex items-center gap-3 text-sm font-semibold">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Everything in Professional
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Custom SMTP & Whitelabel
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Multi-entity Switcher (5 entities)
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Priority 24/7 Support
+                                    </li>
+                                </ul>
+                                <button className="w-full py-3 rounded-lg bg-black text-white font-bold hover:opacity-90 transition-all">Choose Enterprise</button>
+                            </div>
+                            {/* Custom */}
+                            <div className="border border-slate-200 rounded-xl p-10 flex flex-col hover:border-black transition-colors">
+                                <h5 className="text-lg font-bold mb-2">Custom</h5>
+                                <p className="text-sm text-[#45464d] mb-6">Tailored for large institutions</p>
+                                <div className="mb-8">
+                                    <span className="text-4xl font-bold">Talk to Us</span>
+                                </div>
+                                <ul className="space-y-4 mb-10 flex-grow">
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Unlimited Managed Entities
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Custom API Integrations
+                                    </li>
+                                    <li className="flex items-center gap-3 text-sm">
+                                        <span className="material-symbols-outlined text-[#006c49] text-base">check</span>
+                                        Dedicated Account Manager
+                                    </li>
+                                </ul>
+                                <button className="w-full py-3 rounded-lg border border-slate-300 text-[#0b1c30] font-bold hover:bg-[#e5eeff] transition-all">Contact Sales</button>
+                            </div>
                         </div>
                     </div>
                 </section>
 
                 {/* FAQ Section */}
-                <section className="py-32 bg-white">
+                <section className="py-24 bg-[#eff4ff] border-t border-slate-100">
                     <div className="max-w-4xl mx-auto px-6">
-                        <div className="text-center mb-20 space-y-4">
-                            <h2 className="text-indigo-600 text-sm font-black uppercase tracking-[0.3em]">Support</h2>
-                            <h3 className="text-4xl font-bold text-slate-900">Frequently Asked Questions</h3>
+                        <div className="text-center mb-16">
+                            <span className="text-xs font-bold tracking-widest text-[#000000] uppercase mb-4 block">Knowledge Base</span>
+                            <h2 className="text-4xl font-bold tracking-tight text-[#0b1c30] mb-4">Frequently Asked Questions</h2>
+                            <p className="text-[#45464d]">Everything you need to know about our cross-border financial engine.</p>
                         </div>
                         <div className="space-y-4">
                             {faqs.map((faq, i) => (
-                                <div key={i} className="border border-slate-100 rounded-3xl overflow-hidden transition-all hover:border-indigo-100">
+                                <div key={i} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                                     <button 
                                         onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                                        className="w-full flex items-center justify-between p-8 text-left hover:bg-slate-50 transition-colors"
+                                        className="w-full px-8 py-6 text-left flex justify-between items-center group transition-colors hover:bg-[#f8f9ff]"
                                     >
-                                        <span className="text-xl font-bold text-slate-900">{faq.q}</span>
-                                        {activeFaq === i ? <Minus size={20} className="text-indigo-600" /> : <Plus size={20} className="text-slate-400" />}
+                                        <span className="font-bold text-lg text-[#0b1c30]">{faq.q}</span>
+                                        <span className={clsx(
+                                            "material-symbols-outlined text-black transition-transform duration-300",
+                                            activeFaq === i && "rotate-180"
+                                        )}>expand_more</span>
                                     </button>
-                                    {activeFaq === i && (
-                                        <div className="px-8 pb-8 text-slate-500 font-medium leading-relaxed">
-                                            {faq.a}
-                                        </div>
-                                    )}
+                                    <AnimatePresence>
+                                        {activeFaq === i && (
+                                            <motion.div 
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="px-8 pb-6 overflow-hidden"
+                                            >
+                                                <p className="text-[#45464d] leading-relaxed">
+                                                    {faq.a}
+                                                </p>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
+
+                {/* CTA Section */}
+                <section className="py-24 bg-[#d3e4fe]">
+                    <div className="max-w-7xl mx-auto px-6 text-center">
+                        <h2 className="text-4xl font-bold tracking-tight mb-8">Ready to automate your global ledger?</h2>
+                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                            <Link href="/register" className="bg-black text-white px-10 py-5 rounded-lg font-bold text-lg active:scale-95 transition-all text-center">Get Started for Free</Link>
+                            <button className="bg-transparent border border-[#76777d] text-[#0b1c30] px-10 py-5 rounded-lg font-bold text-lg hover:bg-white/50 transition-all">Request a Personalized Demo</button>
+                        </div>
+                        <p className="mt-8 text-sm text-[#45464d] font-medium">No credit card required. Setup takes less than 3 minutes.</p>
+                    </div>
+                </section>
             </main>
 
-            <SiteFooter />
+            {/* Footer */}
+            <footer className="bg-slate-50 border-t border-slate-200 w-full">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 px-10 py-16 max-w-7xl mx-auto">
+                    <div className="col-span-2">
+                        <span className="text-lg font-bold text-slate-900 mb-6 block">InvoiceOS</span>
+                        <p className="text-slate-500 text-sm leading-6 max-w-xs">The precision engine for multi-jurisdictional financial operations between Africa and the West.</p>
+                    </div>
+                    <div>
+                        <h6 className="text-slate-900 font-bold text-sm mb-4">Company</h6>
+                        <ul className="space-y-3">
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">About</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Careers</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 className="text-slate-900 font-bold text-sm mb-4">Product</h6>
+                        <ul className="space-y-3">
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Intelligence</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Compliance</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 className="text-slate-900 font-bold text-sm mb-4">Legal</h6>
+                        <ul className="space-y-3">
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Privacy</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Terms</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 className="text-slate-900 font-bold text-sm mb-4">Support</h6>
+                        <ul className="space-y-3">
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">API Docs</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Status</Link></li>
+                        </ul>
+                    </div>
+                </div>
+                <div className="max-w-7xl mx-auto px-10 py-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-slate-500 text-xs">© 2024 InvoiceOS Precision. All rights reserved. Financial services provided by partner banks.</p>
+                    <div className="flex gap-6">
+                        <Link className="text-slate-400 hover:text-black transition-colors" href="#"><span className="material-symbols-outlined text-lg">brand_awareness</span></Link>
+                        <Link className="text-slate-400 hover:text-black transition-colors" href="#"><span className="material-symbols-outlined text-lg">public</span></Link>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }
-
-const advancedFeatures = [
-    { 
-        icon: Wand2, 
-        title: "AI-Powered Invoicing", 
-        desc: "Speak or type naturally and let AI build your invoice. Dictate by voice or paste a text description to auto-fill customers, line items, and prices in seconds.",
-        iconBg: "bg-indigo-50 text-indigo-600"
-    },
-    { 
-        icon: Building2, 
-        title: "Business Switcher", 
-        desc: "Manage multiple businesses under one account. Switch between isolated workspaces instantly — each with its own branding, clients, and invoices.",
-        iconBg: "bg-emerald-50 text-emerald-600"
-    },
-    { 
-        icon: Calculator, 
-        title: "Automatic Taxes", 
-        desc: "Define tax rates once and let the system apply them automatically to every line item. VAT, GST, or set your own custom rates.",
-        iconBg: "bg-amber-50 text-amber-600"
-    },
-    { 
-        icon: Palette, 
-        title: "Fully White-Label", 
-        desc: "Remove our branding entirely. Add your logo, brand colors, custom domains, and custom css for a seamless client experience.",
-        iconBg: "bg-rose-50 text-rose-600"
-    },
-    { 
-        icon: Mail, 
-        title: "Custom SMTP", 
-        desc: "Send automated reminders and invoices directly from your own email address to maintain perfect deliverability and trust.",
-        iconBg: "bg-sky-50 text-sky-600"
-    },
-    { 
-        icon: FileCheck, 
-        title: "Branded PDFs", 
-        desc: "Generate pixel-perfect, beautifully designed PDF invoices that leave a lasting professional impression on your clients.",
-        iconBg: "bg-indigo-50 text-indigo-600",
-        featured: true
-    },
-    { 
-        icon: Users, 
-        title: "Unified Team Collaboration", 
-        desc: "Securely invite team members to your workspace with strict Admin and User roles. Collaborate securely on the same financial ledger without sharing passwords.",
-        iconBg: "bg-violet-50 text-violet-600"
-    },
-    { 
-        icon: Clock, 
-        title: "Intelligent Auto-Pilot", 
-        desc: "Never chase down a late payment manually. The system silently evaluates due dates and fires professional reminders automatically from your custom SMTP domain.",
-        iconBg: "bg-emerald-50 text-emerald-600"
-    },
-    { 
-        icon: BarChart3, 
-        title: "Dynamic Ledger Tracking", 
-        desc: "Log fractional payments over time natively. Our ledger continuously calculates exact balances in real-time until the invoice perfectly reconciles to Paid.",
-        iconBg: "bg-blue-50 text-blue-600"
-    }
-];
-
-const featureIcons = [
-    { icon: FileText, title: "Smart Invoicing", desc: "Create professional invoices in seconds with our automated builder." },
-    { icon: Zap, title: "Instant Payments", desc: "Get paid faster with integrated payment gateways for US & Nigeria." },
-    { icon: BarChart, title: "Financial Insights", desc: "Deep analytics to help you understand your business growth." },
-    { icon: Shield, title: "Secure Storage", desc: "Enterprise-grade security for all your financial documents." }
-];
-
-const faqs = [
-    { q: "How secure is my data?", a: "We use AES-256 encryption for all data storage and SSL/TLS for data transmission." },
-    { q: "Can I cancel my subscription?", a: "Yes, you can cancel at any time. Your data will be preserved for 30 days after cancellation." },
-    { q: "Do you support mobile payments?", a: "Absolutely. Our checkout pages are mobile-responsive and support Apple/Google Pay." },
-    { q: "What currencies are supported?", a: "We support over 135 currencies out of the box, with automatic exchange rate calculations." }
-];
