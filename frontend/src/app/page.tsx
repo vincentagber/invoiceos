@@ -150,23 +150,52 @@ export default function LandingPage() {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="md:col-span-5 bg-[#131b2e] text-white rounded-xl p-8 flex flex-col justify-between relative overflow-hidden"
+                            className="md:col-span-5 bg-[#0b1c30] text-white rounded-xl p-10 flex flex-col justify-between relative overflow-hidden group border border-white/5"
                         >
+                            {/* Animated Background Pulse */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] -z-0 group-hover:bg-blue-500/20 transition-all duration-700"></div>
+                            
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <span className="w-10 h-6 bg-blue-600 rounded-sm flex items-center justify-center text-[10px] text-white">★</span>
-                                    <span className="text-sm font-bold tracking-tight text-[#7c839b]">Global Operations</span>
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="w-10 h-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-sm flex items-center justify-center shadow-lg shadow-blue-900/40">
+                                        <span className="text-[10px] font-bold text-white">★</span>
+                                    </div>
+                                    <span className="text-xs font-bold tracking-[0.2em] uppercase text-blue-400/80">Institutional Intel</span>
                                 </div>
-                                <h3 className="text-3xl font-bold tracking-tight mb-4">IRS Compliance & USD Settlements</h3>
-                                <p className="text-[#7c839b] mb-8">Full 1099 reporting and multi-currency support. Settle in USD via Stripe or ACH with automatic FX adjustment.</p>
-                                <div className="bg-white/5 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
-                                    <code className="text-xs text-[#6ffbbe]">settlement_mode: "ACH_INSTANT"</code>
-                                    <div className="h-px bg-white/10 my-2"></div>
-                                    <code className="text-xs text-[#6ffbbe]">compliance_status: "IRS_W9_VERIFIED"</code>
+                                
+                                <h3 className="text-3xl font-bold tracking-tight mb-6 leading-tight">IRS Compliance & <br/><span className="text-blue-400">USD Settlements</span></h3>
+                                <p className="text-slate-400 mb-10 leading-relaxed font-medium">Full 1099 reporting and multi-currency support. Settle in USD via Stripe or ACH with automatic FX adjustment and institutional-grade ledgering.</p>
+                                
+                                {/* Advanced Financial Code Block */}
+                                <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 font-mono text-[11px] space-y-3 shadow-2xl relative overflow-hidden group-hover:border-blue-500/30 transition-colors">
+                                    <div className="flex gap-1.5 mb-2">
+                                        <div className="w-2 h-2 rounded-full bg-rose-500/50"></div>
+                                        <div className="w-2 h-2 rounded-full bg-amber-500/50"></div>
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500/50"></div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-slate-500">// Compliance Verification</span>
+                                        <span className="text-emerald-400 flex items-center gap-1 font-bold">● SECURED</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p><span className="text-blue-400">const</span> settlement = <span className="text-amber-400">"ACH_INSTANT"</span>;</p>
+                                        <p><span className="text-blue-400">const</span> status = <span className="text-amber-400">"IRS_W9_VERIFIED"</span>;</p>
+                                        <p><span className="text-blue-400">const</span> reporting = <span className="text-blue-300">ledger</span>.<span className="text-indigo-300">generate1099</span>();</p>
+                                    </div>
+                                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                        <span className="material-symbols-outlined text-7xl text-white">shield_with_house</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="absolute bottom-0 right-0 p-8 opacity-10">
-                                <span className="material-symbols-outlined text-9xl">public</span>
+                            
+                            <div className="mt-10 flex items-center gap-4 text-xs font-bold tracking-widest text-slate-500 uppercase">
+                                <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span> SOC2 Type II</span>
+                                <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> PCI DSS v4.0</span>
+                            </div>
+
+                            {/* Background Symbol */}
+                            <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                                <span className="material-symbols-outlined text-[12rem] text-white">public</span>
                             </div>
                         </motion.div>
                     </div>
