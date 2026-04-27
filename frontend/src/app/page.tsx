@@ -261,7 +261,7 @@ export default function LandingPage() {
                                 <h5 className="text-lg font-bold mb-2">Professional</h5>
                                 <p className="text-sm text-[#45464d] mb-6">For growing digital agencies</p>
                                 <div className="mb-8">
-                                    <span className="text-4xl font-bold">₦15,000</span>
+                                    <span className="text-4xl font-bold">₦3,000</span>
                                     <span className="text-[#45464d]">/mo</span>
                                 </div>
                                 <ul className="space-y-4 mb-10 flex-grow">
@@ -291,7 +291,7 @@ export default function LandingPage() {
                                 <h5 className="text-lg font-bold mb-2">Enterprise</h5>
                                 <p className="text-sm text-[#45464d] mb-6">For multi-national operations</p>
                                 <div className="mb-8">
-                                    <span className="text-4xl font-bold">₦75,000</span>
+                                    <span className="text-4xl font-bold">₦7,500</span>
                                     <span className="text-[#45464d]">/mo</span>
                                 </div>
                                 <ul className="space-y-4 mb-10 flex-grow">
