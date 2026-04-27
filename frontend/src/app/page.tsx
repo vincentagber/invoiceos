@@ -45,7 +45,7 @@ export default function LandingPage() {
                             <Link href="#" className="font-medium text-sm tracking-tight text-black border-b-2 border-black pb-1">Product</Link>
                             <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Features</Link>
                             <Link href="#pricing" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Pricing</Link>
-                            <Link href="#" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Resources</Link>
+                            <Link href="/contact" className="font-medium text-sm tracking-tight text-slate-600 hover:text-black transition-colors">Resources</Link>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -447,8 +447,8 @@ export default function LandingPage() {
                     <div>
                         <h6 className="text-slate-900 font-bold text-sm mb-4">Support</h6>
                         <ul className="space-y-3">
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">API Docs</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Status</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/contact">API Docs</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/contact">Status</Link></li>
                         </ul>
                     </div>
                 </div>
