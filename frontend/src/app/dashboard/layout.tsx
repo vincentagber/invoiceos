@@ -18,6 +18,7 @@ import {
     Wallet
 } from 'lucide-react';
 import clsx from 'clsx';
+import { NotificationCenter } from '@/components/NotificationCenter';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { user, logout, loading } = useAuth();
@@ -28,17 +29,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [, setTick] = useState(0);
     React.useEffect(() => {
         const handleUserUpdate = () => {
-            // In a perfect world AuthContext would handle this, 
-            // but strictly for this task scope, a force re-read/render works to show new localStorage data if AuthContext isn't reactive enough to direct localStorage mutations (which it isn't usually).
-            // However, AuthContext state 'user' might be stale if we don't update it. 
-            // Ideally we call a method on AuthContext. 
-            // For now, let's assume valid page reload or just accept that full reactivity might need AuthContext refactor.
-            // Actually, the Settings page DOES dispatch 'user-updated' but doesn't update AuthContext state. 
-            // Let's just create a quick reload for now to be safe, OR we can try to rely on next navigation.
-            // But to make it "elegant" without reload, we need to update the User object.
-
-            // Simplest elegant fix: Verify if page reload from Settings is enough.
-            // The Settings page sets localStorage. 
             window.location.reload();
         };
         window.addEventListener('user-updated', handleUserUpdate);
@@ -135,7 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </div>
                             {navigation.filter(item => ['Invoices', 'Quotations', 'Expenses', 'Clients'].includes(item.name)).map((item) => {
                                 const Icon = item.icon;
-                                const isActive = pathname === item.href; // Simple strict match for now
+                                const isActive = pathname === item.href;
                                 return (
                                     <Link
                                         key={item.name}
@@ -238,13 +228,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
 
                     <div className="flex items-center gap-3 sm:gap-6">
-                        <button className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
-                            <span className="sr-only">View notifications</span>
-                            <div className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></div>
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31c.51-.183.683-.483.683-.73 0-.371-.365-.703-.956-.963a15.354 15.354 0 01-3.098-1.884l-.53-.414a16.55 16.55 0 01-1.637-1.523l-.138-.15c-.482-.544-.73-1.258-.73-1.954V10.5c0-2.139-1.318-3.928-3.136-4.422A3.001 3.001 0 0011 3.5a3.001 3.001 0 00-2.864 2.578C6.318 6.572 5 8.361 5 10.5v1.446c0 .696-.248 1.41-.73 1.954l-.138.15a16.55 16.55 0 01-1.637 1.523l-.53.414a15.354 15.354 0 01-3.098 1.884c-.591.26-.956.592-.956.963 0 .247.173.547.683.73a24.016 24.016 0 005.454 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                            </svg>
-                        </button>
+                        <NotificationCenter />
 
                         <Link
                             href="/dashboard/invoices/new"

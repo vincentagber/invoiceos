@@ -2,36 +2,24 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
 import {
     Wallet,
     AlertCircle,
     Plus,
-    Activity,
-    ArrowUpRight,
-    Search,
-    Zap,
-    Download,
     Calendar,
     ChevronDown,
-    Filter,
-    ShieldAlert,
-    DollarSign,
-    Bell,
-    Menu,
     ReceiptText,
     LineChart,
     PieChart,
     BarChart3,
-    Clock,
     X,
-    Smartphone
+    Smartphone,
+    Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { RevenueChart } from './components/RevenueChart';
 import { useAuth } from '@/context/AuthContext';
-import { PresenceAvatars } from '@/components/PresenceAvatars';
-import clsx from 'clsx';
+import { useSocket } from '@/context/SocketContext';
 
 interface DashboardStats {
     metrics: {
@@ -52,10 +40,30 @@ interface DashboardStats {
 export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loadingStats, setLoadingStats] = useState(true);
-    const [timeRange, setTimeRange] = useState('6m');
-    const [currency, setCurrency] = useState('NGN');
     const [showInstallBanner, setShowInstallBanner] = useState(true);
     const { token, loading: authLoading } = useAuth();
+    const { socket } = useSocket();
+
+    const fetchDashboardData = async () => {
+        try {
+            const bizRes = await api.get('/business/me');
+            const businessId = bizRes.data.id;
+
+            const [statsRes, invoicesRes] = await Promise.all([
+                api.get(`/analytics/summary?businessId=${businessId}`),
+                api.get(`/invoices?businessId=${businessId}`)
+            ]);
+
+            setStats({
+                metrics: statsRes.data.metrics,
+                recent_invoices: invoicesRes.data.slice(0, 5)
+            });
+        } catch (error) {
+            console.error('Failed to fetch dashboard data', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
 
     useEffect(() => {
         if (authLoading) return;
@@ -63,35 +71,35 @@ export default function DashboardPage() {
             setLoadingStats(false);
             return;
         }
-
-        const fetchDashboardData = async () => {
-            try {
-                const bizRes = await api.get('/business/me');
-                const businessId = bizRes.data.id;
-
-                const [statsRes, invoicesRes] = await Promise.all([
-                    api.get(`/analytics/summary?businessId=${businessId}`),
-                    api.get(`/invoices?businessId=${businessId}`)
-                ]);
-
-                setStats({
-                    metrics: statsRes.data.metrics,
-                    recent_invoices: invoicesRes.data.slice(0, 5)
-                });
-            } catch (error) {
-                console.error('Failed to fetch dashboard data', error);
-            } finally {
-                setLoadingStats(false);
-            }
-        };
         fetchDashboardData();
     }, [authLoading, token]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleLiveUpdate = () => {
+            console.log('Live update received, refreshing dashboard...');
+            fetchDashboardData();
+        };
+
+        socket.on('invoice-status-updated', handleLiveUpdate);
+        socket.on('invoice-viewed', handleLiveUpdate);
+        socket.on('payment-received', handleLiveUpdate);
+        socket.on('invoice-sent', handleLiveUpdate);
+
+        return () => {
+            socket.off('invoice-status-updated', handleLiveUpdate);
+            socket.off('invoice-viewed', handleLiveUpdate);
+            socket.off('payment-received', handleLiveUpdate);
+            socket.off('invoice-sent', handleLiveUpdate);
+        };
+    }, [socket]);
 
     if (authLoading || loadingStats) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#7C3AED] border-t-transparent"></div>
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
                     <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Syncing Intelligence...</p>
                 </div>
             </div>
@@ -100,85 +108,55 @@ export default function DashboardPage() {
 
     if (!stats) return <div className="p-10 text-rose-500 font-black uppercase text-xs">System Offline. Check Connection.</div>;
 
-    // Derived values for the 4 specific cards in the image
     const kpiCards = [
         {
             title: 'Total Revenue',
-            value: `₦${(stats.metrics.paidAmount / 1000000).toFixed(2)}M`,
+            value: `₦${(stats.metrics.paidAmount / 1000).toFixed(1)}K`,
             subtext: `From ${stats.recent_invoices.length} payments`,
             icon: Wallet,
             color: 'text-slate-400'
         },
         {
             title: 'Total Expenses',
-            value: `₦345.78K`, // Mock for now as we don't have expense aggregation yet
-            subtext: `2 expenses logged`,
+            value: `₦0.00`,
+            subtext: `0 expenses logged`,
             icon: ReceiptText,
             color: 'text-slate-400'
         },
         {
             title: 'Net Profit',
-            value: `₦${((stats.metrics.paidAmount * 0.85) / 1000000).toFixed(2)}M`,
-            subtext: `85.7% margin • 1 paid invoice`,
+            value: `₦${(stats.metrics.paidAmount / 1000).toFixed(1)}K`,
+            subtext: `100% margin`,
             icon: LineChart,
             color: 'text-slate-400',
-            trend: '85.7% margin'
+            trend: '100% margin'
         },
         {
             title: 'Outstanding',
-            value: `₦${(stats.metrics.outstandingAmount / 1000000).toFixed(2)}M`,
-            subtext: `2 unpaid • 1 partial`,
+            value: `₦${(stats.metrics.outstandingAmount / 1000).toFixed(1)}K`,
+            subtext: `${stats.recent_invoices.filter(i => i.status !== 'PAID').length} unpaid`,
             icon: AlertCircle,
-            color: 'text-[#7C3AED]',
-            iconColor: 'text-[#7C3AED]'
+            color: 'text-indigo-600',
+            iconColor: 'text-indigo-600'
         }
     ];
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-8 pb-32 animate-in fade-in duration-700 font-sans px-4 sm:px-6">
+        <div className="max-w-[1400px] mx-auto space-y-8 pb-32 animate-in fade-in duration-700 font-sans">
             
-            {/* Minimal Top Bar */}
-            <div className="flex items-center justify-between h-16 border-b border-slate-100 mb-8">
-                <div className="flex items-center gap-4">
-                    <Menu className="text-slate-400 sm:hidden" size={20} />
-                    <h1 className="text-xl font-heading font-bold text-slate-900 tracking-tight">Dashboard</h1>
-                </div>
-                <div className="flex items-center gap-4 sm:gap-6">
-                    <button className="relative text-slate-400 hover:text-slate-900 transition-colors">
-                        <Bell size={22} strokeWidth={1.5} />
-                        <span className="absolute top-0.5 right-0.5 h-2 w-2 bg-rose-500 rounded-full border-2 border-white" />
-                    </button>
-                    <Link href="/dashboard/invoices/new" className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/20 hover:bg-[#6D28D9] transition-all active:scale-95">
-                        <Plus size={16} strokeWidth={3} />
-                        New Invoice
-                    </Link>
-                </div>
-            </div>
-
             <div className="space-y-10">
                 
                 {/* Financial Overview Section */}
                 <div className="space-y-6">
-                    <h2 className="text-lg font-heading font-bold text-slate-900">Financial Overview</h2>
-                    
-                    {/* Filters Row */}
-                    <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                        <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm">
-                            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#7C3AED] focus:ring-[#7C3AED]" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Compare</span>
-                        </div>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-heading font-bold text-slate-900">Financial Overview</h2>
                         
-                        <div className="relative flex items-center bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
-                            <Calendar size={14} className="text-slate-400 mr-2" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Last 6 Months</span>
-                            <ChevronDown size={14} className="text-slate-400 ml-2" />
-                        </div>
-
-                        <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cur:</span>
-                            <div className="flex items-center gap-1 cursor-pointer">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">NGN (₦)</span>
-                                <ChevronDown size={14} className="text-slate-400" />
+                        {/* Filters Row */}
+                        <div className="flex items-center gap-3">
+                            <div className="relative flex items-center bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                                <Calendar size={14} className="text-slate-400 mr-2" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Last 6 Months</span>
+                                <ChevronDown size={14} className="text-slate-400 ml-2" />
                             </div>
                         </div>
                     </div>
@@ -214,7 +192,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-heading font-bold text-slate-900">Cash Flow</h3>
                         <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
-                            <button className="p-2 rounded-lg bg-[#7C3AED] text-white shadow-sm">
+                            <button className="p-2 rounded-lg bg-indigo-600 text-white shadow-sm">
                                 <BarChart3 size={16} />
                             </button>
                             <button className="p-2 rounded-lg text-slate-400 hover:text-slate-900 transition-colors">
@@ -224,44 +202,65 @@ export default function DashboardPage() {
                     </div>
                     <div className="h-[350px] relative">
                         <RevenueChart />
-                        
-                        {/* Decorative Overlay for premium feel */}
                         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                    </div>
+                </div>
+
+                {/* Recent Activity Table */}
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                        <h3 className="text-lg font-heading font-bold text-slate-900">Recent Invoices</h3>
+                        <Link href="/dashboard/invoices" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-widest">View All</Link>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-slate-50/50">
+                                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Invoice</th>
+                                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Client</th>
+                                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Amount</th>
+                                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {stats.recent_invoices.map((invoice) => (
+                                    <tr key={invoice.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-8 py-5 text-sm font-bold text-slate-900">{invoice.invoiceNumber}</td>
+                                        <td className="px-8 py-5 text-sm text-slate-600">{invoice.client.name}</td>
+                                        <td className="px-8 py-5 text-sm font-bold text-slate-900">₦{invoice.totalAmount.toLocaleString()}</td>
+                                        <td className="px-8 py-5">
+                                            <span className={clsx(
+                                                "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                                invoice.status === 'PAID' ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+                                            )}>
+                                                {invoice.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            {/* Floating Install Banner (PWA Style) */}
+            {/* PWA Banner */}
             {showInstallBanner && (
-                <div className="fixed bottom-8 left-4 right-4 sm:left-auto sm:right-8 sm:w-[450px] z-[60] animate-in slide-in-from-bottom-10 duration-700">
-                    <div className="bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-100 p-6 sm:p-8 flex items-center gap-6 relative overflow-hidden group">
-                        {/* Ambient glow */}
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all" />
-                        
-                        <div className="h-16 w-16 bg-gradient-to-br from-[#7C3AED] to-indigo-400 rounded-2xl flex items-center justify-center text-white shadow-xl flex-shrink-0">
-                            <Smartphone size={32} strokeWidth={1.5} />
+                <div className="fixed bottom-8 right-8 w-[400px] z-[60] animate-in slide-in-from-bottom-10">
+                    <div className="bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-100 p-6 flex items-center gap-6 relative group">
+                        <div className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl flex-shrink-0">
+                            <Smartphone size={28} />
                         </div>
-                        
-                        <div className="flex-1 space-y-4">
-                            <div>
-                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Install InvoiceOS</h4>
-                                <p className="text-[11px] font-medium text-slate-400 mt-0.5">Add to your home screen for instant revenue tracking.</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button className="flex-1 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
-                                    Install
-                                </button>
-                                <button onClick={() => setShowInstallBanner(false)} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
-                                    Not now
-                                </button>
+                        <div className="flex-1">
+                            <h4 className="text-sm font-black text-slate-900 uppercase">Install InvoiceOS</h4>
+                            <p className="text-[10px] text-slate-400 mt-1">Access your dashboard instantly from your home screen.</p>
+                            <div className="flex items-center gap-2 mt-4">
+                                <button className="flex-1 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl">Install</button>
+                                <button onClick={() => setShowInstallBanner(false)} className="px-4 text-[10px] font-black uppercase text-slate-400">Dismiss</button>
                             </div>
                         </div>
-
-                        <button 
-                            onClick={() => setShowInstallBanner(false)}
-                            className="absolute top-4 right-4 text-slate-300 hover:text-slate-900 transition-colors"
-                        >
-                            <X size={16} />
+                        <button onClick={() => setShowInstallBanner(false)} className="absolute top-4 right-4 text-slate-300 hover:text-slate-900">
+                            <X size={14} />
                         </button>
                     </div>
                 </div>
@@ -269,4 +268,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
