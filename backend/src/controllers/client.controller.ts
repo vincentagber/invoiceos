@@ -1,15 +1,20 @@
 import { Response, NextFunction } from 'express';
-import prisma from '../lib/prisma';
+import { supabase } from '../lib/supabase';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const businessId = req.query.businessId as string;
-    const clients = await prisma.client.findMany({
-      where: { businessId },
-      include: { _count: { select: { invoices: true } } },
-      orderBy: { name: 'asc' }
-    });
+    const organizationId = req.query.businessId as string;
+    
+    // We can't do exact _count in a single simple Supabase select like Prisma without specialized functions,
+    // but we can fetch clients and handle count or use a view.
+    const { data: clients, error } = await supabase
+      .from('clients')
+      .select('*, invoices(count)')
+      .eq('organization_id', organizationId)
+      .order('name', { ascending: true });
+
+    if (error) throw error;
     res.json(clients);
   } catch (error) {
     next(error);
@@ -19,9 +24,13 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, ...data } = req.body;
-    const client = await prisma.client.create({
-      data: { ...data, businessId }
-    });
+    const { data: client, error } = await supabase
+      .from('clients')
+      .insert({ ...data, organization_id: businessId })
+      .select()
+      .single();
+
+    if (error) throw error;
     res.status(201).json(client);
   } catch (error) {
     next(error);
@@ -30,10 +39,13 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const client = await prisma.client.findUnique({
-      where: { id: req.params.id as string },
-      include: { invoices: true }
-    });
+    const { data: client, error } = await supabase
+      .from('clients')
+      .select('*, invoices(*)')
+      .eq('id', req.params.id as string)
+      .single();
+
+    if (error) throw error;
     res.json(client);
   } catch (error) {
     next(error);
