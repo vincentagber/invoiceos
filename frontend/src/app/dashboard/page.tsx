@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { RevenueChart } from './components/RevenueChart';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
+import clsx from 'clsx';
 
 interface DashboardStats {
     metrics: {
@@ -55,8 +56,8 @@ export default function DashboardPage() {
             ]);
 
             setStats({
-                metrics: statsRes.data.metrics,
-                recent_invoices: invoicesRes.data.slice(0, 5)
+                metrics: statsRes.data.metrics || { totalInvoiced: 0, paidAmount: 0, outstandingAmount: 0, conversionRate: 0 },
+                recent_invoices: invoicesRes.data.slice(0, 5) || []
             });
         } catch (error) {
             console.error('Failed to fetch dashboard data', error);
@@ -226,8 +227,8 @@ export default function DashboardPage() {
                                 {stats.recent_invoices.map((invoice) => (
                                     <tr key={invoice.id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="px-8 py-5 text-sm font-bold text-slate-900">{invoice.invoiceNumber}</td>
-                                        <td className="px-8 py-5 text-sm text-slate-600">{invoice.client.name}</td>
-                                        <td className="px-8 py-5 text-sm font-bold text-slate-900">₦{invoice.totalAmount.toLocaleString()}</td>
+                                        <td className="px-8 py-5 text-sm text-slate-600">{invoice.client?.name || 'Unknown Client'}</td>
+                                        <td className="px-8 py-5 text-sm font-bold text-slate-900">₦{(invoice.totalAmount || 0).toLocaleString()}</td>
                                         <td className="px-8 py-5">
                                             <span className={clsx(
                                                 "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
