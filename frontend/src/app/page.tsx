@@ -278,7 +278,12 @@ export default function LandingPage() {
                                         Multi-currency (NGN/USD)
                                     </li>
                                 </ul>
-                                <button className="w-full py-3 rounded-lg border border-black text-black font-bold hover:bg-[#e5eeff] transition-all">Choose Professional</button>
+                                <Link 
+                                    href="/register?plan=professional" 
+                                    className="w-full py-3 rounded-lg border border-black text-black font-bold hover:bg-[#e5eeff] transition-all text-center"
+                                >
+                                    Choose Professional
+                                </Link>
                             </div>
                             {/* Enterprise */}
                             <div className="border-2 border-black rounded-xl p-10 flex flex-col relative scale-105 bg-white shadow-xl">
@@ -307,7 +312,12 @@ export default function LandingPage() {
                                         Priority 24/7 Support
                                     </li>
                                 </ul>
-                                <button className="w-full py-3 rounded-lg bg-black text-white font-bold hover:opacity-90 transition-all">Choose Enterprise</button>
+                                <Link 
+                                    href="/register?plan=enterprise" 
+                                    className="w-full py-3 rounded-lg bg-black text-white font-bold hover:opacity-90 transition-all text-center"
+                                >
+                                    Choose Enterprise
+                                </Link>
                             </div>
                             {/* Custom */}
                             <div className="border border-slate-200 rounded-xl p-10 flex flex-col hover:border-black transition-colors">
@@ -330,7 +340,12 @@ export default function LandingPage() {
                                         Dedicated Account Manager
                                     </li>
                                 </ul>
-                                <button className="w-full py-3 rounded-lg border border-slate-300 text-[#0b1c30] font-bold hover:bg-[#e5eeff] transition-all">Contact Sales</button>
+                                <Link 
+                                    href="/register?plan=custom" 
+                                    className="w-full py-3 rounded-lg border border-slate-300 text-[#0b1c30] font-bold hover:bg-[#e5eeff] transition-all text-center"
+                                >
+                                    Contact Sales
+                                </Link>
                             </div>
                         </div>
                     </div>
