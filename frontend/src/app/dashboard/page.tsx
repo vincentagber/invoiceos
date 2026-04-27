@@ -16,7 +16,9 @@ import {
     Smartphone,
     Menu,
     Rocket,
-    ArrowRight
+    ArrowRight,
+    Sparkles,
+    ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { RevenueChart } from './components/RevenueChart';
@@ -118,21 +120,58 @@ export default function DashboardPage() {
 
     if (user && user.organizations.length === 0) {
         return (
-            <div className="max-w-2xl mx-auto py-20 text-center space-y-8">
-                <div className="h-24 w-24 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm">
-                    <Rocket size={40} />
+            <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
+                <div className="w-full max-w-2xl relative">
+                    {/* Architectural Background Glows */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+                    
+                    <div className="relative bg-white/[0.7] backdrop-blur-2xl rounded-[3rem] border border-white p-12 sm:p-16 text-center space-y-10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.06)] overflow-hidden">
+                        {/* Subtle Top Accent */}
+                        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
+                        
+                        <div className="space-y-8 relative">
+                            {/* Animated Icon Cluster */}
+                            <div className="relative mx-auto w-32 h-32">
+                                <div className="absolute inset-0 bg-indigo-600/10 rounded-[2.5rem] animate-pulse" />
+                                <div className="relative h-full w-full bg-white rounded-[2.5rem] shadow-[0_12px_24px_-8px_rgba(79,70,229,0.15)] border border-indigo-50 flex items-center justify-center text-indigo-600">
+                                    <Rocket size={48} strokeWidth={1.5} className="animate-bounce-subtle" />
+                                </div>
+                                <div className="absolute -top-2 -right-2 h-10 w-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg border-2 border-white animate-in zoom-in duration-500 delay-300">
+                                    <Sparkles size={18} />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/50">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">Onboarding Sequence 01</span>
+                                </div>
+                                <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-[-0.04em] leading-[0.95]">
+                                    Initialize Your <br />
+                                    <span className="text-indigo-600">Workspace</span>
+                                </h2>
+                                <p className="text-sm sm:text-base text-slate-500 max-w-sm mx-auto font-medium leading-relaxed">
+                                    Welcome to the command center. To begin generating revenue and tracking financial intelligence, establish your business profile.
+                                </p>
+                            </div>
+
+                            <div className="pt-4">
+                                <Link 
+                                    href="/dashboard/settings" 
+                                    className="group relative inline-flex items-center gap-4 px-10 py-5 bg-[#5E6AD2] text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_-12px_rgba(79,70,229,0.4)] hover:bg-[#4E5AC2] hover:shadow-[0_25px_50px_-12px_rgba(79,70,229,0.5)] transition-all active:scale-[0.98] lustre"
+                                >
+                                    <span>Setup Business Profile</span>
+                                    <ArrowRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                                
+                                <p className="mt-8 text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                                    <ShieldCheck size={12} className="text-indigo-500" />
+                                    Secure Enterprise Environment
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-3">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Initialize Your Workspace</h2>
-                    <p className="text-slate-500 max-w-md mx-auto">Welcome to InvoiceOS. To begin generating revenue and tracking intelligence, you first need to establish your business profile.</p>
-                </div>
-                <Link 
-                    href="/dashboard/settings" 
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95"
-                >
-                    Create Business Profile
-                    <ArrowRight size={16} />
-                </Link>
             </div>
         );
     }
