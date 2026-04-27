@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { ArrowRight, Loader2, Mail, User, Check } from 'lucide-react';
+import { ArrowRight, Loader2, Check } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { clsx } from 'clsx';
@@ -68,7 +68,6 @@ export default function RegisterPage() {
 
             if (error) throw error;
             
-            // Redirect to login or check email
             if (data.user && data.session === null) {
                 setError("Please check your email to confirm your account.");
             } else {
@@ -78,6 +77,20 @@ export default function RegisterPage() {
             setError(err.message || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/dashboard`
+                }
+            });
+            if (error) throw error;
+        } catch (err: any) {
+            setError(err.message);
         }
     };
 
@@ -98,132 +111,131 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex bg-white font-sans text-slate-900">
-            {/* Left Side Visuals */}
-            <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/40 to-indigo-600/20 z-10 animate-in fade-in duration-1000" />
-                <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-
-                <div className="relative z-20 flex flex-col justify-between p-12 w-full h-full">
-                    <div className="flex items-center gap-3 animate-in slide-in-from-left-4 fade-in duration-700">
-                        <div className="bg-white p-3 rounded-xl shadow-lg">
-                            <img src="/logo.png" alt="InvoiceOS" className="h-16 w-auto object-contain" />
-                        </div>
+        <div className="min-h-screen flex items-center justify-center bg-[#F1F5F9] font-sans p-4">
+            <div className="w-full max-w-[520px] bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 space-y-8 animate-in fade-in zoom-in-95 duration-700">
+                
+                {/* Logo & Heading */}
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="h-16 flex items-center justify-center bg-indigo-50 rounded-2xl p-4">
+                        <img 
+                            src="/logo.png" 
+                            alt="InvoiceOS" 
+                            className="h-full w-auto object-contain"
+                        />
                     </div>
-
-                    <div className="space-y-6 max-w-lg mb-20 animate-in slide-in-from-bottom-8 fade-in duration-1000 delay-200">
-                        <h2 className="text-4xl font-bold text-white leading-tight">
-                            Join thousands of growing businesses.
-                        </h2>
-                        <p className="text-lg text-slate-300">
-                            Start sending professional invoices today. No credit card required.
+                    <div className="text-center space-y-2">
+                        <h1 className="text-3xl font-heading font-black text-slate-900 tracking-tighter uppercase leading-none">Join the Network</h1>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
+                            Create your Revenue Command Center
                         </p>
-                    </div>
-
-                    <div className="flex items-center gap-4 text-sm text-slate-400 animate-in fade-in duration-1000 delay-500">
-                        <p>© 2025 InvoiceOS Engine. All rights reserved.</p>
                     </div>
                 </div>
-            </div>
 
-            {/* Right Side - Form */}
-            <div className="flex-1 flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-gray-50 lg:bg-white animate-in zoom-in-95 duration-500">
-                <div className="w-full max-w-md space-y-8 bg-white lg:bg-transparent p-8 lg:p-0 rounded-2xl shadow-sm lg:shadow-none border lg:border-none border-gray-100">
-                    <div className="text-center lg:text-left space-y-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Create an account</h1>
-                        <p className="text-sm text-gray-600">
-                            Already have an account?{' '}
-                            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                                Sign in
-                            </Link>
-                        </p>
-                    </div>
+                <form className="space-y-6" onSubmit={handleSubmit}>
+                    {error && (
+                        <div className={clsx(
+                            "p-3 rounded-lg border text-xs flex items-center gap-2 animate-in fade-in slide-in-from-top-2",
+                            error.includes("check your email") ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-red-50 border-red-100 text-red-600"
+                        )}>
+                            <span className="font-bold">{error.includes("check your email") ? "Success:" : "Error:"}</span> {error}
+                        </div>
+                    )}
 
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="p-4 rounded-lg bg-red-50 border border-red-100 text-sm text-red-600 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                                <span className="font-medium">Error:</span> {error}
-                            </div>
-                        )}
+                    <div className="space-y-4">
+                        <Input
+                            label="Full Name"
+                            placeholder="John Doe"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                            className="h-11 rounded-lg border-slate-200 bg-slate-50/50 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 transition-all"
+                        />
 
-                        <div className="space-y-5">
-                            <Input
-                                label="Full Name"
-                                placeholder="John Doe"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
+                        <Input
+                            label="Email address"
+                            type="email"
+                            placeholder="you@company.com"
+                            value={email}
+                            onChange={handleEmailChange}
+                            required
+                            className="h-11 rounded-lg border-slate-200 bg-slate-50/50 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 transition-all"
+                            error={!emailValid && email.length > 0 ? "Invalid email address" : undefined}
+                            rightElement={emailValid && email.length > 0 ? <Check size={16} className="text-green-500" /> : undefined}
+                        />
+
+                        <div className="space-y-2">
+                            <PasswordInput
+                                label="Create Password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 required
-                                icon={<User size={18} />}
+                                icon={null}
+                                className="h-11 rounded-lg border-slate-200 bg-slate-50/50 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 transition-all"
                             />
-
-                            <Input
-                                label="Email address"
-                                type="email"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={handleEmailChange}
-                                required
-                                icon={<Mail size={18} />}
-                                error={!emailValid && email.length > 0 ? "Invalid email address" : undefined}
-                                rightElement={emailValid && email.length > 0 ? <Check size={16} className="text-green-500" /> : undefined}
-                            />
-
-                            <div>
-                                <PasswordInput
-                                    label="Password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-
-                                {/* Password Strength Meter */}
-                                <div className="mt-3 space-y-2 transition-all duration-300">
-                                    <div className="flex justify-between text-xs text-gray-500">
-                                        <span>Strength</span>
-                                        <span className={clsx("font-medium", {
-                                            'text-red-500': passwordStrength <= 2,
-                                            'text-yellow-500': passwordStrength === 3,
-                                            'text-green-600': passwordStrength === 4
-                                        })}>{getStrengthText()}</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div
-                                            className={clsx("h-full transition-all duration-500 ease-out", getStrengthColor())}
-                                            style={{ width: `${(passwordStrength / 4) * 100}%` }}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-gray-400">
-                                        Use 8+ chars, numbers & symbols.
-                                    </p>
+                            
+                            {/* Strength Meter */}
+                            <div className="px-1 space-y-1.5">
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <span>Security Level</span>
+                                    <span className={clsx(
+                                        passwordStrength <= 2 ? 'text-rose-500' : 'text-emerald-500'
+                                    )}>{getStrengthText()}</span>
+                                </div>
+                                <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div
+                                        className={clsx("h-full transition-all duration-500 ease-out", getStrengthColor())}
+                                        style={{ width: `${(passwordStrength / 4) * 100}%` }}
+                                    />
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-                        >
-                            {loading ? (
-                                <Loader2 className="animate-spin" size={18} />
-                            ) : (
-                                <>
-                                    Create Account
-                                    <ArrowRight size={18} />
-                                </>
-                            )}
-                        </button>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#4F46E5] py-3.5 text-sm font-bold text-white shadow-md shadow-indigo-100 hover:bg-[#4338CA] transition-all active:scale-[0.98] disabled:opacity-70"
+                    >
+                        {loading ? <Loader2 className="animate-spin" size={18} /> : (
+                            <>
+                                Create Account
+                                <ArrowRight size={18} className="ml-1" />
+                            </>
+                        )}
+                    </button>
 
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-200" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="bg-white lg:bg-transparent px-2 text-gray-500">Secured by InvoiceOS</span>
-                            </div>
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-100" />
                         </div>
-                    </form>
+                        <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-widest">
+                            <span className="bg-white px-3 text-slate-400">OR JOIN WITH</span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleGoogleLogin}
+                        className="w-full flex items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all active:scale-[0.98]"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 18 18">
+                            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285f4"/>
+                            <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34a853"/>
+                            <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.712s.102-1.172.282-1.712V4.956H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.044l3.007-2.332z" fill="#fbbc05"/>
+                            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.956l3.007 2.332C4.672 5.164 6.656 3.58 9 3.58z" fill="#ea4335"/>
+                        </svg>
+                        Google Account
+                    </button>
+                </form>
+
+                <div className="text-center pt-2">
+                    <p className="text-sm text-slate-500 font-medium">
+                        Already have an account?{' '}
+                        <Link href="/login" className="text-indigo-600 hover:text-indigo-500 font-bold">
+                            Sign in
+                        </Link>
+                    </p>
                 </div>
             </div>
         </div>
