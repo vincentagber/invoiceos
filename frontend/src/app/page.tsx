@@ -440,8 +440,8 @@ export default function LandingPage() {
                     <div>
                         <h6 className="text-slate-900 font-bold text-sm mb-4">Legal</h6>
                         <ul className="space-y-3">
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Privacy</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="#">Terms</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/privacy">Privacy</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/privacy">Terms</Link></li>
                         </ul>
                     </div>
                     <div>
