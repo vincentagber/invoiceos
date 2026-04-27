@@ -5,11 +5,18 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+interface Organization {
+    id: string;
+    name: string;
+    role: string;
+}
+
 interface User {
     id: string;
     name: string;
     email: string;
     profilePicture?: string;
+    organizations: Organization[];
 }
 
 interface AuthContextType {
@@ -33,45 +40,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // 1. Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             handleSessionUpdate(session);
-            setLoading(false);
         });
 
         // 2. Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             handleSessionUpdate(session);
-            setLoading(false);
         });
 
         return () => subscription.unsubscribe();
     }, []);
 
-    const handleSessionUpdate = (session: any) => {
+    const handleSessionUpdate = async (session: any) => {
         setSession(session);
         if (session?.user) {
             const newToken = session.access_token;
             setToken(newToken);
-            localStorage.setItem('token', newToken); // Sync for axios interceptor
-            mapSupabaseUser(session.user);
+            localStorage.setItem('token', newToken);
+            
+            // Fetch organizations for the user
+            const { data: memberships } = await supabase
+                .from('organization_members')
+                .select('role, organizations(id, name)')
+                .eq('user_id', session.user.id);
+
+            const orgs = (memberships || []).map((m: any) => ({
+                id: m.organizations.id,
+                name: m.organizations.name,
+                role: m.role
+            }));
+
+            setUser({
+                id: session.user.id,
+                email: session.user.email || '',
+                name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+                profilePicture: session.user.user_metadata?.avatar_url,
+                organizations: orgs
+            });
         } else {
             setToken(null);
             setUser(null);
             localStorage.removeItem('token');
         }
-    };
-
-    const mapSupabaseUser = (sbUser: SupabaseUser) => {
-        setUser({
-            id: sbUser.id,
-            email: sbUser.email || '',
-            name: sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || 'User',
-            profilePicture: sbUser.user_metadata?.avatar_url
-        });
+        setLoading(false);
     };
 
     const logout = async () => {
         await supabase.auth.signOut();
         localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        setUser(null);
         router.push('/login');
     };
 

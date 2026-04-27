@@ -29,7 +29,6 @@ export const AddClientModal = ({ isOpen, onClose, onSuccess }: AddClientModalPro
         setSubmitting(true);
         try {
             // Mock AI parsing for now
-            // In a real scenario, this calls a backend endpoint that uses GPT to extract JSON from text
             setTimeout(() => {
                 setName("Acme Corp Ltd");
                 setContactName("John Doe");
@@ -50,8 +49,8 @@ export const AddClientModal = ({ isOpen, onClose, onSuccess }: AddClientModalPro
         setError('');
 
         try {
-            const businessId = user?.businesses?.[0]?.id;
-            if (!businessId) throw new Error('Business profile not found');
+            const businessId = user?.organizations?.[0]?.id;
+            if (!businessId) throw new Error('No active organization found');
 
             const res = await api.post('/clients', {
                 name,
@@ -225,4 +224,3 @@ export const AddClientModal = ({ isOpen, onClose, onSuccess }: AddClientModalPro
         </div>
     );
 };
-

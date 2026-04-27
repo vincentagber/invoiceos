@@ -24,10 +24,10 @@ export default function NewClientPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!user?.businesses?.[0]?.id) {
+        if (!user?.organizations?.[0]?.id) {
             setModalConfig({
-                title: 'Session Expired',
-                message: 'Business profile not found. Please relogin to continue.',
+                title: 'Session Error',
+                message: 'No active organization found. Please relogin to continue.',
                 type: 'error'
             });
             setShowModal(true);
@@ -42,7 +42,7 @@ export default function NewClientPage() {
                 phone,
                 address,
                 taxId,
-                businessId: user.businesses[0].id
+                businessId: user.organizations[0].id
             });
             setModalConfig({
                 title: 'Partner Registered',
