@@ -65,12 +65,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     .eq('user_id', session.user.id);
 
                 if (orgError) {
-                    console.error("Supabase Query Error:", {
-                        message: orgError.message,
-                        details: orgError.details,
-                        hint: orgError.hint,
-                        code: orgError.code
-                    });
+                    console.error("Supabase Query Error Detected!");
+                    console.error("Message:", orgError.message);
+                    console.error("Code:", orgError.code);
+                    console.error("Details:", orgError.details);
                     throw orgError;
                 }
 
