@@ -10,6 +10,7 @@ import businessRoutes from './routes/business.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import aiRoutes from './routes/ai.routes';
 import quotationRoutes from './routes/quotation.routes';
+import billingRoutes from './routes/billing.routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/api/business', businessRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/quotations', quotationRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Socket.io Connection
 io.on('connection', (socket) => {

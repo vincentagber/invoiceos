@@ -36,9 +36,27 @@ model Business {
   templates       InvoiceTemplate[]
   automationRules AutomationRule[]
   quotations      Quotation[]
+  subscription    Subscription?
   
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+}
+
+model Subscription {
+  id              String      @id @default(cuid())
+  businessId      String      @unique
+  business        Business    @relation(fields: [businessId], references: [id])
+  plan            String      // e.g., "PROFESSIONAL", "ENTERPRISE"
+  status          String      // e.g., "ACTIVE", "EXPIRED", "CANCELLED"
+  amount          Float
+  currency        String      @default("NGN")
+  billingCycle    String      // e.g., "MONTHLY", "YEARLY"
+  startDate       DateTime    @default(now())
+  endDate         DateTime
+  paystackRef     String?     @unique
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model Client {
