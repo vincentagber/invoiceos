@@ -154,9 +154,9 @@ export default function LoginPage() {
                                 )}
                             </motion.button>
 
-                            <div className="relative py-2">
+                            <div className="relative py-4">
                                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100" /></div>
-                                <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.2em]"><span className="bg-white/0 px-4 text-slate-300">Or continue with</span></div>
+                                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.15em]"><span className="bg-[#fcfdfe] px-4 text-slate-400">Or continue with</span></div>
                             </div>
 
                             <motion.button
