@@ -2,22 +2,6 @@ import { Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
-export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const organizationId = req.query.businessId as string;
-    
-    const { data: invoices, error } = await supabase
-      .from('invoices')
-      .select('*, client:clients(*), items:invoice_items(*)')
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    res.json(invoices);
-  } catch (error) {
-    next(error);
-  }
-};
 
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
