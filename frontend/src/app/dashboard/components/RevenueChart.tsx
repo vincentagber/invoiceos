@@ -31,7 +31,11 @@ export const RevenueChart = () => {
                 <AreaChart 
                     data={data} 
                     margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
-                    onMouseMove={(v: any) => setHoveredData(v?.activePayload?.[0]?.payload)}
+                    onMouseMove={(v: any) => {
+                        if (v && v.activePayload && v.activePayload.length > 0) {
+                            setHoveredData(v.activePayload[0].payload);
+                        }
+                    }}
                     onMouseLeave={() => setHoveredData(null)}
                 >
                     <defs>

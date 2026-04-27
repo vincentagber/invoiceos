@@ -13,7 +13,9 @@ import {
     Menu,
     X,
     CreditCard,
-    Landmark
+    Landmark,
+    Crown,
+    Wallet
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -63,10 +65,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Invoices', href: '/dashboard/invoices', icon: FileText },
         { name: 'Quotations', href: '/dashboard/quotations', icon: FileText },
-        { name: 'Accounting', href: '/dashboard/accounting', icon: CreditCard }, // New
-        { name: 'Taxes', href: '/dashboard/taxes', icon: Landmark }, // New
+        { name: 'Expenses', href: '/dashboard/expenses', icon: Wallet },
+        { name: 'Taxes', href: '/dashboard/taxes', icon: Landmark },
         { name: 'Clients', href: '/dashboard/clients', icon: Users },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+        { name: 'Subscription', href: '/dashboard/subscription', icon: Crown },
     ];
 
     return (
@@ -130,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <div className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                                 Management
                             </div>
-                            {navigation.filter(item => ['Invoices', 'Quotations', 'Clients'].includes(item.name)).map((item) => {
+                            {navigation.filter(item => ['Invoices', 'Quotations', 'Expenses', 'Clients'].includes(item.name)).map((item) => {
                                 const Icon = item.icon;
                                 const isActive = pathname === item.href; // Simple strict match for now
                                 return (
@@ -156,7 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <div className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                                 System
                             </div>
-                            {navigation.filter(item => ['Settings'].includes(item.name)).map((item) => {
+                            {navigation.filter(item => ['Settings', 'Subscription'].includes(item.name)).map((item) => {
                                 const Icon = item.icon;
                                 const isActive = pathname === item.href;
                                 return (

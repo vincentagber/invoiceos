@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import Link from 'next/link';
-import { Plus, Edit, Trash, Search, Mail, Phone, Users, MoreHorizontal } from 'lucide-react';
+import { Plus, Edit, Trash, Search, Mail, Phone, Users } from 'lucide-react';
 import { StatusModal } from '@/components/ui/StatusModal';
+import { AddClientModal } from '@/components/ui/AddClientModal';
 
 interface Client {
     id: string;
@@ -20,6 +20,7 @@ export default function ClientsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [showAddClient, setShowAddClient] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     useEffect(() => {
@@ -40,6 +41,10 @@ export default function ClientsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleClientCreated = (newClient: any) => {
+        setClients([...clients, newClient]);
     };
 
     const handleDelete = async (id: string) => {
@@ -76,13 +81,13 @@ export default function ClientsPage() {
                     <h1 className="text-3xl font-heading font-black text-slate-900 tracking-tighter uppercase leading-none">Clients</h1>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Revenue Partner Database</p>
                 </div>
-                <Link
-                    href="/dashboard/clients/new"
+                <button
+                    onClick={() => setShowAddClient(true)}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-3.5 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95"
                 >
                     <Plus size={18} />
                     New Partner
-                </Link>
+                </button>
             </div>
 
             {/* Search and Filters */}
@@ -180,6 +185,12 @@ export default function ClientsPage() {
                     </table>
                 </div>
             </div>
+
+            <AddClientModal 
+                isOpen={showAddClient} 
+                onClose={() => setShowAddClient(false)} 
+                onSuccess={handleClientCreated}
+            />
 
             <StatusModal 
                 isOpen={showModal}

@@ -3,11 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import Link from 'next/link';
-import { Plus, Eye, Download, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Download, Search, Pencil, Trash2 } from 'lucide-react';
 import { generateInvoicePDF } from '@/lib/pdfGenerator';
 import { formatCurrency } from '@/lib/utils';
 import clsx from 'clsx';
 import { StatusModal } from '@/components/ui/StatusModal';
+import { CreateInvoiceModal } from './components/CreateInvoiceModal';
 
 interface Invoice {
     id: string;
@@ -26,6 +27,7 @@ export default function InvoicesPage() {
     const [settings, setSettings] = useState<any>({});
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
         fetchInvoices();
@@ -107,16 +109,16 @@ export default function InvoicesPage() {
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-100 pb-8">
                 <div>
-                    <h1 className="text-3xl font-heading font-black text-slate-900 tracking-tighter uppercase leading-none">Invoice Engine</h1>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Revenue Flow Management</p>
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Invoices</h1>
+                    <p className="text-sm text-slate-500 mt-1">Manage and track all your invoices.</p>
                 </div>
-                <Link
-                    href="/dashboard/invoices/new"
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-3.5 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95"
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#5E6AD2] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#4E5AC2] transition-all active:scale-95"
                 >
-                    <Plus size={18} />
-                    New Engine
-                </Link>
+                    <Plus size={16} />
+                    New Invoice
+                </button>
             </div>
 
             {/* Search and Filters */}
@@ -271,6 +273,11 @@ export default function InvoicesPage() {
                 message={modalConfig.message}
                 type={modalConfig.type}
                 actionLabel="Proceed"
+            />
+            <CreateInvoiceModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={() => { setShowCreateModal(false); fetchInvoices(); }}
             />
         </div>
     );
