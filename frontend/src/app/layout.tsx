@@ -48,7 +48,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${outfit.variable} font-sans tabular-nums bg-slate-50 text-slate-900 antialiased`}>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+      </head>
+      <body className={`${inter.variable} ${outfit.variable} font-sans tabular-nums bg-[#f8f9ff] text-slate-900 antialiased`}>
         <AuthProvider>
           <SocketProvider>
             <CollaborationProvider>
