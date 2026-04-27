@@ -64,7 +64,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     .select('role, organizations(id, name)')
                     .eq('user_id', session.user.id);
 
-                if (orgError) throw orgError;
+                if (orgError) {
+                    console.error("Supabase Query Error:", {
+                        message: orgError.message,
+                        details: orgError.details,
+                        hint: orgError.hint,
+                        code: orgError.code
+                    });
+                    throw orgError;
+                }
 
                 const orgs = (memberships || []).map((m: any) => ({
                     id: m.organizations.id,
@@ -79,9 +87,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     profilePicture: session.user.user_metadata?.avatar_url,
                     organizations: orgs
                 });
-            } catch (err) {
-                console.error("Error fetching memberships:", err);
-                // Still set the user so the app doesn't think they are logged out
+            } catch (err: any) {
+                console.error("Critical Auth Context Error:", err);
+                
+                // Fallback: Set user with no organizations so the app doesn't crash
                 setUser({
                     id: session.user.id,
                     email: session.user.email || '',
