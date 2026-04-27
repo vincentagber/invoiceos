@@ -235,7 +235,7 @@ export default function ContactPage() {
                         <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Privacy Policy</Link>
                         <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Terms of Service</Link>
                         <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Compliance</Link>
-                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/privacy">Security</Link>
+                        <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/security">Security</Link>
                         <Link className="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="/contact">API Documentation</Link>
                     </div>
                 </div>

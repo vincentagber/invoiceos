@@ -448,7 +448,7 @@ export default function LandingPage() {
                         <h6 className="text-slate-900 font-bold text-sm mb-4">Support</h6>
                         <ul className="space-y-3">
                             <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/contact">API Docs</Link></li>
-                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/contact">Status</Link></li>
+                            <li><Link className="text-slate-500 text-sm hover:text-black underline underline-offset-4 decoration-slate-300" href="/security">Security</Link></li>
                         </ul>
                     </div>
                 </div>
