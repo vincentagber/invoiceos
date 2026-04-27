@@ -42,19 +42,20 @@ model Business {
 }
 
 model Client {
-  id         String    @id @default(cuid())
-  businessId String
-  business   Business  @relation(fields: [businessId], references: [id])
-  name       String
-  email      String
-  address    String?
-  phone      String?
-  taxId      String?
-  invoices   Invoice[]
-  quotations Quotation[]
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id])
+  name        String    // Usually Company Name
+  contactName String?   // Individual Contact
+  email       String
+  address     String?
+  phone       String?
+  taxId       String?
+  invoices    Invoice[]
+  quotations  Quotation[]
   
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Invoice {

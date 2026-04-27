@@ -17,7 +17,16 @@ import {
     Zap,
     Star,
     LayoutDashboard,
-    Minus
+    Minus,
+    Wand2,
+    Building2,
+    Calculator,
+    Palette,
+    Mail,
+    FileCheck,
+    Clock,
+    BarChart3,
+    Smartphone
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -129,64 +138,137 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                {/* Global Compliance Section */}
-                <section className="py-32 bg-white">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="text-center space-y-4 mb-20">
-                            <h2 className="text-indigo-600 text-sm font-black uppercase tracking-[0.3em]">Institutional Grade Compliance</h2>
-                            <h3 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">Global Standards. Local Precision.</h3>
-                            <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-                                InvoiceOS handles the complexity of local tax laws so you don't have to. Built for IRS (US) and FIRS (Nigeria) standards.
-                            </p>
+                {/* Institutional Compliance Section */}
+                <section className="py-32 bg-white relative overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-6 relative z-10">
+                        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24">
+                            <div className="space-y-6 max-w-3xl">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100">
+                                    <Shield size={14} className="text-indigo-600" />
+                                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Cross-Border Compliance</span>
+                                </div>
+                                <h2 className="text-5xl md:text-6xl font-heading font-black text-slate-900 tracking-tighter leading-[1.1]">
+                                    Global Standards. <br />
+                                    <span className="text-slate-400">Local Precision.</span>
+                                </h2>
+                                <p className="text-xl text-slate-500 leading-relaxed font-medium">
+                                    InvoiceOS handles the complexity of local tax laws so you don't have to. Built for IRS (US) and FIRS (Nigeria) standards.
+                                </p>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-4">
+                                <div className="px-6 py-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+                                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">IRS Validated</span>
+                                </div>
+                                <div className="px-6 py-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+                                    <div className="h-2 w-2 rounded-full bg-indigo-500" />
+                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">FIRS Validated</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-10">
-                            <div className="group p-10 rounded-[3rem] bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/5">
-                                <div className="flex items-center justify-between mb-10">
-                                    <div className="h-16 w-16 rounded-3xl bg-white shadow-xl flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
-                                        <Shield size={32} />
-                                    </div>
-                                    <span className="px-5 py-2 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-widest">IRS Ready (USA)</span>
+                            {/* USA Block */}
+                            <div className="group p-12 rounded-[3.5rem] bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-all duration-700 hover:shadow-[0_40px_80px_-20px_rgba(79,70,229,0.1)] relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <Shield size={200} />
                                 </div>
-                                <h4 className="text-2xl font-bold text-slate-900 mb-6">United States</h4>
-                                <ul className="space-y-4 text-slate-500 font-medium">
-                                    <li className="flex items-center gap-3">
-                                        <Check className="text-indigo-600" size={18} /> IRS-ready reporting and W-9 collection
-                                    </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="text-indigo-600" size={18} /> Sales tax automation for all 50 states
-                                    </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="text-indigo-600" size={18} /> Professional 1099-NEC tracking
-                                    </li>
-                                </ul>
+                                <div className="relative space-y-10">
+                                    <div className="space-y-4">
+                                        <div className="h-14 w-14 rounded-2xl bg-white shadow-xl flex items-center justify-center text-indigo-600">
+                                            <img src="https://upload.wikimedia.org/wikipedia/en/a/a4/Flag_of_the_United_States.svg" className="w-8 h-auto" alt="USA" />
+                                        </div>
+                                        <h4 className="text-3xl font-heading font-black text-slate-900 tracking-tight">United States</h4>
+                                    </div>
+                                    <ul className="space-y-6">
+                                        {[
+                                            'IRS-ready reporting and W-9 collection',
+                                            'Sales tax automation for all 50 states',
+                                            'Professional 1099-NEC tracking'
+                                        ].map((item, idx) => (
+                                            <li key={idx} className="flex items-start gap-4 text-slate-500 font-bold text-sm leading-tight group/item">
+                                                <div className="mt-1 h-5 w-5 rounded-full bg-white shadow-md flex items-center justify-center text-indigo-600 group-hover/item:bg-indigo-600 group-hover/item:text-white transition-all">
+                                                    <Check size={12} strokeWidth={4} />
+                                                </div>
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
 
-                            <div className="group p-10 rounded-[3rem] bg-slate-900 text-white border border-slate-800 hover:border-indigo-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10">
-                                <div className="flex items-center justify-between mb-10">
-                                    <div className="h-16 w-16 rounded-3xl bg-white/10 shadow-xl flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                                        <Shield size={32} />
-                                    </div>
-                                    <span className="px-5 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">FIRS Validated (Nigeria)</span>
+                            {/* Nigeria Block */}
+                            <div className="group p-12 rounded-[3.5rem] bg-slate-900 text-white border border-slate-800 hover:border-indigo-500/50 transition-all duration-700 hover:shadow-[0_40px_80px_-20px_rgba(79,70,229,0.2)] relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <Shield size={200} />
                                 </div>
-                                <h4 className="text-2xl font-bold text-white mb-6">Nigeria</h4>
-                                <ul className="space-y-4 text-slate-400 font-medium">
-                                    <li className="flex items-center gap-3">
-                                        <Check className="text-indigo-400" size={18} /> VAT-compliant invoices matching FIRS regulations
-                                    </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="text-indigo-400" size={18} /> WHT (Withholding Tax) calculations automated
-                                    </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="text-indigo-400" size={18} /> CAC registered business information support
-                                    </li>
-                                </ul>
+                                <div className="relative space-y-10">
+                                    <div className="space-y-4">
+                                        <div className="h-14 w-14 rounded-2xl bg-white/10 shadow-xl flex items-center justify-center text-indigo-400">
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/79/Flag_of_Nigeria.svg" className="w-8 h-auto" alt="Nigeria" />
+                                        </div>
+                                        <h4 className="text-3xl font-heading font-black text-white tracking-tight">Nigeria</h4>
+                                    </div>
+                                    <ul className="space-y-6">
+                                        {[
+                                            'VAT-compliant invoices matching FIRS regulations',
+                                            'WHT (Withholding Tax) calculations automated',
+                                            'CAC registered business information support'
+                                        ].map((item, idx) => (
+                                            <li key={idx} className="flex items-start gap-4 text-slate-400 font-bold text-sm leading-tight group/item">
+                                                <div className="mt-1 h-5 w-5 rounded-full bg-white/10 flex items-center justify-center text-emerald-400 group-hover/item:bg-emerald-500 group-hover/item:text-white transition-all">
+                                                    <Check size={12} strokeWidth={4} />
+                                                </div>
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Features Section */}
+
+                {/* Advanced Features Grid */}
+                <section id="features" className="py-32 bg-white relative">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center space-y-4 mb-24">
+                            <h2 className="text-5xl font-heading font-black text-slate-900 tracking-tighter">Everything you need to bill like a pro</h2>
+                            <p className="text-lg text-slate-500 max-w-3xl mx-auto font-medium">
+                                Say goodbye to generic invoices that advertise someone else's platform. Elevate your brand with complete customization.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {advancedFeatures.map((feature, i) => (
+                                <div 
+                                    key={i} 
+                                    className={clsx(
+                                        "group p-10 rounded-[2.5rem] border transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] flex flex-col items-start text-left",
+                                        feature.featured 
+                                            ? "bg-slate-50/50 border-indigo-100 shadow-[0_20px_40px_rgba(79,70,229,0.05)]" 
+                                            : "bg-white border-slate-100 hover:border-indigo-100"
+                                    )}
+                                >
+                                    <div className={clsx(
+                                        "h-12 w-12 rounded-2xl flex items-center justify-center mb-8 transition-transform duration-500 group-hover:scale-110",
+                                        feature.iconBg || "bg-slate-50 text-slate-400"
+                                    )}>
+                                        <feature.icon size={24} strokeWidth={1.5} />
+                                    </div>
+                                    <h4 className="text-xl font-heading font-bold text-slate-900 mb-4 tracking-tight">{feature.title}</h4>
+                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                                        {feature.desc}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Features Section (Legacy Small Icons) */}
                 <section id="products" className="py-32 bg-slate-50">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="grid lg:grid-cols-4 gap-12">
@@ -236,6 +318,64 @@ export default function LandingPage() {
         </div>
     );
 }
+
+const advancedFeatures = [
+    { 
+        icon: Wand2, 
+        title: "AI-Powered Invoicing", 
+        desc: "Speak or type naturally and let AI build your invoice. Dictate by voice or paste a text description to auto-fill customers, line items, and prices in seconds.",
+        iconBg: "bg-indigo-50 text-indigo-600"
+    },
+    { 
+        icon: Building2, 
+        title: "Business Switcher", 
+        desc: "Manage multiple businesses under one account. Switch between isolated workspaces instantly — each with its own branding, clients, and invoices.",
+        iconBg: "bg-emerald-50 text-emerald-600"
+    },
+    { 
+        icon: Calculator, 
+        title: "Automatic Taxes", 
+        desc: "Define tax rates once and let the system apply them automatically to every line item. VAT, GST, or set your own custom rates.",
+        iconBg: "bg-amber-50 text-amber-600"
+    },
+    { 
+        icon: Palette, 
+        title: "Fully White-Label", 
+        desc: "Remove our branding entirely. Add your logo, brand colors, custom domains, and custom css for a seamless client experience.",
+        iconBg: "bg-rose-50 text-rose-600"
+    },
+    { 
+        icon: Mail, 
+        title: "Custom SMTP", 
+        desc: "Send automated reminders and invoices directly from your own email address to maintain perfect deliverability and trust.",
+        iconBg: "bg-sky-50 text-sky-600"
+    },
+    { 
+        icon: FileCheck, 
+        title: "Branded PDFs", 
+        desc: "Generate pixel-perfect, beautifully designed PDF invoices that leave a lasting professional impression on your clients.",
+        iconBg: "bg-indigo-50 text-indigo-600",
+        featured: true
+    },
+    { 
+        icon: Users, 
+        title: "Unified Team Collaboration", 
+        desc: "Securely invite team members to your workspace with strict Admin and User roles. Collaborate securely on the same financial ledger without sharing passwords.",
+        iconBg: "bg-violet-50 text-violet-600"
+    },
+    { 
+        icon: Clock, 
+        title: "Intelligent Auto-Pilot", 
+        desc: "Never chase down a late payment manually. The system silently evaluates due dates and fires professional reminders automatically from your custom SMTP domain.",
+        iconBg: "bg-emerald-50 text-emerald-600"
+    },
+    { 
+        icon: BarChart3, 
+        title: "Dynamic Ledger Tracking", 
+        desc: "Log fractional payments over time natively. Our ledger continuously calculates exact balances in real-time until the invoice perfectly reconciles to Paid.",
+        iconBg: "bg-blue-50 text-blue-600"
+    }
+];
 
 const featureIcons = [
     { icon: FileText, title: "Smart Invoicing", desc: "Create professional invoices in seconds with our automated builder." },
