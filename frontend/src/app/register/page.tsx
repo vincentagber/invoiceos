@@ -225,7 +225,7 @@ export default function RegisterPage() {
                                 whileTap={{ scale: 0.98 }}
                                 type="submit"
                                 disabled={loading}
-                                className="w-full h-14 flex items-center justify-center gap-3 rounded-2xl bg-slate-900 py-3 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-2xl shadow-slate-200 hover:bg-slate-800 transition-all duration-300 disabled:opacity-70"
+                                className="w-full h-14 flex items-center justify-center gap-3 rounded-2xl bg-indigo-600 border-t border-indigo-400 py-3 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-[0_20px_40px_-12px_rgba(79,70,229,0.4)] hover:bg-indigo-700 hover:shadow-[0_25px_50px_-12px_rgba(79,70,229,0.5)] transition-all duration-300 disabled:opacity-70 group"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : (
                                     <>
