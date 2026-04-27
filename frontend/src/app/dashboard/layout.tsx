@@ -170,26 +170,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             })}
                         </div>
 
-                        {/* Resources Group */}
-                        <div className="space-y-2">
-                            <div className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                                Resources
-                            </div>
-                            <Link
-                                href="/blog"
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-500 hover:bg-white hover:text-[#5E6AD2] hover:shadow-sm hover:ring-1 hover:ring-slate-200 transition-all"
-                            >
-                                <LayoutDashboard size={18} className="text-slate-400" />
-                                Blog
-                            </Link>
-                            <Link
-                                href="/tools/invoice-generator"
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-500 hover:bg-white hover:text-[#5E6AD2] hover:shadow-sm hover:ring-1 hover:ring-slate-200 transition-all"
-                            >
-                                <FileText size={18} className="text-slate-400" />
-                                Free Tools
-                            </Link>
-                        </div>
                     </nav>
 
                     <div className="p-4 border-t border-slate-200/60 bg-slate-50">
