@@ -57,25 +57,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setToken(newToken);
             localStorage.setItem('token', newToken);
             
-            // Fetch organizations for the user
-            const { data: memberships } = await supabase
-                .from('organization_members')
-                .select('role, organizations(id, name)')
-                .eq('user_id', session.user.id);
+            try {
+                // Fetch organizations for the user
+                const { data: memberships, error: orgError } = await supabase
+                    .from('organization_members')
+                    .select('role, organizations(id, name)')
+                    .eq('user_id', session.user.id);
 
-            const orgs = (memberships || []).map((m: any) => ({
-                id: m.organizations.id,
-                name: m.organizations.name,
-                role: m.role
-            }));
+                if (orgError) throw orgError;
 
-            setUser({
-                id: session.user.id,
-                email: session.user.email || '',
-                name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-                profilePicture: session.user.user_metadata?.avatar_url,
-                organizations: orgs
-            });
+                const orgs = (memberships || []).map((m: any) => ({
+                    id: m.organizations.id,
+                    name: m.organizations.name,
+                    role: m.role
+                }));
+
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+                    profilePicture: session.user.user_metadata?.avatar_url,
+                    organizations: orgs
+                });
+            } catch (err) {
+                console.error("Error fetching memberships:", err);
+                // Still set the user so the app doesn't think they are logged out
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+                    profilePicture: session.user.user_metadata?.avatar_url,
+                    organizations: []
+                });
+            }
         } else {
             setToken(null);
             setUser(null);
