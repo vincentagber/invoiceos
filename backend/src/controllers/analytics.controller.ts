@@ -1,42 +1,50 @@
 import { Response, NextFunction } from 'express';
-import prisma from '../lib/prisma';
+import { supabase } from '../lib/supabase';
 import { AuthRequest } from '../middlewares/auth.middleware';
-import { InvoiceStatus } from '@prisma/client';
 
 export const getSummary = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const businessId = req.query.businessId as string;
+    const organizationId = req.query.businessId as string;
     
-    if (!businessId) {
-      return res.status(400).json({ message: 'Business ID is required for analytics' });
+    if (!organizationId) {
+      return res.status(400).json({ message: 'Organization ID is required' });
     }
 
-    const [totalInvoiced, paidAmount, outstandingAmount] = await Promise.all([
-      prisma.invoice.aggregate({
-        where: { businessId },
-        _sum: { totalAmount: true }
-      }),
-      prisma.invoice.aggregate({
-        where: { businessId, status: InvoiceStatus.PAID },
-        _sum: { totalAmount: true }
-      }),
-      prisma.invoice.aggregate({
-        where: { businessId, status: { notIn: [InvoiceStatus.PAID, InvoiceStatus.CANCELLED] } },
-        _sum: { totalAmount: true }
-      })
-    ]);
+    // 1. Fetch Invoices for aggregation
+    const { data: invoices, error } = await supabase
+      .from('invoices')
+      .select('status, total_amount')
+      .eq('organization_id', organizationId);
 
-    const sentInvoices = await prisma.invoice.count({ where: { businessId, status: { not: 'DRAFT' } } });
-    const paidInvoices = await prisma.invoice.count({ where: { businessId, status: 'PAID' } });
+    if (error) throw error;
 
-    res.json({
-      metrics: {
-        totalInvoiced: totalInvoiced._sum.totalAmount || 0,
-        paidAmount: paidAmount._sum.totalAmount || 0,
-        outstandingAmount: outstandingAmount._sum.totalAmount || 0,
-        conversionRate: sentInvoices > 0 ? (paidInvoices / sentInvoices) * 100 : 0
+    const metrics = {
+      totalInvoiced: 0,
+      paidAmount: 0,
+      outstandingAmount: 0,
+      conversionRate: 0
+    };
+
+    let sentCount = 0;
+    let paidCount = 0;
+
+    invoices?.forEach(inv => {
+      metrics.totalInvoiced += inv.total_amount;
+      if (inv.status === 'PAID') {
+        metrics.paidAmount += inv.total_amount;
+        paidCount++;
+      }
+      if (inv.status !== 'PAID' && inv.status !== 'CANCELLED') {
+        metrics.outstandingAmount += inv.total_amount;
+      }
+      if (inv.status !== 'DRAFT') {
+        sentCount++;
       }
     });
+
+    metrics.conversionRate = sentCount > 0 ? (paidCount / sentCount) * 100 : 0;
+
+    res.json({ metrics });
   } catch (error) {
     next(error);
   }
@@ -44,28 +52,22 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
 
 export const getRevenueTrends = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const businessId = req.query.businessId as string;
-    
-    // Simple grouping by month for the last 6 months
+    const organizationId = req.query.businessId as string;
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    const invoices = await prisma.invoice.findMany({
-      where: {
-        businessId,
-        issueDate: { gte: sixMonthsAgo },
-        status: InvoiceStatus.PAID
-      },
-      select: {
-        totalAmount: true,
-        issueDate: true
-      }
-    });
+    const { data: invoices, error } = await supabase
+      .from('invoices')
+      .select('total_amount, issue_date')
+      .eq('organization_id', organizationId)
+      .eq('status', 'PAID')
+      .gte('issue_date', sixMonthsAgo.toISOString());
 
-    // Grouping logic
-    const trends = invoices.reduce((acc: any, inv) => {
-      const month = inv.issueDate.toLocaleString('default', { month: 'short' });
-      acc[month] = (acc[month] || 0) + inv.totalAmount;
+    if (error) throw error;
+
+    const trends = (invoices || []).reduce((acc: any, inv) => {
+      const month = new Date(inv.issue_date).toLocaleString('default', { month: 'short' });
+      acc[month] = (acc[month] || 0) + inv.total_amount;
       return acc;
     }, {});
 
