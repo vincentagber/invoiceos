@@ -11,7 +11,10 @@ import analyticsRoutes from './routes/analytics.routes';
 import aiRoutes from './routes/ai.routes';
 import quotationRoutes from './routes/quotation.routes';
 import billingRoutes from './routes/billing.routes';
+import expenseRoutes from './routes/expense.routes';
+import settingsRoutes from './routes/settings.routes';
 import { errorHandler } from './middlewares/errorHandler';
+import { logger } from './utils/logger';
 
 dotenv.config();
 
@@ -19,8 +22,22 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // In production, replace with your frontend URL
+    origin: '*',
   },
+});
+
+// Socket.io Connection
+io.on('connection', (socket) => {
+  logger.info(`Client connected: ${socket.id}`);
+  
+  socket.on('join-business', (businessId) => {
+    socket.join(businessId);
+    logger.info(`Socket ${socket.id} joined business ${businessId}`);
+  });
+
+  socket.on('disconnect', () => {
+    logger.info(`Client disconnected: ${socket.id}`);
+  });
 });
 
 // Middleware
@@ -36,20 +53,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/quotations', quotationRoutes);
 app.use('/api/billing', billingRoutes);
-
-// Socket.io Connection
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-  
-  socket.on('join-business', (businessId) => {
-    socket.join(businessId);
-    console.log(`Socket ${socket.id} joined business ${businessId}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
-});
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Attach IO to request for use in controllers
 app.set('io', io);
@@ -59,5 +64,5 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => {
-  console.log(`🚀 InvoiceOS Backend running on http://localhost:${PORT}`);
+  logger.info(`🚀 InvoiceOS Backend running on http://localhost:${PORT}`);
 });

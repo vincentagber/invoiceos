@@ -12,17 +12,7 @@ import {
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 
-const data = [
-    { name: 'Apr 01', revenue: 45000, previous: 38000 },
-    { name: 'Apr 05', revenue: 52000, previous: 41000 },
-    { name: 'Apr 10', revenue: 48000, previous: 45000 },
-    { name: 'Apr 15', revenue: 61000, previous: 42000 },
-    { name: 'Apr 20', revenue: 59000, previous: 48000 },
-    { name: 'Apr 25', revenue: 72000, previous: 51000 },
-    { name: 'Apr 30', revenue: 68000, previous: 54000 },
-];
-
-export const RevenueChart = () => {
+export const RevenueChart = ({ data = [] }: { data?: any[] }) => {
     const [hoveredData, setHoveredData] = useState<any>(null);
 
     return (
@@ -53,14 +43,14 @@ export const RevenueChart = () => {
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#94A3B8', fontSize: 10, fontWeight: 600 }}
+                        tick={{ fill: '#94A3B8', fontSize: 10, fontWeight: 600, fontFamily: 'var(--font-figtree)' }}
                         dy={10}
                         interval={1}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#94A3B8', fontSize: 10, fontWeight: 600 }}
+                        tick={{ fill: '#94A3B8', fontSize: 10, fontWeight: 600, fontFamily: 'var(--font-figtree)' }}
                         tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip

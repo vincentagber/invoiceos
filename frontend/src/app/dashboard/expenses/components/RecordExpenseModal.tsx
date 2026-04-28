@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, Mic, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
+import api from '@/lib/api';
 
 interface RecordExpenseModalProps {
     isOpen: boolean;
@@ -30,9 +31,13 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ isOpen, 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        // Simulate API call since no Prisma model exists yet
-        setTimeout(() => {
-            setSaving(false);
+        try {
+            const bizRes = await api.get('/business/me');
+            await api.post('/expenses', {
+                ...formData,
+                businessId: bizRes.data.id,
+                amount: parseFloat(formData.amount)
+            });
             if (onSuccess) onSuccess(formData);
             onClose();
             setFormData({
@@ -43,7 +48,12 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ isOpen, 
                 category: '',
                 description: ''
             });
-        }, 1000);
+        } catch (error) {
+            console.error('Failed to save expense', error);
+            alert('Failed to save expense. Please try again.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const inputBaseClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 outline-none focus:bg-white focus:border-[#5E6AD2] focus:ring-4 focus:ring-[#5E6AD2]/5 transition-all";

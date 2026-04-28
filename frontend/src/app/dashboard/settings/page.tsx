@@ -10,7 +10,13 @@ import {
     Lock,
     AlertTriangle,
     Mail,
-    ChevronDown
+    ChevronDown,
+    Globe,
+    Bell,
+    Zap,
+    ShieldCheck,
+    CreditCard,
+    Check
 } from 'lucide-react';
 import clsx from 'clsx';
 import { StatusModal } from '@/components/ui/StatusModal';
@@ -34,19 +40,24 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (val: boole
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [testingEmail, setTestingEmail] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     const [settings, setSettings] = useState({
-        businessName: 'InvoiceOS',
-        address: '123 Tech Boulevard\nSan Francisco, CA 94105',
-        email: 'billing@invoiceos.com',
-        phone: '+1 (555) 123-4567',
-        taxNumber: '12-3456789',
-        paymentDetails: 'Bank: Chase\nAccount: 123456789\nRouting: 987654321',
+        businessName: '',
+        address: '',
+        email: '',
+        phone: '',
+        taxNumber: '',
+        paymentDetails: '',
 
         // Branding
         brandColor: '#5E6AD2',
+        logo: null as string | null,
+        favicon: null as string | null,
+        icon: null as string | null,
+        customDomain: '',
         
         // Invoice Defaults
         defaultCurrency: 'NGN',
@@ -67,26 +78,52 @@ export default function SettingsPage() {
         dailySummary: false,
 
         // SMTP
-        smtpHost: 'smtp.sendgrid.net',
-        smtpPort: '587',
-        smtpUsername: 'apikey',
-        smtpPassword: '••••••••••••••••',
-        fromName: 'InvoiceOS Billing',
-        fromEmail: 'billing@invoiceos.com',
+        smtpHost: '',
+        smtpPort: '',
+        smtpUsername: '',
+        smtpPassword: '',
+        fromName: '',
+        fromEmail: '',
     });
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await api.get('/business/me');
+                const res = await api.get('/settings');
                 if (res.data) {
-                    setSettings(prev => ({
-                        ...prev,
-                        businessName: res.data.name || prev.businessName,
-                        address: res.data.address || prev.address,
-                        email: res.data.supportEmail || prev.email,
-                        brandColor: res.data.brandColor || prev.brandColor,
-                    }));
+                    const s = res.data;
+                    const smtp = s.smtpConfig || {};
+                    setSettings({
+                        businessName: s.name || '',
+                        address: s.address || '',
+                        email: s.email || '',
+                        phone: s.phone || '',
+                        taxNumber: s.taxNumber || '',
+                        paymentDetails: s.paymentDetails || '',
+                        brandColor: s.brandColor || '#5E6AD2',
+                        logo: s.logo || null,
+                        favicon: s.favicon || null,
+                        icon: s.icon || null,
+                        customDomain: s.customDomain || '',
+                        defaultCurrency: s.defaultCurrency || 'NGN',
+                        invoicePrefix: s.invoicePrefix || 'INV',
+                        defaultDuePeriod: s.defaultDuePeriod || 'Net 30 Days',
+                        defaultDiscount: s.defaultDiscount?.toString() || '0',
+                        defaultNotes: s.defaultNotes || '',
+                        invoiceReminders: s.invoiceReminders || false,
+                        documentStyle: s.documentStyle || 'Professional',
+                        estimatePrefix: s.estimatePrefix || 'EST',
+                        bccEmails: s.bccEmails || false,
+                        autoSendInvoice: s.autoSendInvoice || false,
+                        paymentReminders: s.paymentReminders || true,
+                        dailySummary: s.dailySummary || false,
+                        smtpHost: smtp.host || '',
+                        smtpPort: smtp.port || '',
+                        smtpUsername: smtp.user || '',
+                        smtpPassword: smtp.pass || '',
+                        fromName: smtp.fromName || '',
+                        fromEmail: smtp.fromEmail || '',
+                    });
                 }
             } catch (error) {
                 console.error(error);
@@ -98,30 +135,83 @@ export default function SettingsPage() {
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setSettings({ ...settings, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setSettings(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'logo' | 'favicon' | 'icon') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setSettings(prev => ({ ...prev, [field]: reader.result as string }));
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            const payload = {
-                name: settings.businessName,
+            // Sequential saves for robust error reporting
+            await api.put('/settings/business', {
+                businessName: settings.businessName,
                 address: settings.address,
-                supportEmail: settings.email,
+                email: settings.email,
+                phone: settings.phone,
+                taxNumber: settings.taxNumber,
+                paymentDetails: settings.paymentDetails
+            });
+
+            await api.put('/settings/branding', {
                 brandColor: settings.brandColor,
-            };
-            await api.put(`/business/me`, payload);
+                customDomain: settings.customDomain,
+                logo: settings.logo,
+                favicon: settings.favicon,
+                icon: settings.icon
+            });
+
+            await api.put('/settings/invoice-defaults', {
+                defaultCurrency: settings.defaultCurrency,
+                invoicePrefix: settings.invoicePrefix,
+                defaultDuePeriod: settings.defaultDuePeriod,
+                defaultDiscount: settings.defaultDiscount,
+                defaultNotes: settings.defaultNotes
+            });
+
+            await api.put('/settings/workflow', {
+                invoiceReminders: settings.invoiceReminders,
+                documentStyle: settings.documentStyle,
+                estimatePrefix: settings.estimatePrefix,
+                bccEmails: settings.bccEmails
+            });
+
+            await api.put('/settings/notifications', {
+                autoSendInvoice: settings.autoSendInvoice,
+                paymentReminders: settings.paymentReminders,
+                dailySummary: settings.dailySummary
+            });
+
+            await api.put('/settings/email', {
+                smtpHost: settings.smtpHost,
+                smtpPort: settings.smtpPort,
+                smtpUsername: settings.smtpUsername,
+                smtpPassword: settings.smtpPassword,
+                fromName: settings.fromName,
+                fromEmail: settings.fromEmail
+            });
+
             setModalConfig({
-                title: 'Configuration Saved',
-                message: 'Your platform settings have been successfully synchronized.',
+                title: 'Institutional Sync Complete',
+                message: 'All platform configurations have been successfully committed to the ledger.',
                 type: 'success'
             });
             setShowModal(true);
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            const msg = error.response?.data?.error || error.message || 'Synchronization Error';
             setModalConfig({
-                title: 'Update Failed',
-                message: 'We encountered an error saving your preferences. Please try again.',
+                title: 'Operational Failure',
+                message: `The ledger refused the update: ${msg}`,
                 type: 'error'
             });
             setShowModal(true);
@@ -130,396 +220,402 @@ export default function SettingsPage() {
         }
     };
 
+    const handleSendTestEmail = async () => {
+        setTestingEmail(true);
+        try {
+            await api.post('/settings/email/test', {
+                smtpHost: settings.smtpHost,
+                smtpPort: settings.smtpPort,
+                smtpUsername: settings.smtpUsername,
+                smtpPassword: settings.smtpPassword,
+                fromName: settings.fromName,
+                fromEmail: settings.fromEmail
+            });
+            setModalConfig({
+                title: 'Verification Dispatched',
+                message: 'A test email has been successfully queued for delivery.',
+                type: 'success'
+            });
+            setShowModal(true);
+        } catch (error: any) {
+            const msg = error.response?.data?.error || error.message || 'SMTP Failure';
+            setModalConfig({
+                title: 'Email Operational Failure',
+                message: `SMTP verification failed: ${msg}`,
+                type: 'error'
+            });
+            setShowModal(true);
+        } finally {
+            setTestingEmail(false);
+        }
+    };
+
+    const handleDeleteBusiness = async () => {
+        if (!confirm('CRITICAL: Are you sure you want to terminate this institutional workspace? This action is permanent.')) return;
+        
+        try {
+            await api.delete('/settings/business');
+            setModalConfig({
+                title: 'Workspace Terminated',
+                message: 'The institutional business has been successfully decommissioned.',
+                type: 'success'
+            });
+            setShowModal(true);
+            setTimeout(() => window.location.href = '/dashboard', 2000);
+        } catch (error: any) {
+            const msg = error.response?.data?.error || error.message;
+            setModalConfig({
+                title: 'Termination Refused',
+                message: `The system blocked the deletion: ${msg}`,
+                type: 'error'
+            });
+            setShowModal(true);
+        }
+    };
+
     if (loading) return (
         <div className="h-[60vh] flex items-center justify-center">
-            <div className="animate-spin h-8 w-8 border-4 border-[#5E6AD2] border-t-transparent rounded-full" />
+            <div className="animate-spin h-8 w-8 border-4 border-slate-900 border-t-transparent rounded-full" />
         </div>
     );
 
-    const inputClasses = "w-full bg-slate-50/80 border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-800 outline-none focus:bg-white focus:border-[#5E6AD2] transition-colors";
-    const labelClasses = "text-sm font-semibold text-slate-800";
+    const inputClasses = "w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-slate-900/5 transition-all";
+    const labelClasses = "text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1";
     const gridLayout = "grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 items-start";
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-20 font-sans antialiased">
+        <div className="max-w-4xl mx-auto space-y-12 pb-32 font-sans animate-in fade-in duration-700">
             
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-10">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Settings</h1>
-                    <p className="text-slate-500 text-sm mt-1">Manage your InvoiceOS instance and revenue operations.</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Console Settings</h1>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-3">Manage institutional identity and revenue protocols.</p>
                 </div>
                 <button 
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#5E6AD2] text-white text-sm font-medium shadow-sm hover:bg-[#4E5AC2] transition-colors active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                    className="px-8 py-3.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
                 >
                     {saving ? <Clock className="animate-spin" size={16} /> : (
-                        <>
-                            <Save size={16} />
-                            Save All Settings
-                        </>
+                        <span className="flex items-center gap-3"><Save size={14} /> Synchronize Ledger</span>
                     )}
                 </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-10">
                 
                 {/* 1. Business Profile */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-8">
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">1. Business Profile</h2>
-                        <p className="text-sm text-slate-500 mt-1">These details appear on your generated invoices.</p>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">1. Business Profile</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Core institutional data for generated documents.</p>
                     </div>
                     
-                    <div className="space-y-6">
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Business Name</label>
-                            <div className="md:col-span-2">
-                                <input type="text" name="businessName" value={settings.businessName} onChange={handleChange} className={inputClasses} />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Legal Entity Name</label>
+                            <input type="text" name="businessName" value={settings.businessName} onChange={handleChange} className={inputClasses} />
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Address</label>
-                            <div className="md:col-span-2">
-                                <textarea name="address" rows={3} value={settings.address} onChange={handleChange} className={clsx(inputClasses, "resize-none")} />
-                            </div>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Institutional Email</label>
+                            <input type="email" name="email" value={settings.email} onChange={handleChange} className={inputClasses} />
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Email</label>
-                            <div className="md:col-span-2">
-                                <input type="email" name="email" value={settings.email} onChange={handleChange} className={inputClasses} />
-                            </div>
+                        <div className="space-y-3 md:col-span-2">
+                            <label className={labelClasses}>Physical Address</label>
+                            <textarea name="address" rows={3} value={settings.address} onChange={handleChange} className={clsx(inputClasses, "resize-none")} />
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Phone</label>
-                            <div className="md:col-span-2 flex items-center">
-                                {/* Simulated Flag Dropdown */}
-                                <div className="absolute pl-3 flex items-center pointer-events-none">
-                                    <span className="text-lg mr-1">🇺🇸</span>
-                                    <span className="text-sm text-slate-500 border-r border-slate-300 pr-2">+1</span>
-                                </div>
-                                <input type="text" name="phone" value={settings.phone.replace('+1 ', '')} onChange={handleChange} className={clsx(inputClasses, "pl-16")} />
-                            </div>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Contact Terminal (Phone)</label>
+                            <input type="text" name="phone" value={settings.phone} onChange={handleChange} className={inputClasses} />
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>IRS / TIN / RC Number</label>
-                            <div className="md:col-span-2">
-                                <input type="text" name="taxNumber" value={settings.taxNumber} onChange={handleChange} className={inputClasses} />
-                            </div>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Tax Identity (TIN/RC)</label>
+                            <input type="text" name="taxNumber" value={settings.taxNumber} onChange={handleChange} className={inputClasses} />
                         </div>
-
-                        <div className={gridLayout}>
-                            <div>
-                                <label className={labelClasses}>Default Payment Details</label>
-                                <p className="text-xs text-slate-400 mt-1">Include bank details, wire instructions, Zelle or PayPal links.</p>
-                            </div>
-                            <div className="md:col-span-2">
-                                <textarea name="paymentDetails" rows={3} value={settings.paymentDetails} onChange={handleChange} className={clsx(inputClasses, "resize-none")} />
-                            </div>
+                        <div className="space-y-3 md:col-span-2">
+                            <label className={labelClasses}>Default Financial Settlement Details</label>
+                            <textarea name="paymentDetails" rows={3} value={settings.paymentDetails} onChange={handleChange} className={clsx(inputClasses, "resize-none")} />
                         </div>
                     </div>
                 </div>
 
                 {/* 2. Branding */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-8">
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">2. Branding</h2>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">2. Institutional Branding</h2>
                     </div>
 
-                    <div className="space-y-8">
-                        <div className={gridLayout}>
-                            <div>
-                                <label className={labelClasses}>Brand Logo</label>
-                                <p className="text-xs text-slate-400 mt-1">Displayed on invoices.</p>
-                            </div>
-                            <div className="md:col-span-2 flex items-center gap-4">
-                                <div className="h-12 px-4 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center">
-                                    <span className="text-indigo-600 font-bold text-xl flex items-center gap-1"><span className="text-emerald-500 font-black tracking-tighter">OS</span>Invoice</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div className="space-y-6">
+                            <label className={labelClasses}>Brand Architecture</label>
+                            <div className="flex items-center gap-4">
+                                <div className="h-20 w-full bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center overflow-hidden">
+                                    {settings.logo ? (
+                                        <img src={settings.logo} className="h-full w-full object-contain p-4" />
+                                    ) : (
+                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">No Logo Uploaded</span>
+                                    )}
                                 </div>
-                                <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center gap-2">
-                                    <Upload size={14} /> Upload Image
-                                </button>
+                                <label className="shrink-0 h-12 w-12 bg-slate-900 text-white rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-colors">
+                                    <Upload size={18} />
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo')} />
+                                </label>
                             </div>
                         </div>
 
-                        <div className={gridLayout}>
-                            <div>
-                                <label className={labelClasses}>Favicon / Icon</label>
-                                <p className="text-xs text-slate-400 mt-1">Small icon used in browser tabs and as a fallback if no logo is present. Recommended size: 32x32px.</p>
-                            </div>
-                            <div className="md:col-span-2 flex items-center gap-4">
-                                <div className="h-12 w-12 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden">
-                                    <div className="h-6 w-6 bg-gradient-to-tr from-indigo-500 to-emerald-400 rounded-md shadow-sm"></div>
-                                </div>
-                                <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center gap-2">
-                                    <Upload size={14} /> Upload Icon
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className={gridLayout}>
-                            <div>
-                                <label className={labelClasses}>Brand Color</label>
-                                <p className="text-xs text-slate-400 mt-1">Used for highlights, buttons, and accents on your invoices.</p>
-                            </div>
-                            <div className="md:col-span-2 flex items-center gap-3">
+                        <div className="space-y-6">
+                            <label className={labelClasses}>Institutional Color</label>
+                            <div className="flex items-center gap-4">
                                 <input 
                                     type="color" 
                                     name="brandColor"
                                     value={settings.brandColor}
                                     onChange={handleChange}
-                                    className="h-10 w-10 rounded border-0 p-0 cursor-pointer overflow-hidden shadow-sm flex-shrink-0"
+                                    className="h-14 w-14 rounded-2xl border-0 p-0 cursor-pointer overflow-hidden shadow-lg flex-shrink-0"
                                 />
-                                <input type="text" name="brandColor" value={settings.brandColor} onChange={handleChange} className={clsx(inputClasses, "max-w-[120px] uppercase font-mono")} />
+                                <input type="text" name="brandColor" value={settings.brandColor} onChange={handleChange} className={clsx(inputClasses, "uppercase font-mono")} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <label className={labelClasses}>Favicon Cluster</label>
+                            <div className="flex items-center gap-4">
+                                <div className="h-14 w-14 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center overflow-hidden">
+                                    {settings.favicon ? (
+                                        <img src={settings.favicon} className="h-full w-full object-cover" />
+                                    ) : (
+                                        <Globe size={18} className="text-slate-200" />
+                                    )}
+                                </div>
+                                <label className="px-4 py-2 bg-slate-50 border border-slate-100 text-slate-900 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 cursor-pointer transition-colors">
+                                    Upload Favicon
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'favicon')} />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <label className={labelClasses}>App Icon Node</label>
+                            <div className="flex items-center gap-4">
+                                <div className="h-14 w-14 bg-slate-900 rounded-2xl flex items-center justify-center overflow-hidden shadow-xl">
+                                    {settings.icon ? (
+                                        <img src={settings.icon} className="h-full w-full object-cover" />
+                                    ) : (
+                                        <Zap size={20} className="text-white" fill="currentColor" />
+                                    )}
+                                </div>
+                                <label className="px-4 py-2 bg-slate-50 border border-slate-100 text-slate-900 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 cursor-pointer transition-colors">
+                                    Upload Icon
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'icon')} />
+                                </label>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 3. Invoice Defaults */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-8">
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">3. Invoice Defaults</h2>
-                        <p className="text-sm text-slate-500 mt-1">Set default values for when creating new invoices or estimates.</p>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">3. Ledger Defaults</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Standardized values for newly minted documents.</p>
                     </div>
 
-                    <div className="space-y-6">
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Default Currency</label>
-                            <div className="md:col-span-2">
-                                <select name="defaultCurrency" value={settings.defaultCurrency} onChange={handleChange} className={clsx(inputClasses, "max-w-[200px]")}>
-                                    <option value="NGN">NGN (₦)</option>
-                                    <option value="USD">USD ($)</option>
-                                </select>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Primary Currency</label>
+                            <select name="defaultCurrency" value={settings.defaultCurrency} onChange={handleChange} className={inputClasses}>
+                                <option value="NGN">NGN (₦)</option>
+                                <option value="USD">USD ($)</option>
+                                <option value="GBP">GBP (£)</option>
+                                <option value="EUR">EUR (€)</option>
+                            </select>
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Invoice Prefix</label>
-                            <div className="md:col-span-2 flex items-center gap-3">
-                                <input type="text" name="invoicePrefix" value={settings.invoicePrefix} onChange={handleChange} className={clsx(inputClasses, "max-w-[120px]")} />
-                                <span className="text-sm text-slate-400">e.g., INV-0001</span>
-                            </div>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Invoice Alpha-Prefix</label>
+                            <input type="text" name="invoicePrefix" value={settings.invoicePrefix} onChange={handleChange} className={inputClasses} />
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Default Due Period</label>
-                            <div className="md:col-span-2">
-                                <select name="defaultDuePeriod" value={settings.defaultDuePeriod} onChange={handleChange} className={clsx(inputClasses, "max-w-[200px]")}>
-                                    <option value="Net 15 Days">Net 15 Days</option>
-                                    <option value="Net 30 Days">Net 30 Days</option>
-                                    <option value="Due on Receipt">Due on Receipt</option>
-                                </select>
-                            </div>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Standard Due Protocol</label>
+                            <select name="defaultDuePeriod" value={settings.defaultDuePeriod} onChange={handleChange} className={inputClasses}>
+                                <option value="Net 15 Days">Net 15 Days</option>
+                                <option value="Net 30 Days">Net 30 Days</option>
+                                <option value="Due on Receipt">Due on Receipt</option>
+                            </select>
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Default Discount (%)</label>
-                            <div className="md:col-span-2">
-                                <input type="number" name="defaultDiscount" value={settings.defaultDiscount} onChange={handleChange} className={clsx(inputClasses, "max-w-[120px]")} />
-                            </div>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Baseline Yield Discount (%)</label>
+                            <input type="number" name="defaultDiscount" value={settings.defaultDiscount} onChange={handleChange} className={inputClasses} />
                         </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Default Notes / Terms</label>
-                            <div className="md:col-span-2">
-                                <textarea name="defaultNotes" rows={3} value={settings.defaultNotes} onChange={handleChange} className={clsx(inputClasses, "resize-none")} />
-                            </div>
+                        <div className="space-y-3 md:col-span-2">
+                            <label className={labelClasses}>Institutional Terms & Notes</label>
+                            <textarea name="defaultNotes" rows={3} value={settings.defaultNotes} onChange={handleChange} className={clsx(inputClasses, "resize-none")} />
                         </div>
                     </div>
                 </div>
 
                 {/* 4. Workflow Preferences */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-8">
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">4. Workflow Preferences</h2>
-                        <p className="text-sm text-slate-500 mt-1">Configure how documents are structured and handled.</p>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">4. Workflow Engines</h2>
                     </div>
 
-                    <div className="space-y-6">
-                        <div className={gridLayout}>
-                            <div>
-                                <label className={labelClasses}>Invoice Reminders</label>
-                                <p className="text-xs text-slate-400 mt-1">Allow clients to add reminders to their calendar directly from the invoice link. <a href="#" className="text-[#5E6AD2] hover:underline">Learn more about reminders →</a></p>
+                    <div className="space-y-8">
+                        <div className="flex items-center justify-between gap-6 border-b border-slate-50 pb-8">
+                            <div className="space-y-1">
+                                <label className="text-[12px] font-black uppercase text-slate-900">Institutional Reminders</label>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Allow clients to anchor reminders to their local calendars.</p>
                             </div>
-                            <div className="md:col-span-2 flex justify-end md:justify-start">
-                                <Toggle checked={settings.invoiceReminders} onChange={(v) => setSettings({...settings, invoiceReminders: v})} />
+                            <Toggle checked={settings.invoiceReminders} onChange={(v) => setSettings({...settings, invoiceReminders: v})} />
+                        </div>
+
+                        <div className="flex items-center justify-between gap-6 border-b border-slate-50 pb-8">
+                            <div className="space-y-1">
+                                <label className="text-[12px] font-black uppercase text-slate-900">Document Visual Aesthetic</label>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select the institutional skin for outgoing PDFs.</p>
+                            </div>
+                            <div className="flex bg-slate-50 border border-slate-100 p-1.5 rounded-2xl">
+                                {['Minimal', 'Professional', 'Bold'].map(opt => (
+                                    <button
+                                        key={opt}
+                                        onClick={() => setSettings({...settings, documentStyle: opt})}
+                                        className={clsx(
+                                            "px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all", 
+                                            settings.documentStyle === opt ? "bg-white shadow-xl text-slate-900" : "text-slate-300 hover:text-slate-500"
+                                        )}
+                                    >
+                                        {opt}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        <div className={gridLayout}>
-                            <div>
-                                <label className={labelClasses}>Document Style</label>
-                                <p className="text-xs text-slate-400 mt-1">Choose the visual aesthetic for your generated PDF invoices and estimates. <a href="#" className="text-[#5E6AD2] hover:underline">Preview Styles →</a></p>
+                        <div className="flex items-center justify-between gap-6">
+                            <div className="space-y-1">
+                                <label className="text-[12px] font-black uppercase text-slate-900">Routing Redundancy (BCC)</label>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Synchronize all outgoing traffic to your archive terminal.</p>
                             </div>
-                            <div className="md:col-span-2">
-                                <div className="inline-flex bg-slate-100 p-1 rounded-lg">
-                                    {['Minimal', 'Professional', 'Bold'].map(opt => (
-                                        <button
-                                            key={opt}
-                                            onClick={() => setSettings({...settings, documentStyle: opt})}
-                                            className={clsx(
-                                                "px-4 py-1.5 text-sm font-medium rounded-md transition-colors", 
-                                                settings.documentStyle === opt ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"
-                                            )}
-                                        >
-                                            {opt}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={gridLayout}>
-                            <label className={labelClasses}>Estimate Prefix</label>
-                            <div className="md:col-span-2 flex items-center gap-3">
-                                <input type="text" name="estimatePrefix" value={settings.estimatePrefix} onChange={handleChange} className={clsx(inputClasses, "max-w-[120px]")} />
-                                <span className="text-sm text-slate-400">e.g., EST-0001</span>
-                            </div>
-                        </div>
-
-                        <div className={gridLayout}>
-                            <div>
-                                <label className={labelClasses}>BCC Email Addresses</label>
-                                <p className="text-xs text-slate-400 mt-1">Automatically send a copy of all outgoing invoices, receipts, and estimates to another email. <a href="#" className="text-[#5E6AD2] hover:underline">Learn about routing →</a></p>
-                            </div>
-                            <div className="md:col-span-2 flex justify-end md:justify-start">
-                                <Toggle checked={settings.bccEmails} onChange={(v) => setSettings({...settings, bccEmails: v})} />
-                            </div>
+                            <Toggle checked={settings.bccEmails} onChange={(v) => setSettings({...settings, bccEmails: v})} />
                         </div>
                     </div>
                 </div>
 
                 {/* 5. Notifications & Automation */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-8">
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">5. Notifications & Automation</h2>
-                        <p className="text-sm text-slate-500 mt-1">Control your background revenue engines.</p>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">5. Automation Protocols</h2>
                     </div>
 
                     <div className="space-y-8">
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-50 pb-6">
-                            <div>
-                                <label className={labelClasses}>Auto-Send Invoice Generation</label>
-                                <p className="text-xs text-slate-400 mt-1">Automatically dispatch drafted invoices when API triggers them. <a href="#" className="text-[#5E6AD2] hover:underline">Read API Docs →</a></p>
+                        {[
+                            { id: 'autoSendInvoice', label: 'Autonomous Dispatch', desc: 'Instantly transmit invoices triggered via API hooks.' },
+                            { id: 'paymentReminders', label: 'Overdue Interception', desc: 'Automated follow-ups for expired ledger items.' },
+                            { id: 'dailySummary', label: 'Institutional Briefing', desc: 'Daily revenue digest delivered at 08:00 UTC.' }
+                        ].map((item) => (
+                            <div key={item.id} className="flex items-center justify-between gap-6 border-b border-slate-50 last:border-0 pb-8 last:pb-0">
+                                <div className="space-y-1">
+                                    <label className="text-[12px] font-black uppercase text-slate-900">{item.label}</label>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.desc}</p>
+                                </div>
+                                <Toggle checked={(settings as any)[item.id]} onChange={(v) => setSettings({...settings, [item.id]: v})} />
                             </div>
-                            <Toggle checked={settings.autoSendInvoice} onChange={(v) => setSettings({...settings, autoSendInvoice: v})} />
-                        </div>
-
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-50 pb-6">
-                            <div>
-                                <label className={labelClasses}>Payment Reminders</label>
-                                <p className="text-xs text-slate-400 mt-1">Send automated follow-ups for overdue invoices based on terms selected.</p>
-                            </div>
-                            <Toggle checked={settings.paymentReminders} onChange={(v) => setSettings({...settings, paymentReminders: v})} />
-                        </div>
-
-                        <div className="flex items-start justify-between gap-4 pb-2">
-                            <div>
-                                <label className={labelClasses}>Daily Summary</label>
-                                <p className="text-xs text-slate-400 mt-1">Receive a digest email every morning with revenue statistics and tasks.</p>
-                            </div>
-                            <Toggle checked={settings.dailySummary} onChange={(v) => setSettings({...settings, dailySummary: v})} />
-                        </div>
+                        ))}
                     </div>
                 </div>
 
                 {/* 6. Email Integrations (SMTP) */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-8">
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">6. Email Integrations (SMTP)</h2>
-                        <p className="text-sm text-slate-500 mt-1">Send invoices directly from your own email domain. By default, emails are sent via <span className="font-semibold text-slate-700">delivery@invoiceos.com</span>.</p>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">6. Communication Infrastructure</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Deploy your institutional domain for document transit.</p>
                     </div>
 
-                    <div className="bg-[#eff2fe] border border-indigo-100 p-4 rounded-lg flex gap-3 text-sm text-indigo-800">
-                        <Info size={20} className="text-[#5E6AD2] flex-shrink-0" />
-                        <p>
-                            Don't have an SMTP server? You can use a service like <strong>SendGrid</strong> or <strong>Mailgun</strong> and plug their credentials here to send emails from your custom domain.
+                    <div className="bg-slate-900 rounded-3xl p-8 text-white flex gap-6 items-center">
+                        <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+                            <Zap size={24} className="text-emerald-400" />
+                        </div>
+                        <p className="text-[11px] font-bold uppercase leading-relaxed tracking-wider">
+                            By deploying your own SMTP node, you gain full control over deliverability and institutional branding. Ensure your SPF and DKIM records are correctly anchored.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className={labelClasses}>SMTP Host</label>
-                            <input type="text" name="smtpHost" value={settings.smtpHost} onChange={handleChange} className={inputClasses} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className={labelClasses}>SMTP Relay Host</label>
+                            <input type="text" name="smtpHost" value={settings.smtpHost} onChange={handleChange} className={inputClasses} placeholder="smtp.provider.com" />
                         </div>
-                        <div className="space-y-2">
-                            <label className={labelClasses}>SMTP Port</label>
-                            <input type="text" name="smtpPort" value={settings.smtpPort} onChange={handleChange} className={inputClasses} />
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Encryption Port</label>
+                            <input type="text" name="smtpPort" value={settings.smtpPort} onChange={handleChange} className={inputClasses} placeholder="587" />
                         </div>
-                        <div className="space-y-2">
-                            <label className={labelClasses}>Username</label>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Credential Username</label>
                             <input type="text" name="smtpUsername" value={settings.smtpUsername} onChange={handleChange} className={inputClasses} />
                         </div>
-                        <div className="space-y-2">
-                            <label className={labelClasses}>Password / API Key</label>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Security Token / Key</label>
                             <input type="password" name="smtpPassword" value={settings.smtpPassword} onChange={handleChange} className={inputClasses} />
                         </div>
-                        <div className="space-y-2">
-                            <label className={labelClasses}>From Name</label>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Dispatch Identity (From Name)</label>
                             <input type="text" name="fromName" value={settings.fromName} onChange={handleChange} className={inputClasses} />
                         </div>
-                        <div className="space-y-2">
-                            <label className={labelClasses}>From Email</label>
+                        <div className="space-y-3">
+                            <label className={labelClasses}>Institutional From Address</label>
                             <input type="text" name="fromEmail" value={settings.fromEmail} onChange={handleChange} className={inputClasses} />
                         </div>
                     </div>
 
-                    <div className="flex justify-end pt-2">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-50 transition-colors">
-                            <Mail size={16} /> Send Test Email
+                    <div className="flex justify-end pt-4">
+                        <button 
+                            onClick={handleSendTestEmail}
+                            disabled={testingEmail}
+                            className="flex items-center gap-3 px-8 py-3.5 bg-slate-50 border border-slate-100 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-100 transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            {testingEmail ? <Clock className="animate-spin" size={14} /> : <><Mail size={14} /> Send Verification Pulse</>}
                         </button>
                     </div>
                 </div>
 
                 {/* Sub Footer Actions */}
-                <div className="flex justify-end pb-8">
+                <div className="flex justify-end pb-12">
                     <button 
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#5E6AD2] text-white text-sm font-medium shadow-sm hover:bg-[#4E5AC2] transition-colors active:scale-95 disabled:opacity-50"
+                        className="px-12 py-5 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-[0.25em] shadow-[0_20px_50px_rgba(15,23,42,0.2)] hover:bg-slate-800 hover:scale-105 transition-all active:scale-95 disabled:opacity-50"
                     >
-                        {saving ? <Clock className="animate-spin" size={16} /> : "Save All Settings"}
+                        {saving ? <Clock className="animate-spin" size={18} /> : "Synchronize Console Preferences"}
                     </button>
                 </div>
 
                 {/* 7. Business Management */}
-                <div className="bg-white rounded-2xl border border-rose-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-rose-100">
-                        <h2 className="text-lg font-bold text-rose-600 flex items-center gap-2">
-                            <AlertTriangle size={20} /> 7. Business Management
-                        </h2>
-                        <p className="text-sm text-rose-500 mt-1">Caution: Destructive actions below. Proceed with care.</p>
+                <div className="bg-white rounded-[2.5rem] border border-rose-100 shadow-sm overflow-hidden">
+                    <div className="p-10 border-b border-rose-50 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-black text-rose-600 uppercase tracking-tight flex items-center gap-3">
+                                <AlertTriangle size={24} /> 7. Workspace Termination
+                            </h2>
+                            <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-2">Caution: Destructive protocols below. Proceed with care.</p>
+                        </div>
+                        <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+                            <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                            <span className="text-[10px] font-black uppercase text-emerald-700 tracking-wider">Active Workspace</span>
+                        </div>
                     </div>
                     
-                    <div className="p-8 space-y-8">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-6">
-                            <div>
-                                <label className={labelClasses}>Active Workspace</label>
-                                <p className="text-xs text-slate-400 mt-1">The business you are currently viewing and managing.</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="font-bold text-slate-900">invoiceos</span>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 tracking-wider">ACTIVE</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <button className="text-sm font-bold text-rose-600 hover:text-rose-700 hover:underline">
-                                Delete this business
-                            </button>
-                            <p className="text-xs text-slate-400 mt-1 mb-4">Permanently delete this business and all its data. This action cannot be undone. Any active subscriptions must be canceled first to avoid continued charges.</p>
-                            
-                            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start gap-3">
-                                <Lock size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
-                                <p className="text-xs font-semibold text-amber-800">
-                                    You cannot delete your only business. Create another business first before attempting to delete this one.
+                    <div className="p-10 space-y-10">
+                        <div className="bg-rose-50 border border-rose-100 p-8 rounded-3xl flex gap-6 items-start">
+                            <Lock size={20} className="text-rose-600 shrink-0 mt-1" />
+                            <div className="space-y-4">
+                                <p className="text-[11px] font-bold text-rose-800 uppercase leading-relaxed tracking-wider">
+                                    Terminating this institutional workspace will result in the permanent decommissioning of all related invoices, client records, and financial intelligence. Any active subscription nodes must be manually severed prior to termination.
                                 </p>
+                                <button 
+                                    onClick={handleDeleteBusiness}
+                                    className="text-[11px] font-black text-rose-600 hover:text-rose-700 underline uppercase tracking-[0.2em] decoration-2 underline-offset-4"
+                                >
+                                    Initiate Termination Protocol
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -533,7 +629,7 @@ export default function SettingsPage() {
                 title={modalConfig.title}
                 message={modalConfig.message}
                 type={modalConfig.type}
-                actionLabel="Dismiss"
+                actionLabel="Acknowledge"
             />
         </div>
     );
