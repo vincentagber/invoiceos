@@ -5,8 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -14,6 +14,7 @@ model User {
   email         String     @unique
   password      String
   name          String?
+  profilePicture Bytes?     // Binary image storage
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   businesses    Business[]
@@ -25,11 +26,40 @@ model Business {
   ownerId         String
   owner           User             @relation(fields: [ownerId], references: [id])
   
-  // White-labeling
-  logo            String?
+  // Business Profile
+  address         String?
+  phone           String?
+  email           String?
+  taxNumber       String?
+  paymentDetails  String?
+  
+  // Branding (Binary Storage)
+  logo            Bytes?
+  favicon         Bytes?
+  icon            Bytes?
   brandColor      String?          @default("#4F46E5")
   customDomain    String?          @unique
-  smtpConfig      Json?            // Stores SMTP settings
+  
+  // Invoice Defaults
+  defaultCurrency   String?        @default("NGN")
+  invoicePrefix     String?        @default("INV")
+  defaultDuePeriod  String?        @default("Net 30 Days")
+  defaultDiscount   Float?         @default(0)
+  defaultNotes      String?
+  
+  // Workflow Preferences
+  invoiceReminders  Boolean?       @default(false)
+  documentStyle     String?        @default("Professional")
+  estimatePrefix    String?        @default("EST")
+  bccEmails         Boolean?       @default(false)
+  
+  // Notifications & Automation
+  autoSendInvoice   Boolean?       @default(false)
+  paymentReminders  Boolean?       @default(true)
+  dailySummary      Boolean?       @default(false)
+  
+  // SMTP Configuration
+  smtpConfig        Json?            // Stores SMTP settings (host, port, user, pass, etc.)
   
   clients         Client[]
   invoices        Invoice[]
@@ -40,6 +70,7 @@ model Business {
   
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  version         Int              @default(1)
 }
 
 model Subscription {
@@ -57,6 +88,19 @@ model Subscription {
   
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  transactions    SubscriptionTransaction[]
+}
+
+model SubscriptionTransaction {
+  id              String      @id @default(cuid())
+  subscriptionId  String
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id])
+  plan            String
+  amount          Float
+  billingCycle    String
+  paystackRef     String?     @unique
+  status          String      // e.g., "SUCCESS", "FAILED"
+  createdAt       DateTime    @default(now())
 }
 
 model Client {
@@ -74,6 +118,7 @@ model Client {
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  version     Int       @default(1)
 }
 
 model Invoice {
@@ -102,6 +147,7 @@ model Invoice {
   
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  version         Int           @default(1)
 
   @@unique([businessId, invoiceNumber])
 }
@@ -135,6 +181,7 @@ model Quotation {
   
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  version         Int             @default(1)
 
   @@unique([businessId, quotationNumber])
 }

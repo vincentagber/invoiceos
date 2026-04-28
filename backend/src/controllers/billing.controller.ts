@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
+import { supabase } from '../lib/supabase';
 import axios from 'axios';
-
-const prisma = new PrismaClient();
+import { logger } from '../utils/logger';
 
 export const verifySubscription = async (req: Request, res: Response) => {
     const { reference, businessId, plan, billingCycle, amount } = req.body;
 
     if (!reference || !businessId || !plan || !billingCycle || !amount) {
-        return res.status(400).json({ error: 'Missing required parameters' });
+        return res.status(400).json({ error: 'Missing institutional parameters' });
     }
 
     try {
@@ -20,69 +20,101 @@ export const verifySubscription = async (req: Request, res: Response) => {
         });
 
         if (response.data.data.status !== 'success') {
-            return res.status(400).json({ error: 'Payment verification failed' });
+            return res.status(400).json({ error: 'Paystack verification failed' });
         }
 
-        // Verify amount (Paystack amount is in kobo)
         const paystackAmount = response.data.data.amount / 100;
         if (paystackAmount < amount) {
-            return res.status(400).json({ error: 'Payment amount mismatch' });
+            return res.status(400).json({ error: 'Institutional amount mismatch' });
         }
 
-        // 2. Calculate end date
         const startDate = new Date();
         const endDate = new Date();
-        if (billingCycle === 'yearly') {
+        if (billingCycle.toLowerCase() === 'yearly') {
             endDate.setFullYear(endDate.getFullYear() + 1);
         } else {
             endDate.setMonth(endDate.getMonth() + 1);
         }
 
-        // 3. Create or update subscription
-        const subscription = await prisma.subscription.upsert({
-            where: { businessId },
-            create: {
-                businessId,
+        // 3. Upsert subscription using Supabase fallback
+        const { data: subscription, error: subError } = await supabase
+            .from('subscriptions')
+            .upsert({
+                organization_id: businessId,
                 plan: plan.toUpperCase(),
                 status: 'ACTIVE',
                 amount: amount,
-                billingCycle: billingCycle.toUpperCase(),
-                startDate,
-                endDate,
-                paystackRef: reference
-            },
-            update: {
+                billing_cycle: billingCycle.toUpperCase(),
+                start_date: startDate.toISOString(),
+                end_date: endDate.toISOString(),
+                paystack_ref: reference,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'organization_id' })
+            .select()
+            .single();
+
+        if (subError) throw subError;
+
+        // 4. Record transaction history
+        await supabase
+            .from('subscription_transactions')
+            .insert({
+                subscription_id: subscription.id,
                 plan: plan.toUpperCase(),
-                status: 'ACTIVE',
                 amount: amount,
-                billingCycle: billingCycle.toUpperCase(),
-                startDate,
-                endDate,
-                paystackRef: reference,
-                updatedAt: new Date()
-            }
-        });
+                billing_cycle: billingCycle.toUpperCase(),
+                paystack_ref: reference,
+                status: 'SUCCESS'
+            });
 
         res.json({
-            message: 'Subscription activated successfully',
+            message: 'Institutional Subscription Activated',
             subscription
         });
     } catch (error: any) {
-        console.error('Subscription verification error:', error.response?.data || error.message);
-        res.status(500).json({ error: 'Internal server error during verification' });
+        logger.error('Subscription verification failure:', error);
+        res.status(500).json({ error: 'Internal system error during verification' });
     }
 };
 
 export const getSubscription = async (req: Request, res: Response) => {
-    const { businessId } = req.params;
+    const businessId = req.params.businessId as string;
 
     try {
-        const subscription = await prisma.subscription.findUnique({
-            where: { businessId }
-        });
+        const { data: subscription, error } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('organization_id', businessId)
+            .maybeSingle();
 
         res.json(subscription || { status: 'INACTIVE', plan: 'FREE' });
     } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+        logger.error('Failed to fetch subscription intelligence', error);
+        res.status(500).json({ error: 'Internal system error' });
+    }
+};
+
+export const getBillingHistory = async (req: Request, res: Response) => {
+    const businessId = req.params.businessId as string;
+
+    try {
+        const { data: subscription, error: subError } = await supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('organization_id', businessId)
+            .maybeSingle();
+
+        if (!subscription) return res.json([]);
+
+        const { data: transactions, error } = await supabase
+            .from('subscription_transactions')
+            .select('*')
+            .eq('subscription_id', subscription.id)
+            .order('created_at', { ascending: false });
+
+        res.json(transactions || []);
+    } catch (error) {
+        logger.error('Failed to retrieve billing history', error);
+        res.status(500).json({ error: 'Internal system error' });
     }
 };

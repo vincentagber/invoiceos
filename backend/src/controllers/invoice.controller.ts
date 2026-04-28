@@ -238,16 +238,38 @@ export const addPayment = async (req: Request, res: Response, next: NextFunction
 
 export const update = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { items, ...data } = req.body;
+    const { items, version, ...data } = req.body;
     
+    // OCC Check: Update only if version matches
     const { data: invoice, error: invError } = await supabase
       .from('invoices')
-      .update(data)
+      .update({ 
+        ...data, 
+        version: (version || 1) + 1,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', req.params.id as string)
+      .eq('version', version || 1)
       .select()
       .single();
 
-    if (invError) throw invError;
+    if (invError) {
+      // PGRST116: No rows matched the filter (conflict or not found)
+      if (invError.code === 'PGRST116') {
+        const { data: current } = await supabase
+          .from('invoices')
+          .select('version, updated_at')
+          .eq('id', req.params.id as string)
+          .single();
+          
+        return res.status(409).json({
+          message: 'Conflict detected: The document has been modified by another user.',
+          currentVersion: current?.version,
+          lastModified: current?.updated_at
+        });
+      }
+      throw invError;
+    }
 
     if (items) {
       await supabase.from('invoice_items').delete().eq('invoice_id', req.params.id as string);
@@ -259,6 +281,9 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
         })));
       if (itemsError) throw itemsError;
     }
+
+    const io = req.app.get('io');
+    io.to(invoice.organization_id).emit('invoice-updated', invoice);
 
     res.json(invoice);
   } catch (error) {

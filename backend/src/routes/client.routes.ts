@@ -8,5 +8,7 @@ router.use(authenticate);
 router.get('/', clientController.getAll);
 router.post('/', clientController.create);
 router.get('/:id', clientController.getOne);
+router.put('/:id', clientController.update);
+router.delete('/:id', clientController.remove);
 
 export default router;

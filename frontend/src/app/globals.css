@@ -8,41 +8,51 @@
   /* Core Brand Colors (InvoiceOS Precision) */
   --primary: #0b1c30;          /* Institutional Navy */
   --on-primary: #ffffff;
-  --secondary: #10B981;        /* Surgical Emerald */
+  --secondary: #006c49;        /* Surgical Emerald */
   --on-secondary: #ffffff;
   
-  /* Surface Containers */
-  --surface: #f8f9ff;
-  --surface-variant: #d3e4fe;
+  /* Material 3 Styled Tokens from Mockup */
+  --outline: #76777d;
+  --on-surface-variant: #45464d;
   --surface-container-low: #eff4ff;
   --surface-container: #e5eeff;
   --surface-container-high: #dce9ff;
+  --surface-container-highest: #d3e4fe;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
 }
 
 @theme inline {
   /* Color Palette Overrides */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
   --color-surface: var(--surface);
+  --color-outline: var(--outline);
+  --color-error: var(--error);
   
-  /* Font Families */
-  --font-sans: "Inter", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Inter", var(--font-inter), sans-serif;
-  --font-mono: "Inter", monospace;
+  /* Font Family Aliases */
+  --font-sans: "Figtree", var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Figtree", var(--font-figtree), sans-serif;
+  --font-display: "Figtree", var(--font-figtree), sans-serif;
+  --font-headline: "Figtree", var(--font-figtree), sans-serif;
+  --font-body: "Figtree", var(--font-figtree), sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Corner Radius Precision */
-  --radius-sm: 2px;
-  --radius-default: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  /* Corner Radius Precision (Institutional Standard) */
+  --radius-sm: 0.125rem;
+  --radius-default: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
 
   /* Shadow Precision (Ambient institutional shadows) */
   --shadow-sm: 0 1px 2px 0 rgba(11, 28, 48, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(11, 28, 48, 0.05), 0 2px 4px -2px rgba(11, 28, 48, 0.05);
   --shadow-lg: 0 12px 20px -5px rgba(11, 28, 48, 0.04), 0 8px 10px -6px rgba(11, 28, 48, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 html {

@@ -44,7 +44,27 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
 
     metrics.conversionRate = sentCount > 0 ? (paidCount / sentCount) * 100 : 0;
 
-    res.json({ metrics });
+    // 2. Fetch Expenses for aggregation (Resilient)
+    let totalExpenses = 0;
+    try {
+      const { data: expenses, error: expError } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('organization_id', organizationId);
+
+      if (!expError) {
+        totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
+      }
+    } catch (e) {
+      console.error('Expenses table might not be migrated yet', e);
+    }
+
+    res.json({ 
+      metrics: {
+        ...metrics,
+        totalExpenses
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -65,11 +85,47 @@ export const getRevenueTrends = async (req: AuthRequest, res: Response, next: Ne
 
     if (error) throw error;
 
-    const trends = (invoices || []).reduce((acc: any, inv) => {
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      last6Months.push(d.toLocaleString('default', { month: 'short' }));
+    }
+
+    const trends = last6Months.map(month => ({
+      name: month,
+      revenue: 0,
+      expenses: 0
+    }));
+
+    (invoices || []).forEach(inv => {
       const month = new Date(inv.issue_date).toLocaleString('default', { month: 'short' });
-      acc[month] = (acc[month] || 0) + inv.total_amount;
-      return acc;
-    }, {});
+      const trend = trends.find(t => t.name === month);
+      if (trend) {
+        trend.revenue += inv.total_amount;
+      }
+    });
+
+    // Fetch Expenses for trends (Resilient)
+    try {
+      const { data: expensesData, error: expError } = await supabase
+        .from('expenses')
+        .select('amount, date')
+        .eq('organization_id', organizationId)
+        .gte('date', sixMonthsAgo.toISOString());
+
+      if (!expError && expensesData) {
+        expensesData.forEach(exp => {
+          const month = new Date(exp.date).toLocaleString('default', { month: 'short' });
+          const trend = trends.find(t => t.name === month);
+          if (trend) {
+            trend.expenses += exp.amount;
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Expenses trends fetch failed', e);
+    }
 
     res.json(trends);
   } catch (error) {

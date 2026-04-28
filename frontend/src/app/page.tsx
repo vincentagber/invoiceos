@@ -6,31 +6,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ComplianceBridge from '@/components/landing/ComplianceBridge';
 
 export default function LandingPage() {
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [isYearly, setIsYearly] = useState(false);
 
     const faqs = [
-        { 
-            q: "How does InvoiceOS handle dual-jurisdiction compliance (FIRS and IRS)?", 
-            a: "InvoiceOS operates a dual-ledger system. For Nigerian entities, we automate FIRS-compliant VAT (7.5%) and WHT deductions with automated credit note generation. For US entities, we manage W-9 collection, 1099 reporting, and IRS-ready transactional records, ensuring you stay compliant in both regions simultaneously." 
+        {
+            q: "How does InvoiceOS handle dual-jurisdiction compliance (FIRS and IRS)?",
+            a: "InvoiceOS operates a dual-ledger system. For Nigerian entities, we automate FIRS-compliant VAT (7.5%) and WHT deductions with automated credit note generation. For US entities, we manage W-9 collection, 1099 reporting, and IRS-ready transactional records, ensuring you stay compliant in both regions simultaneously."
         },
-        { 
-            q: "Can I automate Withholding Tax (WHT) calculations?", 
-            a: "Yes. Our system automatically calculates the appropriate WHT rate based on the vendor type and service category. We generate the necessary documentation for your accounting team to reconcile with the FIRS portal, reducing manual errors by 98%." 
+        {
+            q: "Can I automate Withholding Tax (WHT) calculations?",
+            a: "Yes. Our system automatically calculates the appropriate WHT rate based on the vendor type and service category. We generate the necessary documentation for your accounting team to reconcile with the FIRS portal, reducing manual errors by 98%."
         },
-        { 
-            q: "Is my financial data secure and SOC2 compliant?", 
-            a: "Security is our highest priority. InvoiceOS is SOC2 Type II compliant and utilizes bank-grade AES-256 encryption. We undergo regular third-party security audits and maintain strict data residency protocols to protect your institutional financial records." 
+        {
+            q: "Is my financial data secure and SOC2 compliant?",
+            a: "Security is our highest priority. InvoiceOS is SOC2 Type II compliant and utilizes bank-grade AES-256 encryption. We undergo regular third-party security audits and maintain strict data residency protocols to protect your institutional financial records."
         },
-        { 
-            q: "Does InvoiceOS support multi-business switching for agencies?", 
-            a: "Absolutely. Our 'Institutional Switcher' allows you to manage multiple legal entities, subsidiaries, or client accounts from a single dashboard. Each entity maintains its own isolated ledger, tax settings, and multi-currency balances." 
+        {
+            q: "Does InvoiceOS support multi-business switching for agencies?",
+            a: "Absolutely. Our 'Institutional Switcher' allows you to manage multiple legal entities, subsidiaries, or client accounts from a single dashboard. Each entity maintains its own isolated ledger, tax settings, and multi-currency balances."
         },
-        { 
-            q: "Can I white-label my invoices with custom domains?", 
-            a: "Yes, our Enterprise plan includes full white-labeling capabilities. You can host the payment portal on your own subdomain (e.g., billing.yourcompany.com) and connect your SMTP server to ensure all financial communications come directly from your brand's email address." 
+        {
+            q: "Can I white-label my invoices with custom domains?",
+            a: "Yes, our Enterprise plan includes full white-labeling capabilities. You can host the payment portal on your own subdomain (e.g., billing.yourcompany.com) and connect your SMTP server to ensure all financial communications come directly from your brand's email address."
         }
     ];
 
@@ -43,7 +44,7 @@ export default function LandingPage() {
                 {/* Hero Section */}
                 <section className="relative pt-24 pb-32 overflow-hidden hero-gradient">
                     <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
@@ -68,22 +69,49 @@ export default function LandingPage() {
                                 </button>
                             </div>
                         </motion.div>
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             className="relative"
                         >
                             <div className="bg-white rounded-xl shadow-2xl border border-slate-200 p-4 relative z-10">
-                                <img 
-                                    alt="Dashboard Preview" 
-                                    className="rounded-lg w-full h-auto" 
+                                <img
+                                    alt="Dashboard Preview"
+                                    className="rounded-lg w-full h-auto"
                                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVU4d-zYyxc9Y8q0J_V-DzY4NKYpDyvvwJ2T-TytuneMhKH74Rj8JWkNQEPYvMcFEYi-c4I9X-il7eBzF09Gdmzr0Un1RLSwQMi8ut2uVkdPVkEV0WhxvfkML-eSWrkhs6rIySeTO7SB9IFH3iSub0vBVSlUq2Fp5dfIMg5yhf2OUhnQ_56KPP81Vf_skcw_4MjoFwdb6T2Iznlq3LBf7pl3cFDll5llRP0rfUMDI0gKYAPZ3nNh-_i_eQ3QYdcJJs4qOhB9Wc6Og"
                                 />
                             </div>
                             <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#6cf8bb]/20 rounded-full blur-3xl -z-10"></div>
                             <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-[#d3e4fe]/30 rounded-full blur-3xl -z-10"></div>
                         </motion.div>
+                    </div>
+                </section>
+
+                {/* Enterprise Benefits */}
+                <section className="py-16 bg-white">
+                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-[#e5eeff] rounded-full flex items-center justify-center mb-4">
+                                <span className="material-symbols-outlined text-[#006c49] text-2xl">description</span>
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Compliance Reports</h3>
+                            <p className="text-[#45464d]">Automated FIRS/IRS filings, real‑time audit‑ready PDFs and API access.</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-[#e5eeff] rounded-full flex items-center justify-center mb-4">
+                                <span className="material-symbols-outlined text-[#006c49] text-2xl">history</span>
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Immutable Audit Trail</h3>
+                            <p className="text-[#45464d]">Every transaction logged with cryptographic proof for full traceability.</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-[#e5eeff] rounded-full flex items-center justify-center mb-4">
+                                <span className="material-symbols-outlined text-[#006c49] text-2xl">swap_horiz</span>
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Multi‑Entity Switcher</h3>
+                            <p className="text-[#45464d]">Manage up to 5 subsidiaries instantly from a single dashboard.</p>
+                        </div>
                     </div>
                 </section>
 
@@ -100,93 +128,8 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                {/* Dual Jurisdiction Bento Grid */}
-                <section className="py-24 max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                        {/* Nigeria Card */}
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="md:col-span-7 bg-white rounded-xl border border-slate-200 p-8 flex flex-col justify-between overflow-hidden relative group"
-                        >
-                            <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <span className="w-10 h-6 bg-emerald-700 rounded-sm"></span>
-                                    <span className="text-sm font-bold tracking-tight text-[#0b1c30]">Nigeria Regional Compliance</span>
-                                </div>
-                                <h3 className="text-3xl font-bold tracking-tight mb-4">FIRS VAT & WHT Automation</h3>
-                                <p className="text-[#45464d] mb-8 max-w-md">Automatically calculate and file Withholding Tax and Value Added Tax. Support for CAC documentation and e-invoicing mandates.</p>
-                                <ul className="space-y-3 mb-8">
-                                    <li className="flex items-center gap-3 text-sm font-medium">
-                                        <span className="material-symbols-outlined text-[#006c49] text-lg">check_circle</span>
-                                        Auto-generated VAT invoices (7.5%)
-                                    </li>
-                                    <li className="flex items-center gap-3 text-sm font-medium">
-                                        <span className="material-symbols-outlined text-[#006c49] text-lg">check_circle</span>
-                                        WHT credit note reconciliation
-                                    </li>
-                                </ul>
-                            </div>
-                            <div className="mt-4 translate-x-12 translate-y-8 group-hover:translate-x-8 group-hover:translate-y-4 transition-transform duration-500">
-                                <img alt="Nigeria Compliance" className="rounded-xl w-full h-48 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfWhAiRseuxMmc_4vwZVhomXLhhttBeF0K7XX2jGk518kW2YmAJ41Fv3HWrcknKkL_1Ai13od2eFeSqmppVfcHX94-vQ9ujHS-k6zdlIedVheLGZ-lVulBq_CPX57ZYAgyCEeAU5TNavTdacVihgMg02bY4pwAcodW2GmgCKqPvSPc3Awj3jykru1rQPU2ASQ8pvHNSkIlerku5TsYEHm_uvxn-Y-C6ofr4T78jyiTiRvrZ0uvvJ2dnGrXYuFvq8xy3553kZsUxzg" />
-                            </div>
-                        </motion.div>
-                        {/* Global Card */}
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="md:col-span-5 bg-[#0b1c30] text-white rounded-xl p-10 flex flex-col justify-between relative overflow-hidden group border border-white/5"
-                        >
-                            {/* Animated Background Pulse */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] -z-0 group-hover:bg-blue-500/20 transition-all duration-700"></div>
-                            
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-8">
-                                    <div className="w-10 h-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-sm flex items-center justify-center shadow-lg shadow-blue-900/40">
-                                        <span className="text-[10px] font-bold text-white">★</span>
-                                    </div>
-                                    <span className="text-xs font-bold tracking-[0.2em] uppercase text-blue-400/80">Institutional Intel</span>
-                                </div>
-                                
-                                <h3 className="text-3xl font-bold tracking-tight mb-6 leading-tight">IRS Compliance & <br/><span className="text-blue-400">USD Settlements</span></h3>
-                                <p className="text-slate-400 mb-10 leading-relaxed font-medium">Full 1099 reporting and multi-currency support. Settle in USD via Stripe or ACH with automatic FX adjustment and institutional-grade ledgering.</p>
-                                
-                                {/* Advanced Financial Code Block */}
-                                <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 font-mono text-[11px] space-y-3 shadow-2xl relative overflow-hidden group-hover:border-blue-500/30 transition-colors">
-                                    <div className="flex gap-1.5 mb-2">
-                                        <div className="w-2 h-2 rounded-full bg-rose-500/50"></div>
-                                        <div className="w-2 h-2 rounded-full bg-amber-500/50"></div>
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500/50"></div>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-slate-500">// Compliance Verification</span>
-                                        <span className="text-emerald-400 flex items-center gap-1 font-bold">● SECURED</span>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p><span className="text-blue-400">const</span> settlement = <span className="text-amber-400">"ACH_INSTANT"</span>;</p>
-                                        <p><span className="text-blue-400">const</span> status = <span className="text-amber-400">"IRS_W9_VERIFIED"</span>;</p>
-                                        <p><span className="text-blue-400">const</span> reporting = <span className="text-blue-300">ledger</span>.<span className="text-indigo-300">generate1099</span>();</p>
-                                    </div>
-                                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                        <span className="material-symbols-outlined text-7xl text-white">shield_with_house</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="mt-10 flex items-center gap-4 text-xs font-bold tracking-widest text-slate-500 uppercase">
-                                <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span> SOC2 Type II</span>
-                                <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> PCI DSS v4.0</span>
-                            </div>
-
-                            {/* Background Symbol */}
-                            <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
-                                <span className="material-symbols-outlined text-[12rem] text-white">public</span>
-                            </div>
-                        </motion.div>
-                    </div>
-                </section>
+                {/* Compliance Bridge Visualization */}
+                <ComplianceBridge />
 
                 {/* Feature Clusters */}
                 <section className="py-24 bg-[#eff4ff]">
@@ -201,7 +144,7 @@ export default function LandingPage() {
                                 { icon: 'brush', title: 'Customization', desc: 'Complete white-label capabilities. Connect your own SMTP for personalized invoice delivery.', list: ['Custom Domain & CSS', 'Branded SMTP Server'] },
                                 { icon: 'hub', title: 'Operations', desc: 'Institutional switcher for managing multiple entities and collaboration tools for accounting teams.', list: ['Multi-Entity Switcher', 'Role-Based Access'] }
                             ].map((cluster, i) => (
-                                <motion.div 
+                                <motion.div
                                     key={i}
                                     initial={{ opacity: 0, y: 20 }}
                                     whileInView={{ opacity: 1, y: 0 }}
@@ -234,7 +177,7 @@ export default function LandingPage() {
                             <h2 className="text-4xl font-bold tracking-tight mb-4">Transparent Institutional Pricing</h2>
                             <div className="flex items-center justify-center gap-4 mt-8">
                                 <span className={clsx("text-sm transition-colors", !isYearly ? "font-bold text-black" : "text-slate-400")}>Monthly</span>
-                                <button 
+                                <button
                                     onClick={() => setIsYearly(!isYearly)}
                                     className="w-12 h-6 bg-[#e5eeff] rounded-full relative p-1 transition-all duration-300"
                                 >
@@ -270,8 +213,8 @@ export default function LandingPage() {
                                         Multi-currency (NGN/USD)
                                     </li>
                                 </ul>
-                                <Link 
-                                    href={`/register?plan=professional&cycle=${isYearly ? 'yearly' : 'monthly'}`} 
+                                <Link
+                                    href={`/register?plan=professional&cycle=${isYearly ? 'yearly' : 'monthly'}`}
                                     className="w-full py-3 rounded-lg border border-black text-black font-bold hover:bg-[#e5eeff] transition-all text-center"
                                 >
                                     Choose Professional
@@ -305,8 +248,8 @@ export default function LandingPage() {
                                         Priority 24/7 Support
                                     </li>
                                 </ul>
-                                <Link 
-                                    href={`/register?plan=enterprise&cycle=${isYearly ? 'yearly' : 'monthly'}`} 
+                                <Link
+                                    href={`/register?plan=enterprise&cycle=${isYearly ? 'yearly' : 'monthly'}`}
                                     className="w-full py-3 rounded-lg bg-black text-white font-bold hover:opacity-90 transition-all text-center"
                                 >
                                     Choose Enterprise
@@ -333,8 +276,8 @@ export default function LandingPage() {
                                         Dedicated Account Manager
                                     </li>
                                 </ul>
-                                <Link 
-                                    href="/register?plan=custom" 
+                                <Link
+                                    href="/register?plan=custom"
                                     className="w-full py-3 rounded-lg border border-slate-300 text-[#0b1c30] font-bold hover:bg-[#e5eeff] transition-all text-center"
                                 >
                                     Contact Sales
@@ -355,7 +298,7 @@ export default function LandingPage() {
                         <div className="space-y-4">
                             {faqs.map((faq, i) => (
                                 <div key={i} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                                    <button 
+                                    <button
                                         onClick={() => setActiveFaq(activeFaq === i ? null : i)}
                                         className="w-full px-8 py-6 text-left flex justify-between items-center group transition-colors hover:bg-[#f8f9ff]"
                                     >
@@ -367,7 +310,7 @@ export default function LandingPage() {
                                     </button>
                                     <AnimatePresence>
                                         {activeFaq === i && (
-                                            <motion.div 
+                                            <motion.div
                                                 initial={{ height: 0, opacity: 0 }}
                                                 animate={{ height: 'auto', opacity: 1 }}
                                                 exit={{ height: 0, opacity: 0 }}

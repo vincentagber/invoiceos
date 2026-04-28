@@ -1,0 +1,183 @@
+2026-04-28 10:03:54 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:05:04 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:05:31 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:07:12 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:09:19 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:09:24 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:09:58 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:16:53 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:17:02 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:19:13 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:21:09 [error]: Failed to fetch subscription Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:21:33 [error]: Failed to fetch subscription Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:21:33 [error]: Failed to fetch billing history Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:24:00 [error]: Failed to fetch billing history Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:24:00 [error]: Failed to fetch subscription Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:24:23 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:24:35 [error]: Failed to fetch subscription Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:24:35 [error]: Failed to fetch billing history Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:24:59 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:25:10 [error]: Failed to fetch subscription Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:25:10 [error]: Failed to fetch billing history Could not find the table 'public.subscriptions' in the schema cache
+2026-04-28 10:31:23 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:31:45 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:31:59 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:43:02 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:43:03 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:44:06 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:52:04 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:52:10 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:54:51 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:54:52 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:55:05 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:55:05 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:55:06 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:55:39 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:56:34 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 10:57:02 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 10:57:11 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 11:03:50 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 11:03:51 [error]: Could not find the table 'public.expenses' in the schema cache
+2026-04-28 11:06:17 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 11:06:39 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 11:36:32 [error]: invalid input syntax for type uuid: "me"
+2026-04-28 11:45:45 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 11:45:55 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 11:55:12 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 11:56:15 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:00:17 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:01:46 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:02:32 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:03:51 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:03:54 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:04:36 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:04:39 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:04:42 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:04:45 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:04:47 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:05:30 [error]: PrismaClientInitializationError: 
+Invalid `prisma.business.findFirst()` invocation in
+/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:44
+
+  4 
+  5 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  6   try {
+→ 7     const business = await prisma.business.findFirst(
+Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at ei.handleRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-28 12:05:57 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:08:37 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:10:06 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:13:48 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-28 12:15:20 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
