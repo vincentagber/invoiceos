@@ -2,108 +2,166 @@
 
 import React, { useState } from 'react';
 import { 
-    AreaChart, 
-    Area, 
+    LineChart, 
+    Line, 
     XAxis, 
     YAxis, 
     CartesianGrid, 
     Tooltip, 
-    ResponsiveContainer
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    ReferenceLine
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 
-export const RevenueChart = ({ data = [] }: { data?: any[] }) => {
-    const [hoveredData, setHoveredData] = useState<any>(null);
+export const RevenueChart = ({ data = [], type = 'line' }: { data?: any[], type?: 'line' | 'bar' }) => {
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-    return (
-        <div className="h-full w-full relative group">
-            <ResponsiveContainer width="100%" height="100%">
-                <AreaChart 
-                    data={data} 
-                    margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
-                    onMouseMove={(v: any) => {
-                        if (v && v.activePayload && v.activePayload.length > 0) {
-                            setHoveredData(v.activePayload[0].payload);
-                        }
-                    }}
-                    onMouseLeave={() => setHoveredData(null)}
-                >
-                    <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="colorPrevious" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#94A3B8" stopOpacity={0.05}/>
-                            <stop offset="95%" stopColor="#94A3B8" stopOpacity={0}/>
-                        </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                    <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#94A3B8', fontSize: 10, fontWeight: 600, fontFamily: 'var(--font-figtree)' }}
-                        dy={10}
-                        interval={1}
-                    />
-                    <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#94A3B8', fontSize: 10, fontWeight: 600, fontFamily: 'var(--font-figtree)' }}
-                        tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                        content={() => null} // We use our custom floating indicator
-                    />
-                    <Area
-                        type="monotone"
-                        dataKey="previous"
-                        stroke="#94A3B8"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        fillOpacity={1}
-                        fill="url(#colorPrevious)"
-                        animationDuration={1500}
-                    />
-                    <Area
-                        type="monotone"
-                        dataKey="revenue"
-                        stroke="#6366F1"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorRevenue)"
-                        activeDot={{ 
-                            r: 6, 
-                            fill: '#6366F1', 
-                            stroke: '#fff', 
-                            strokeWidth: 3,
-                            className: "shadow-xl" 
-                        }}
-                        animationDuration={1000}
-                    />
-                </AreaChart>
-            </ResponsiveContainer>
+    const chartColors = {
+        revenue: {
+            stroke: '#1F8A70', // Emerald Green (Success)
+            fill: '#1F8A70',
+        },
+        expense: {
+            stroke: '#0B1F3A', // Deep Navy (Authority)
+            fill: '#0B1F3A',
+        }
+    };
 
-            {/* Custom Floating Info (Stripe-like) */}
-            {hoveredData && (
-                <div className="absolute top-0 right-0 p-4 animate-in fade-in slide-in-from-right-4 duration-300 pointer-events-none">
-                    <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-2xl shadow-2xl shadow-indigo-500/10 min-w-[160px]">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{hoveredData.name}</p>
-                        <div className="space-y-1">
-                            <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                                {formatCurrency(hoveredData.revenue, 'NGN')}
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                                    +12.5% vs Prev.
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-white/95 backdrop-blur-xl border border-slate-200/60 p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] min-w-[220px] animate-in zoom-in-95 duration-200">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 pb-2 border-b border-slate-100">
+                        {payload[0].payload.name} Insights
+                    </p>
+                    <div className="space-y-4">
+                        {payload.map((entry: any, index: number) => (
+                            <div key={index} className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{entry.name}</span>
+                                </div>
+                                <p className="text-xl font-black text-slate-900 tracking-tighter">
+                                    {formatCurrency(entry.value, 'NGN')}
                                 </p>
                             </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
-            )}
+            );
+        }
+        return null;
+    };
+
+    return (
+        <div className="h-full w-full relative group font-sans">
+            <ResponsiveContainer width="100%" height="100%">
+                {type === 'line' ? (
+                    <LineChart 
+                        data={data} 
+                        margin={{ top: 20, right: 30, left: 60, bottom: 40 }}
+                        onMouseMove={(e) => {
+                            if (e.activeTooltipIndex !== undefined) setActiveIndex(e.activeTooltipIndex);
+                        }}
+                        onMouseLeave={() => setActiveIndex(null)}
+                    >
+                        <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#E2E8F0" opacity={0.6} />
+                        <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                            dy={15}
+                        />
+                        <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                            tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
+                            width={60}
+                            dx={-10}
+                        />
+                        <Tooltip 
+                            content={<CustomTooltip />} 
+                            cursor={false} // We use our custom ReferenceLine as a cursor
+                        />
+                        
+                        {/* Custom Vertical Cursor Line */}
+                        {activeIndex !== null && data[activeIndex] && (
+                            <ReferenceLine
+                                x={data[activeIndex].name}
+                                stroke="#CBD5E1"
+                                strokeDasharray="4 4"
+                                strokeWidth={1}
+                            />
+                        )}
+
+                        <Line
+                            name="Revenue"
+                            type="monotone"
+                            dataKey="revenue"
+                            stroke={chartColors.revenue.stroke}
+                            strokeWidth={3}
+                            dot={{ r: 3, fill: chartColors.revenue.stroke, stroke: '#fff', strokeWidth: 2 }}
+                            activeDot={{ r: 7, fill: chartColors.revenue.stroke, stroke: '#fff', strokeWidth: 3 }}
+                            animationDuration={1500}
+                        />
+                        <Line
+                            name="Expenses"
+                            type="monotone"
+                            dataKey="previous"
+                            stroke={chartColors.expense.stroke}
+                            strokeWidth={3}
+                            dot={{ r: 3, fill: chartColors.expense.stroke, stroke: '#fff', strokeWidth: 2 }}
+                            activeDot={{ r: 7, fill: chartColors.expense.stroke, stroke: '#fff', strokeWidth: 3 }}
+                            animationDuration={2000}
+                        />
+                    </LineChart>
+                ) : (
+                    <BarChart 
+                        data={data} 
+                        margin={{ top: 20, right: 30, left: 60, bottom: 40 }}
+                        barGap={12}
+                    >
+                        <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#E2E8F0" opacity={0.6} />
+                        <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                            dy={15}
+                        />
+                        <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                            tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
+                            dx={-10}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F1F5F9', opacity: 0.5 }} />
+                        <Bar 
+                            name="Revenue"
+                            dataKey="revenue" 
+                            fill={chartColors.revenue.stroke} 
+                            radius={[6, 6, 0, 0]} 
+                            barSize={32}
+                            animationDuration={1500}
+                        />
+                        <Bar 
+                            name="Expenses"
+                            dataKey="previous" 
+                            fill={chartColors.expense.stroke} 
+                            radius={[6, 6, 0, 0]} 
+                            barSize={32}
+                            animationDuration={2000}
+                        />
+                    </BarChart>
+                )}
+            </ResponsiveContainer>
         </div>
     );
 };
+
+

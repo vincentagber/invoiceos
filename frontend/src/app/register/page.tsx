@@ -60,27 +60,27 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="bg-[#f8f9ff] text-[#0b1c30] min-h-screen flex flex-col antialiased font-sans selection:bg-[#6cf8bb] selection:text-[#00714d]">
+        <div className="bg-background text-primary min-h-screen flex flex-col antialiased font-sans selection:bg-secondary/30 selection:text-secondary">
             <main className="flex-grow flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
                 {/* Subtle Background Elements */}
                 <div className="absolute inset-0 z-0 pointer-events-none flex justify-center items-center opacity-40">
-                    <div className="w-[800px] h-[800px] bg-[#dce9ff] rounded-full blur-3xl absolute -top-[400px] -right-[200px]"></div>
-                    <div className="w-[600px] h-[600px] bg-[#e5eeff] rounded-full blur-3xl absolute -bottom-[300px] -left-[100px]"></div>
+                    <div className="w-[800px] h-[800px] bg-soft-tint rounded-full blur-3xl absolute -top-[400px] -right-[200px]"></div>
+                    <div className="w-[600px] h-[600px] bg-soft-tint rounded-full blur-3xl absolute -bottom-[300px] -left-[100px]"></div>
                 </div>
 
                 {/* Registration Card */}
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-md bg-white rounded-xl shadow-[0_12px_24px_-8px_rgba(15,23,42,0.06)] border border-[#c6c6cd]/30 p-8 z-10 relative"
+                    className="w-full max-w-md bg-white rounded-xl shadow-[0_12px_24px_-8px_rgba(11,31,58,0.06)] border border-border/50 p-8 z-10 relative"
                 >
                     {/* Header */}
                     <div className="text-center mb-12">
                         <div className="flex justify-center items-center gap-2 mb-6">
                             <img src="/logo.png" alt="InvoiceOS" className="h-16 w-auto object-contain" />
                         </div>
-                        <h2 className="text-xl font-semibold text-[#0b1c30] mb-2">Create your account</h2>
-                        <p className="text-sm text-[#45464d]">Institutional Grade Finance. Secured.</p>
+                        <h2 className="text-xl font-semibold text-primary mb-2">Create your account</h2>
+                        <p className="text-sm text-text-secondary">Institutional Grade Finance. Secured.</p>
                     </div>
 
                     {/* Form */}
@@ -93,7 +93,7 @@ export default function RegisterPage() {
                                     exit={{ opacity: 0, height: 0 }}
                                     className={clsx(
                                         "p-3 rounded-lg border text-xs font-bold flex items-center gap-3 mb-4",
-                                        error.includes("created") ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600"
+                                        error.includes("created") ? "bg-secondary/10 border-secondary/20 text-secondary" : "bg-rose-50 border-rose-100 text-rose-600"
                                     )}
                                 >
                                     {error}
@@ -102,11 +102,11 @@ export default function RegisterPage() {
                         </AnimatePresence>
 
                         <div className="space-y-1">
-                            <label className="block text-xs font-semibold text-[#0b1c30] uppercase tracking-wider mb-1" htmlFor="fullName">Full Name</label>
+                            <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1" htmlFor="fullName">Full Name</label>
                             <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#76777d] text-lg">person</span>
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">person</span>
                                 <input 
-                                    className="w-full bg-white border border-[#c6c6cd] text-[#0b1c30] text-sm rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black block pl-10 p-2.5 transition-colors placeholder-[#76777d]/60 outline-none" 
+                                    className="w-full bg-white border border-border text-primary text-sm rounded-lg focus:ring-2 focus:ring-primary/5 focus:border-primary block pl-10 p-2.5 transition-colors placeholder:text-slate-400 outline-none" 
                                     id="fullName" 
                                     name="fullName" 
                                     placeholder="Jane Doe" 
@@ -119,11 +119,11 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="block text-xs font-semibold text-[#0b1c30] uppercase tracking-wider mb-1" htmlFor="email">Business Email</label>
+                            <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1" htmlFor="email">Business Email</label>
                             <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#76777d] text-lg">mail</span>
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">mail</span>
                                 <input 
-                                    className="w-full bg-white border border-[#c6c6cd] text-[#0b1c30] text-sm rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black block pl-10 p-2.5 transition-colors placeholder-[#76777d]/60 outline-none" 
+                                    className="w-full bg-white border border-border text-primary text-sm rounded-lg focus:ring-2 focus:ring-primary/5 focus:border-primary block pl-10 p-2.5 transition-colors placeholder:text-slate-400 outline-none" 
                                     id="email" 
                                     name="email" 
                                     placeholder="jane@company.com" 
@@ -136,11 +136,11 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="block text-xs font-semibold text-[#0b1c30] uppercase tracking-wider mb-1" htmlFor="password">Password</label>
+                            <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1" htmlFor="password">Password</label>
                             <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#76777d] text-lg">lock</span>
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">lock</span>
                                 <input 
-                                    className="w-full bg-white border border-[#c6c6cd] text-[#0b1c30] text-sm rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black block pl-10 pr-10 p-2.5 transition-colors placeholder-[#76777d]/60 outline-none" 
+                                    className="w-full bg-white border border-border text-primary text-sm rounded-lg focus:ring-2 focus:ring-primary/5 focus:border-primary block pl-10 pr-10 p-2.5 transition-colors placeholder:text-slate-400 outline-none" 
                                     id="password" 
                                     name="password" 
                                     placeholder="••••••••" 
@@ -150,7 +150,7 @@ export default function RegisterPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                                 <button 
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#76777d] hover:text-black transition-colors" 
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors" 
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
@@ -160,33 +160,33 @@ export default function RegisterPage() {
                             {/* Password Strength Indicator */}
                             <div className="mt-2">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] font-medium text-[#45464d] uppercase tracking-wider">Security Level</span>
+                                    <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">Security Level</span>
                                     <span className={clsx(
                                         "text-[10px] font-semibold uppercase tracking-wider",
-                                        passwordStrength >= 3 ? "text-[#006c49]" : "text-amber-600"
+                                        passwordStrength >= 3 ? "text-secondary" : "text-amber-600"
                                     )}>
                                         {passwordStrength >= 3 ? 'Strong' : 'Weak'}
                                     </span>
                                 </div>
                                 <div className="flex gap-1 h-1.5">
-                                    <div className={clsx("w-1/3 rounded-l-full transition-colors", passwordStrength >= 1 ? "bg-[#006c49]" : "bg-slate-200")} />
-                                    <div className={clsx("w-1/3 transition-colors", passwordStrength >= 2 ? "bg-[#006c49]" : "bg-slate-200")} />
-                                    <div className={clsx("w-1/3 rounded-r-full transition-colors", passwordStrength >= 3 ? "bg-[#006c49]" : "bg-slate-200")} />
+                                    <div className={clsx("w-1/3 rounded-l-full transition-colors", passwordStrength >= 1 ? "bg-secondary" : "bg-slate-200")} />
+                                    <div className={clsx("w-1/3 transition-colors", passwordStrength >= 2 ? "bg-secondary" : "bg-slate-200")} />
+                                    <div className={clsx("w-1/3 rounded-r-full transition-colors", passwordStrength >= 3 ? "bg-secondary" : "bg-slate-200")} />
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex items-start mt-4">
                             <div className="flex items-center h-5">
-                                <input className="w-4 h-4 border border-[#c6c6cd] rounded bg-white focus:ring-black text-black" id="terms" required type="checkbox"/>
+                                <input className="w-4 h-4 border border-border rounded bg-white focus:ring-primary text-primary" id="terms" required type="checkbox"/>
                             </div>
-                            <label className="ml-2 text-sm font-medium text-[#45464d]" htmlFor="terms">
-                                I agree to the <Link className="text-black hover:underline font-semibold" href="#">Terms of Service</Link> and <Link className="text-black hover:underline font-semibold" href="#">Privacy Policy</Link>.
+                            <label className="ml-2 text-sm font-medium text-text-secondary" htmlFor="terms">
+                                I agree to the <Link className="text-primary hover:underline font-semibold" href="#">Terms of Service</Link> and <Link className="text-primary hover:underline font-semibold" href="#">Privacy Policy</Link>.
                             </label>
                         </div>
 
                         <button 
-                            className="w-full text-white bg-black hover:bg-black/90 focus:ring-4 focus:outline-none focus:ring-black/10 font-semibold rounded-lg text-sm px-5 py-3 text-center transition-colors mt-6 flex justify-center items-center gap-2 disabled:opacity-50" 
+                            className="w-full text-white bg-secondary hover:bg-secondary/90 hover:shadow-lg hover:shadow-secondary/20 active:scale-[0.98] focus:ring-4 focus:outline-none focus:ring-secondary/10 font-semibold rounded-lg text-sm px-5 py-3 text-center transition-all mt-6 flex justify-center items-center gap-2 disabled:opacity-50" 
                             type="submit"
                             disabled={loading}
                         >
@@ -195,19 +195,19 @@ export default function RegisterPage() {
                         </button>
 
                         <div className="text-center mt-6">
-                            <p className="text-sm text-[#45464d]">
-                                Already have an account? <Link className="font-semibold text-black hover:underline transition-all" href="/login">Sign in</Link>
+                            <p className="text-sm text-text-secondary">
+                                Already have an account? <Link className="font-semibold text-primary hover:underline transition-all" href="/login">Sign in</Link>
                             </p>
                         </div>
                     </form>
 
                     {/* Trust Indicators */}
-                    <div className="mt-8 pt-6 border-t border-[#c6c6cd]/30 flex justify-center items-center gap-6 opacity-60">
-                        <div className="flex items-center gap-1 text-xs font-semibold text-[#45464d] tracking-wider uppercase">
+                    <div className="mt-8 pt-6 border-t border-border/30 flex justify-center items-center gap-6 opacity-60">
+                        <div className="flex items-center gap-1 text-xs font-semibold text-text-secondary tracking-wider uppercase">
                             <span className="material-symbols-outlined text-base">verified_user</span>
                             SOC2
                         </div>
-                        <div className="flex items-center gap-1 text-xs font-semibold text-[#45464d] tracking-wider uppercase">
+                        <div className="flex items-center gap-1 text-xs font-semibold text-text-secondary tracking-wider uppercase">
                             <span className="material-symbols-outlined text-base">lock</span>
                             256-bit
                         </div>
@@ -216,13 +216,13 @@ export default function RegisterPage() {
             </main>
 
             {/* Footer */}
-            <footer className="bg-white text-[#0b1c30] text-sm py-12 mt-auto border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6 px-6 lg:px-12 max-w-[1440px] mx-auto w-full z-10 relative">
-                <div className="text-center md:text-left text-[#45464d]">© 2026 InvoiceOS Precision. All rights reserved.</div>
+            <footer className="bg-white text-primary text-sm py-12 mt-auto border-t border-border flex flex-col md:flex-row justify-between items-center gap-6 px-6 lg:px-12 max-w-[1440px] mx-auto w-full z-10 relative">
+                <div className="text-center md:text-left text-text-secondary">© 2026 InvoiceOS. All rights reserved.</div>
                 <nav className="flex flex-wrap justify-center md:justify-end gap-6">
-                    <Link className="text-[#45464d] hover:text-black transition-colors" href="#">Privacy Policy</Link>
-                    <Link className="text-[#45464d] hover:text-black transition-colors" href="#">Terms of Service</Link>
-                    <Link className="text-[#45464d] hover:text-black transition-colors" href="#">Security Overview</Link>
-                    <Link className="text-[#45464d] hover:text-black transition-colors" href="#">Cookie Policy</Link>
+                    <Link className="text-text-secondary hover:text-primary transition-colors" href="/privacy">Privacy Policy</Link>
+                    <Link className="text-text-secondary hover:text-primary transition-colors" href="/terms">Terms of Service</Link>
+                    <Link className="text-text-secondary hover:text-primary transition-colors" href="/security">Security Overview</Link>
+                    <Link className="text-text-secondary hover:text-primary transition-colors" href="/cookies">Cookie Policy</Link>
                 </nav>
             </footer>
 

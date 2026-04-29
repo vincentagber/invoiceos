@@ -27,7 +27,8 @@ import {
     Globe,
     Zap,
     Info,
-    ChevronDown
+    ChevronDown,
+    CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import clsx from 'clsx';
@@ -80,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             label: 'Institutional',
             items: [
                 { name: 'Settings', href: '/dashboard/settings', icon: SettingsIcon },
-                { name: 'Subscription', href: '/dashboard/subscription', icon: ShieldCheck },
+                { name: 'Subscription', href: '/dashboard/subscription', icon: CreditCard },
             ]
         }
     ];
@@ -102,36 +103,48 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                     {/* Header: Institutional Branding */}
                     <div className="h-20 flex items-center px-7 justify-between relative border-b border-slate-50/50">
-                        <AnimatePresence mode="wait">
-                            {!collapsed && (
-                                <motion.div 
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -10 }}
-                                    className="flex items-center gap-3.5"
-                                >
-                                    <div className="h-9 w-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-2xl shadow-slate-200">
-                                        <Zap size={18} fill="currentColor" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[15px] font-black tracking-tight text-slate-900 leading-none">InvoiceOS</span>
-                                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.2em] mt-1">Sovereign v4</span>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        <div className="flex items-center justify-center">
+                            <AnimatePresence mode="wait">
+                                {!collapsed ? (
+                                    <motion.div 
+                                        key="full-logo"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -10 }}
+                                        className="flex items-center"
+                                    >
+                                        <img src="/logo.png" alt="InvoiceOS" className="h-8 object-contain" />
+                                    </motion.div>
+                                ) : (
+                                    <motion.div 
+                                        key="collapsed-logo"
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.8 }}
+                                        className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center overflow-hidden"
+                                    >
+                                        <img src="/favicon.png" alt="InvoiceOS" className="h-full w-full object-cover" />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                         
-                        <button 
-                            onClick={() => setCollapsed(!collapsed)}
-                            className={clsx(
-                                "h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-300 z-50 border shadow-sm",
-                                collapsed 
-                                    ? "bg-slate-900 text-white border-slate-900 hover:scale-105 active:scale-95 mx-auto" 
-                                    : "bg-white text-slate-400 border-slate-100 hover:text-slate-900 hover:border-slate-200"
-                            )}
-                        >
-                            {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-                        </button>
+                        {!collapsed && (
+                            <button 
+                                onClick={() => setCollapsed(!collapsed)}
+                                className="h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-300 bg-white text-slate-400 border border-slate-100 hover:text-slate-900 hover:border-slate-200 shadow-sm"
+                            >
+                                <PanelLeftClose size={18} />
+                            </button>
+                        )}
+                        {collapsed && (
+                            <button 
+                                onClick={() => setCollapsed(!collapsed)}
+                                className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-[60]"
+                            >
+                                <PanelLeft size={12} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Navigation Scroll Area */}
@@ -145,27 +158,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 )}
                                 <div className="space-y-1">
                                     {group.items.map((item) => {
-                                        const isActive = pathname === item.href;
+                                        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                                         return (
                                             <Link
                                                 key={item.name}
                                                 href={item.href}
                                                 className={clsx(
-                                                    "group flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 relative",
+                                                    "group flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-500 relative overflow-hidden",
                                                     isActive 
-                                                        ? "text-slate-900" 
-                                                        : "text-slate-900 hover:bg-slate-50/50",
+                                                        ? "text-white shadow-[0_10px_25px_-5px_rgba(11,31,58,0.25)]" 
+                                                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
                                                     collapsed && "justify-center px-0 w-12 mx-auto"
                                                 )}
                                             >
-                                                <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={clsx("shrink-0 transition-transform duration-300 group-hover:scale-110", isActive ? "text-slate-900" : "text-slate-900")} />
-                                                {!collapsed && <span className="tracking-tight">{item.name}</span>}
+                                                <item.icon 
+                                                    size={20} 
+                                                    strokeWidth={isActive ? 2.5 : 2} 
+                                                    className={clsx(
+                                                        "shrink-0 transition-all duration-500 group-hover:scale-110 relative z-10", 
+                                                        isActive ? "text-white drop-shadow-sm" : "text-slate-400 group-hover:text-slate-900"
+                                                    )} 
+                                                />
+                                                {!collapsed && <span className="tracking-tight relative z-10">{item.name}</span>}
                                                 
                                                 {isActive && (
                                                     <motion.div 
-                                                        layoutId="activeGlow"
-                                                        className="absolute inset-0 bg-slate-50/80 rounded-2xl -z-10 ring-1 ring-slate-100 shadow-sm"
-                                                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                                                        layoutId="activeIndicator"
+                                                        className="absolute inset-0 bg-primary -z-10"
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        transition={{ type: 'spring', bounce: 0.1, duration: 0.5 }}
                                                     />
                                                 )}
                                             </Link>
