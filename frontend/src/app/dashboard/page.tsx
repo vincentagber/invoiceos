@@ -48,6 +48,7 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [trends, setTrends] = useState<any[]>([]);
     const [loadingStats, setLoadingStats] = useState(true);
+    const [chartType, setChartType] = useState<'line' | 'bar'>('line');
     const { user, token, loading: authLoading } = useAuth();
     const { socket } = useSocket();
 
@@ -119,7 +120,7 @@ export default function DashboardPage() {
         return (
             <div className="flex h-[60vh] items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
                     <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Syncing Intelligence...</p>
                 </div>
             </div>
@@ -133,10 +134,10 @@ export default function DashboardPage() {
                     
                     {/* Minimalist State Header */}
                     <div className="space-y-6 text-center">
-                        <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-slate-900 text-[10px] font-black uppercase tracking-[0.25em] text-white">
+                        <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-primary text-[10px] font-black uppercase tracking-[0.25em] text-white">
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary/50 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
                             </span>
                             System Ready
                         </div>
@@ -215,7 +216,7 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center gap-4 pt-4">
                 <button 
                     onClick={() => window.location.reload()}
-                    className="group relative flex items-center gap-4 px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-indigo-600 transition-all active:scale-95"
+                    className="group relative flex items-center gap-4 px-8 py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:shadow-primary/20 transition-all active:scale-95"
                 >
                     <span>Retry Sync</span>
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
@@ -234,7 +235,7 @@ export default function DashboardPage() {
             subtext: `From ${stats?.recent_invoices?.length || 0} payments`,
             trend: '+12.5%',
             icon: Wallet,
-            iconColor: 'text-slate-900'
+            iconColor: 'text-primary'
         },
         {
             title: 'Total Expenses',
@@ -242,7 +243,7 @@ export default function DashboardPage() {
             subtext: `${(stats?.metrics?.totalExpenses || 0) > 0 ? 'Expenditure tracked' : 'No expenses logged'}`,
             trend: '-2.4%',
             icon: ReceiptText,
-            iconColor: 'text-slate-900'
+            iconColor: 'text-primary'
         },
         {
             title: 'Net Profit',
@@ -250,7 +251,7 @@ export default function DashboardPage() {
             subtext: `Real-time yield`,
             trend: '+8.2%',
             icon: LineChart,
-            iconColor: 'text-slate-900',
+            iconColor: 'text-primary',
         },
         {
             title: 'Outstanding',
@@ -258,7 +259,7 @@ export default function DashboardPage() {
             subtext: `${stats?.recent_invoices?.filter(i => i.status !== 'PAID').length || 0} unpaid`,
             trend: 'Stable',
             icon: AlertCircle,
-            iconColor: 'text-indigo-600'
+            iconColor: 'text-secondary'
         }
     ];
 
@@ -268,7 +269,7 @@ export default function DashboardPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#dce9ff] text-[#000000] text-[10px] font-black tracking-[0.2em] uppercase mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-soft-tint text-primary text-[10px] font-black tracking-[0.2em] uppercase mb-4">
                         Financial Intelligence
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Financial Overview</h2>
@@ -308,38 +309,75 @@ export default function DashboardPage() {
             </div>
 
             {/* Chart Section */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm p-10 space-y-10 group">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Cash Flow Intelligence</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Revenue vs Expenses (Jan - Jun)</p>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_40px_80px_-16px_rgba(0,0,0,0.04)] p-12 space-y-12 relative overflow-hidden group">
+                
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 relative z-10">
+                    <div className="space-y-2">
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Cash Flow Intelligence</h3>
+                        <p className="text-[12px] font-medium text-slate-400 leading-relaxed">
+                            Holistic visualization of <span className="text-slate-900 font-bold">revenue velocity</span> vs <span className="text-slate-900 font-bold">operational burn</span>.
+                        </p>
                     </div>
-                    <div className="flex bg-slate-50 border border-slate-200 rounded-xl p-1">
-                        <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white text-slate-900 rounded-lg shadow-sm border border-slate-200/50 flex items-center gap-2">
-                            <BarChart3 size={14} />
-                            Line Chart
-                        </button>
-                        <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors flex items-center gap-2">
-                            <PieChart size={14} />
-                            Bar Chart
-                        </button>
+                    
+                    <div className="flex flex-col items-end gap-6">
+                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-sm">
+                            <button 
+                                onClick={() => setChartType('line')}
+                                className={clsx(
+                                    "px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center gap-2",
+                                    chartType === 'line' 
+                                        ? "bg-white text-slate-900 shadow-sm border border-slate-200" 
+                                        : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <LineChart size={14} />
+                                Line
+                            </button>
+                            <button 
+                                onClick={() => setChartType('bar')}
+                                className={clsx(
+                                    "px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center gap-2",
+                                    chartType === 'bar' 
+                                        ? "bg-white text-slate-900 shadow-sm border border-slate-200" 
+                                        : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <BarChart3 size={14} />
+                                Bar
+                            </button>
+                        </div>
+
+                        {/* Image-style Legend */}
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-secondary" />
+                                <span className="text-[11px] font-bold text-secondary tracking-tight">Revenue Stream</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-primary" />
+                                <span className="text-[11px] font-bold text-primary tracking-tight">Expense Log</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="h-[400px] relative">
-                    <RevenueChart data={trends} />
-                    {/* Institutional Grid Overlay */}
-                    <div className="absolute inset-0 pointer-events-none border-l border-b border-slate-100/50 opacity-50"></div>
+
+                <div className="h-[480px] relative z-10">
+                    <RevenueChart data={trends} type={chartType} />
                 </div>
-                {/* Legend */}
-                <div className="flex justify-center gap-8 pt-6 border-t border-slate-50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-sm bg-[#0b1c30] shadow-sm"></div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Revenue Stream</span>
+
+                {/* Footer Insight */}
+                <div className="pt-8 border-t border-slate-50 flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 rounded-lg bg-secondary/10 text-secondary">
+                            <Sparkles size={16} />
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                            AI Insight: <span className="text-secondary">Net profitability increased by 14.2%</span> this period.
+                        </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-sm bg-[#cbd5e1] shadow-sm"></div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Expense Log</span>
-                    </div>
+                    <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+                        Download Report
+                    </button>
                 </div>
             </div>
 
@@ -369,7 +407,7 @@ export default function DashboardPage() {
                             {stats.recent_invoices.map((invoice) => (
                                 <tr key={invoice.id} className="hover:bg-slate-50/30 transition-colors group/row">
                                     <td className="px-10 py-6">
-                                        <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="text-sm font-black text-indigo-600 tracking-tighter hover:text-indigo-700 transition-colors uppercase">
+                                        <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="text-sm font-black text-primary tracking-tighter hover:text-secondary transition-colors uppercase">
                                             {invoice.invoiceNumber}
                                         </Link>
                                     </td>

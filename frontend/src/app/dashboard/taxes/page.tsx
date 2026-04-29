@@ -66,7 +66,7 @@ export default function TaxesPage() {
 
         setUploading(true);
         try {
-            await api.post('/documents/upload.php', formData, {
+            await api.post('/documents/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

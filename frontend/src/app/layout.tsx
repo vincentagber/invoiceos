@@ -42,8 +42,8 @@ export const metadata: Metadata = {
     images: ["/emerald-hero.png"],
   },
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   }
 };
 
