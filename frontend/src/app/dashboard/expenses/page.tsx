@@ -23,7 +23,13 @@ import {
     ReceiptText,
     Clock,
     FileUp,
-    Download
+    Download,
+    Pencil,
+    Trash2,
+    X,
+    Save,
+    Calendar,
+    Tag
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -34,6 +40,11 @@ export default function ExpensesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [expenses, setExpenses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [editingExpense, setEditingExpense] = useState<any>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editForm, setEditForm] = useState<any>({});
+    const [editLoading, setEditLoading] = useState(false);
+    const [actionsOpen, setActionsOpen] = useState<string | null>(null);
 
     const fetchExpenses = async () => {
         try {
@@ -50,6 +61,50 @@ export default function ExpensesPage() {
     useEffect(() => {
         if (user) fetchExpenses();
     }, [user]);
+
+    const openEditModal = (expense: any) => {
+        setEditingExpense(expense);
+        setEditForm({
+            merchant: expense.merchant || '',
+            category: expense.category || '',
+            amount: expense.amount || '',
+            currency: expense.currency || 'NGN',
+            date: expense.date ? new Date(expense.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            description: expense.description || '',
+            status: expense.status || 'PENDING',
+            receipt_url: expense.receipt_url || ''
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setEditLoading(true);
+        try {
+            const bizRes = await api.get('/business/me');
+            await api.put(`/expenses/${editingExpense.id}`, {
+                ...editForm,
+                businessId: bizRes.data.id
+            });
+            setIsEditModalOpen(false);
+            setEditingExpense(null);
+            fetchExpenses();
+        } catch (error) {
+            console.error('Failed to update expense', error);
+        } finally {
+            setEditLoading(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this expense?')) return;
+        try {
+            await api.delete(`/expenses/${id}`);
+            setExpenses(expenses.filter(e => e.id !== id));
+        } catch (error) {
+            console.error('Failed to delete expense', error);
+        }
+    };
 
     const filteredExpenses = expenses.filter(exp => 
         (exp.currency === currency || currency === 'ALL') &&
@@ -196,12 +251,14 @@ export default function ExpensesPage() {
                                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Merchant / Entity</th>
                                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Classification</th>
                                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Transaction Yield</th>
+                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-8 py-20 text-center">
+                                    <td colSpan={6} className="px-8 py-20 text-center">
                                         <div className="flex flex-col items-center gap-3 animate-pulse">
                                             <div className="h-10 w-10 bg-slate-100 rounded-full"></div>
                                             <div className="h-2 w-24 bg-slate-100 rounded"></div>
@@ -210,7 +267,7 @@ export default function ExpensesPage() {
                                 </tr>
                             ) : filteredExpenses.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-8 py-20 text-center">
+                                    <td colSpan={6} className="px-8 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="p-6 rounded-full bg-slate-50 text-slate-300">
                                                 <Receipt size={40} />
@@ -267,9 +324,33 @@ export default function ExpensesPage() {
                                             </span>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <button className="text-slate-400 hover:text-slate-900 transition-colors">
-                                                <MoreHorizontal size={20} />
-                                            </button>
+                                            <div className="relative inline-block text-left">
+                                                <button 
+                                                    onClick={() => setActionsOpen(actionsOpen === exp.id ? null : exp.id)}
+                                                    className="p-2.5 text-slate-400 hover:text-slate-900 transition-colors rounded-xl hover:bg-slate-100"
+                                                >
+                                                    <MoreHorizontal size={18} />
+                                                </button>
+                                                {actionsOpen === exp.id && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-10" onClick={() => setActionsOpen(null)} />
+                                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-20">
+                                                            <button 
+                                                                onClick={() => { openEditModal(exp); setActionsOpen(null); }}
+                                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-colors"
+                                                            >
+                                                                <Pencil size={14} /> Edit Expense
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => { handleDelete(exp.id); setActionsOpen(null); }}
+                                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 transition-colors"
+                                                            >
+                                                                <Trash2 size={14} /> Delete
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -299,6 +380,133 @@ export default function ExpensesPage() {
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={fetchExpenses}
             />
+
+            {/* Edit Expense Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)} />
+                    <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.2)] overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-8 sm:p-10 space-y-8">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <h2 className="text-xl font-heading font-black text-slate-900 tracking-tight">Edit Expense</h2>
+                                </div>
+                                <button 
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all active:scale-90"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleEditSubmit} className="space-y-6">
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Merchant / Entity</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editForm.merchant || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, merchant: e.target.value })}
+                                            className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                                            placeholder="e.g. AWS, Adobe, Office Supplies"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Category</label>
+                                            <select
+                                                value={editForm.category || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                                                className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                                            >
+                                                <option value="">Select Category</option>
+                                                <option value="Software">Software</option>
+                                                <option value="Office Supplies">Office Supplies</option>
+                                                <option value="Travel">Travel</option>
+                                                <option value="Marketing">Marketing</option>
+                                                <option value="Utilities">Utilities</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Amount</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                step="0.01"
+                                                value={editForm.amount || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                                                className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Date</label>
+                                            <input
+                                                type="date"
+                                                value={editForm.date || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                                                className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Currency</label>
+                                            <select
+                                                value={editForm.currency || 'NGN'}
+                                                onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                                                className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                                            >
+                                                <option value="NGN">NGN</option>
+                                                <option value="USD">USD</option>
+                                                <option value="EUR">EUR</option>
+                                                <option value="GBP">GBP</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Description</label>
+                                        <textarea
+                                            rows={3}
+                                            value={editForm.description || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                            className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all resize-none"
+                                            placeholder="Optional description..."
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Status</label>
+                                        <select
+                                            value={editForm.status || 'PENDING'}
+                                            onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                                            className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                                        >
+                                            <option value="PENDING">Pending</option>
+                                            <option value="APPROVED">Approved</option>
+                                            <option value="REJECTED">Rejected</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={editLoading}
+                                    className="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+                                >
+                                    {editLoading ? 'Saving...' : 'Save Changes'}
+                                    <Save size={16} />
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

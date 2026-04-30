@@ -193,3 +193,6 @@ Please make sure to provide valid database credentials for the database server a
 2026-04-29 10:52:45 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
 2026-04-29 11:01:42 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
 2026-04-29 11:08:30 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-30 01:29:43 [error]: Could not find the 'city' column of 'clients' in the schema cache
+2026-04-30 01:31:37 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000
+2026-04-30 01:37:28 [info]: 🚀 InvoiceOS Backend running on http://localhost:4000

@@ -63,14 +63,17 @@ export default function NewInvoicePage() {
     useEffect(() => {
         const init = async () => {
             try {
-                const [bizRes, clientsRes] = await Promise.all([
-                    api.get('/business/me'),
-                    api.get('/clients')
-                ]);
-                setClients(clientsRes.data || []);
-                if (bizRes.data) setSettings(bizRes.data);
+                // First fetch business profile
+                const bizRes = await api.get('/business/me');
+                if (bizRes.data) {
+                    setSettings(bizRes.data);
+                    
+                    // Then fetch clients for this specific business
+                    const clientsRes = await api.get(`/clients?businessId=${bizRes.data.id}`);
+                    setClients(clientsRes.data || []);
+                }
             } catch (error) {
-                console.error(error);
+                console.error('Initialization failure:', error);
             } finally {
                 setLoading(false);
             }

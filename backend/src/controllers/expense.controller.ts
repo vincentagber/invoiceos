@@ -63,6 +63,27 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
   }
 };
 
+export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { businessId, ...data } = req.body;
+    
+    const { data: expense, error } = await supabase
+      .from('expenses')
+      .update({
+        ...data,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id as string)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(expense);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { error } = await supabase

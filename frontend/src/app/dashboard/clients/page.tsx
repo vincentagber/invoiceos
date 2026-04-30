@@ -12,10 +12,11 @@ import clsx from 'clsx';
 interface Client {
     id: string;
     name: string;
+    contactName?: string;
     email: string;
-    phone: string;
-    address: string;
-    taxId: string;
+    phone?: string;
+    address?: string;
+    taxId?: string;
     version: number;
 }
 
@@ -25,6 +26,11 @@ export default function ClientsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [showAddClient, setShowAddClient] = useState(false);
+    const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editForm, setEditForm] = useState({ name: '', contactName: '', email: '', phone: '', address: '', taxId: '' });
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState('');
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     useEffect(() => {
@@ -67,6 +73,46 @@ export default function ClientsPage() {
                 type: 'error'
             });
             setShowModal(true);
+        }
+    };
+
+    const openEditModal = (client: Client) => {
+        setEditingClient(client);
+        setEditForm({
+            name: client.name,
+            contactName: client.contactName || '',
+            email: client.email,
+            phone: client.phone || '',
+            address: client.address || '',
+            taxId: client.taxId || '',
+        });
+        setEditError('');
+        setShowEditModal(true);
+    };
+
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingClient) return;
+        setEditLoading(true);
+        setEditError('');
+        try {
+            const { data } = await api.put(`/clients/${editingClient.id}`, {
+                ...editForm,
+                version: editingClient.version,
+            });
+            setClients(clients.map(c => c.id === editingClient.id ? data : c));
+            setShowEditModal(false);
+            setEditingClient(null);
+            setModalConfig({
+                title: 'Partner Updated',
+                message: 'The client record has been successfully updated in the ledger.',
+                type: 'success'
+            });
+            setShowModal(true);
+        } catch (error: any) {
+            setEditError(error.response?.data?.message || 'Failed to update client. Please try again.');
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -208,7 +254,10 @@ export default function ClientsPage() {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button className="p-2.5 text-slate-400 hover:text-slate-900 transition-colors rounded-xl hover:bg-slate-100">
+                                                <button 
+                                                    onClick={() => openEditModal(client)}
+                                                    className="p-2.5 text-slate-400 hover:text-slate-900 transition-colors rounded-xl hover:bg-slate-100"
+                                                >
                                                     <Edit size={18} />
                                                 </button>
                                                 <button 
@@ -241,6 +290,125 @@ export default function ClientsPage() {
                 type={modalConfig.type}
                 actionLabel="Proceed"
             />
+
+            {showEditModal && editingClient && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
+                    <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-300">
+                        <div className="p-8 space-y-6">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Edit Partner</h2>
+                                <p className="text-slate-500 text-sm font-medium mt-1">Update the institutional record for this client.</p>
+                            </div>
+
+                            {editError && (
+                                <div className="bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3 text-rose-700 text-sm font-bold">
+                                    {editError}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleEditSubmit} className="space-y-5">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                                        Partner Name <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
+                                        placeholder="Enter partner name"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                                        Contact Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.contactName}
+                                        onChange={(e) => setEditForm({ ...editForm, contactName: e.target.value })}
+                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
+                                        placeholder="Primary contact person"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                                        Email Address <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={editForm.email}
+                                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
+                                        placeholder="partner@company.com"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                                        Phone
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={editForm.phone}
+                                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
+                                        placeholder="+1 (555) 000-0000"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                                        Address
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.address}
+                                        onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
+                                        placeholder="Full business address"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                                        Tax ID
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.taxId}
+                                        onChange={(e) => setEditForm({ ...editForm, taxId: e.target.value })}
+                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
+                                        placeholder="Tax identification number"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditModal(false)}
+                                        className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 rounded-2xl py-4 font-black text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={editLoading}
+                                        className="flex-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl py-4 font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-slate-200 active:scale-95"
+                                    >
+                                        {editLoading ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
