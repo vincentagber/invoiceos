@@ -148,3 +148,4 @@ Please make sure to provide valid database credentials for the database server a
     at ei.request (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
     at async a (/Applications/MAMP/htdocs/invoiceOS/backend/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
     at async getCurrent (/Applications/MAMP/htdocs/invoiceOS/backend/src/controllers/business.controller.ts:7:22)
+2026-04-30 01:29:43 [error]: Could not find the 'city' column of 'clients' in the schema cache

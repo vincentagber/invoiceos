@@ -19,59 +19,87 @@ import {
     ArrowRight,
     Sparkles,
     ShieldCheck,
-    Building2
+    Building2,
+    SlidersHorizontal,
+    TrendingUp,
+    TrendingDown,
+    FileCheck,
+    Users,
+    ArrowUpRight,
+    Search,
+    MoreHorizontal,
+    Filter,
+    Download
 } from 'lucide-react';
 import Link from 'next/link';
 import { RevenueChart } from './components/RevenueChart';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
+import { Skeleton } from '@/components/ui/skeleton';
 import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DashboardStats {
     metrics: {
         totalInvoiced: number;
         paidAmount: number;
         outstandingAmount: number;
-        conversionRate: number;
         totalExpenses: number;
+        totalClients: number;
+        invoicesSentCount: number;
+        conversionRate: number;
+        growth?: number;
     };
-    recent_invoices: Array<{
-        id: string;
-        invoiceNumber: string;
-        totalAmount: number;
-        status: string;
-        client: { name: string };
+    topClients: Array<{
+        name: string;
+        total: number;
+        balance: number;
+        avatar?: string;
     }>;
 }
 
 export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [trends, setTrends] = useState<any[]>([]);
+    const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [loadingStats, setLoadingStats] = useState(true);
-    const [chartType, setChartType] = useState<'line' | 'bar'>('line');
+    const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
     const { user, token, loading: authLoading } = useAuth();
     const { socket } = useSocket();
 
     const fetchDashboardData = async () => {
         try {
-            const bizRes = await api.get('/business/me');
-            const businessId = bizRes.data.id;
+            setLoadingStats(true);
+            const businessId = user?.organizations?.[0]?.id;
+            if (!businessId) {
+                setLoadingStats(false);
+                return;
+            }
 
-            const [statsRes, invoicesRes, trendsRes] = await Promise.all([
+            const [statsRes, trendsRes, invoicesRes] = await Promise.all([
                 api.get(`/analytics/summary?businessId=${businessId}`),
-                api.get(`/invoices?businessId=${businessId}`),
-                api.get(`/analytics/revenue-trends?businessId=${businessId}`)
+                api.get(`/analytics/revenue-trends?businessId=${businessId}&timeframe=${timeframe}`),
+                api.get(`/invoices?businessId=${businessId}&limit=5`)
             ]);
 
-            const recentInvoices = Array.isArray(invoicesRes.data) 
-                ? invoicesRes.data.slice(0, 5) 
-                : (invoicesRes.data?.invoices?.slice(0, 5) || []);
-
             setStats({
-                metrics: statsRes.data.metrics || { totalInvoiced: 0, paidAmount: 0, outstandingAmount: 0, conversionRate: 0, totalExpenses: 0 },
-                recent_invoices: recentInvoices
+                metrics: statsRes.data.metrics || {
+                    totalInvoiced: 0,
+                    paidAmount: 0,
+                    outstandingAmount: 0,
+                    totalExpenses: 0,
+                    totalClients: 0,
+                    invoicesSentCount: 0,
+                    conversionRate: 0
+                },
+                topClients: (statsRes.data.topClients || []).map((c: any) => ({
+                    ...c,
+                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.name}`
+                }))
             });
+
             setTrends(trendsRes.data || []);
+            setRecentActivity(invoicesRes.data.data || []);
         } catch (error) {
             console.error('Failed to fetch dashboard data', error);
         } finally {
@@ -85,351 +113,332 @@ export default function DashboardPage() {
             setLoadingStats(false);
             return;
         }
-
-        // If user is logged in but has no organization, we can't fetch data
         if (user && user.organizations.length === 0) {
             setLoadingStats(false);
             return;
         }
-
         fetchDashboardData();
-    }, [authLoading, token, user]);
+    }, [authLoading, token, user, timeframe]);
 
     useEffect(() => {
         if (!socket) return;
-
-        const handleLiveUpdate = () => {
-            console.log('Live update received, refreshing dashboard...');
-            fetchDashboardData();
-        };
-
+        const handleLiveUpdate = () => fetchDashboardData();
         socket.on('invoice-status-updated', handleLiveUpdate);
-        socket.on('invoice-viewed', handleLiveUpdate);
         socket.on('payment-received', handleLiveUpdate);
-        socket.on('invoice-sent', handleLiveUpdate);
-
+        socket.on('invoice-created', handleLiveUpdate);
         return () => {
             socket.off('invoice-status-updated', handleLiveUpdate);
-            socket.off('invoice-viewed', handleLiveUpdate);
             socket.off('payment-received', handleLiveUpdate);
-            socket.off('invoice-sent', handleLiveUpdate);
+            socket.off('invoice-created', handleLiveUpdate);
         };
     }, [socket]);
 
     if (authLoading || loadingStats) {
-        return (
-            <div className="flex h-[60vh] items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                    <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Syncing Intelligence...</p>
-                </div>
-            </div>
-        );
+        return <DashboardSkeleton />;
     }
 
     if (user && user.organizations.length === 0) {
-        return (
-            <div className="min-h-[70vh] flex flex-col items-center justify-center">
-                <div className="w-full max-w-3xl space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
-                    
-                    {/* Minimalist State Header */}
-                    <div className="space-y-6 text-center">
-                        <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-primary text-[10px] font-black uppercase tracking-[0.25em] text-white">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary/50 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
-                            </span>
-                            System Ready
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <h2 className="text-5xl sm:text-6xl font-black text-slate-900 tracking-[-0.05em] leading-[0.9]">
-                                Workspace <br />
-                                <span className="text-slate-300">Initialization</span>
-                            </h2>
-                            <p className="text-slate-500 text-lg font-medium max-w-md mx-auto leading-relaxed">
-                                Establish your professional identity. Your business profile serves as the core intelligence layer for all financial operations.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Elite Setup Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
-                        {[
-                            { title: 'Identity', desc: 'Legal entity name & brand assets', icon: Building2 },
-                            { title: 'Compliance', desc: 'Tax identifiers & regional settings', icon: ShieldCheck },
-                            { title: 'Financials', desc: 'Currency defaults & bank bridges', icon: Wallet },
-                        ].map((step, i) => (
-                            <div key={i} className="bg-white border border-slate-200 p-8 space-y-4 hover:bg-slate-50 transition-colors duration-300 first:rounded-l-[2rem] last:rounded-r-[2rem]">
-                                <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
-                                    <step.icon size={20} strokeWidth={1.5} />
-                                </div>
-                                <div className="space-y-1">
-                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">{step.title}</h4>
-                                    <p className="text-[11px] text-slate-400 font-medium leading-normal">{step.desc}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Action Layer */}
-                    <div className="flex flex-col items-center gap-6 pt-4">
-                        <Link 
-                            href="/dashboard/setup/branding" 
-                            className="group relative flex items-center gap-6 px-12 py-6 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:bg-indigo-600 transition-all duration-500 active:scale-[0.98]"
-                        >
-                            <span>Initialize Profile</span>
-                            <div className="w-8 h-px bg-white/20 group-hover:w-12 transition-all duration-500" />
-                            <ArrowRight size={16} className="opacity-50 group-hover:opacity-100 transition-opacity" />
-                        </Link>
-                        
-                        <div className="flex items-center gap-8">
-                            <div className="flex items-center gap-2">
-                                <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Encrypted</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Ready for Scale</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <OnboardingState />;
     }
 
-    if (!stats) return (
-        <div className="max-w-xl mx-auto py-32 text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="relative inline-flex items-center justify-center">
-                <div className="absolute inset-0 bg-rose-500/10 rounded-full blur-2xl animate-pulse"></div>
-                <div className="h-20 w-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center relative border border-rose-100 shadow-sm">
-                    <AlertCircle size={40} strokeWidth={1.5} />
-                </div>
-            </div>
-            <div className="space-y-3">
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight">Ledger Synchronization Paused</h3>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-sm mx-auto">
-                    We're having trouble reaching the institutional ledger. This usually happens during network shifts or organization updates.
-                </p>
-            </div>
-            <div className="flex flex-col items-center gap-4 pt-4">
-                <button 
-                    onClick={() => window.location.reload()}
-                    className="group relative flex items-center gap-4 px-8 py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:shadow-primary/20 transition-all active:scale-95"
-                >
-                    <span>Retry Sync</span>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-                <Link href="/dashboard/settings" className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">
-                    Verify Organization Settings
-                </Link>
-            </div>
-        </div>
-    );
+    if (!stats) return <ErrorState onRetry={() => fetchDashboardData()} />;
 
-    const kpiCards = [
-        {
-            title: 'Total Revenue',
-            value: `₦${(((stats?.metrics?.paidAmount || 0)) / 1000).toFixed(1)}K`,
-            subtext: `From ${stats?.recent_invoices?.length || 0} payments`,
-            trend: '+12.5%',
-            icon: Wallet,
-            iconColor: 'text-primary'
-        },
-        {
-            title: 'Total Expenses',
-            value: `₦${(stats?.metrics?.totalExpenses || 0).toLocaleString()}`,
-            subtext: `${(stats?.metrics?.totalExpenses || 0) > 0 ? 'Expenditure tracked' : 'No expenses logged'}`,
-            trend: '-2.4%',
-            icon: ReceiptText,
-            iconColor: 'text-primary'
-        },
-        {
-            title: 'Net Profit',
-            value: `₦${(((stats?.metrics?.paidAmount || 0) - (stats?.metrics?.totalExpenses || 0)) / 1000).toFixed(1)}K`,
-            subtext: `Real-time yield`,
-            trend: '+8.2%',
-            icon: LineChart,
-            iconColor: 'text-primary',
-        },
-        {
-            title: 'Outstanding',
-            value: `₦${((stats?.metrics?.outstandingAmount || 0) / 1000).toFixed(1)}K`,
-            subtext: `${stats?.recent_invoices?.filter(i => i.status !== 'PAID').length || 0} unpaid`,
-            trend: 'Stable',
-            icon: AlertCircle,
-            iconColor: 'text-secondary'
-        }
+    const kpiMetrics = [
+        { label: 'Total Revenue', value: `$${(stats.metrics.paidAmount || 0).toLocaleString()}`, trend: '+12.5%', icon: Wallet, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+        { label: 'Total Expenses', value: `$${(stats.metrics.totalExpenses || 0).toLocaleString()}`, trend: '-2.4%', icon: TrendingDown, color: 'text-rose-500', bg: 'bg-rose-50' },
+        { label: 'Invoices Sent', value: (stats.metrics.invoicesSentCount || 0).toString(), trend: '+18%', icon: FileCheck, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+        { label: 'Unpaid Invoices', value: `$${(stats.metrics.outstandingAmount || 0).toLocaleString()}`, trend: '+4%', icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50' },
+        { label: 'Total Clients', value: (stats.metrics.totalClients || 0).toString(), trend: '+2', icon: Users, color: 'text-sky-500', bg: 'bg-sky-50' },
     ];
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-12 pb-32 animate-in fade-in duration-1000 font-sans">
+        <div className="space-y-8 animate-in fade-in duration-700 font-sans pb-20">
             
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-10">
-                <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-soft-tint text-primary text-[10px] font-black tracking-[0.2em] uppercase mb-4">
-                        Financial Intelligence
-                    </div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Financial Overview</h2>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-3">Monitoring business health and cash flow dynamics.</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-2">
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Welcome back, {user.name}</h1>
+                    <p className="text-sm font-medium text-slate-500">Monitor and control what happens with your money today.</p>
                 </div>
-                <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
-                    <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-900 bg-slate-50 rounded-lg shadow-sm border border-slate-200/50">Last 6 Months</button>
-                    <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">This Year</button>
-                    <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">All Time</button>
-                </div>
-            </div>
-
-            {/* Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {kpiCards.map((card, i) => (
-                    <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-[0_2px_12px_rgba(15,23,42,0.03)] relative overflow-hidden group hover:border-slate-300 transition-all duration-500">
-                        <div className="flex justify-between items-start mb-6">
-                            <p className="text-[10px] uppercase font-black tracking-[0.15em] text-slate-400">{card.title}</p>
-                            <div className={clsx("p-2 rounded-xl bg-slate-50 border border-slate-100 group-hover:scale-110 transition-transform duration-500", card.iconColor)}>
-                                <card.icon size={18} strokeWidth={2} />
-                            </div>
-                        </div>
-                        <div className="space-y-1">
-                            <h3 className="text-3xl font-black text-slate-900 tracking-tighter">
-                                {card.value}
-                            </h3>
-                            <div className="flex items-center gap-2">
-                                {card.trend && (
-                                    <span className="text-[9px] font-black text-[#006c49] bg-[#006c49]/10 px-2 py-0.5 rounded-full uppercase tracking-widest">{card.trend}</span>
-                                )}
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{card.subtext}</p>
-                            </div>
-                        </div>
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-50 group-hover:bg-indigo-50 transition-colors"></div>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm">
+                        <Calendar size={16} className="text-slate-400" />
+                        <span className="text-sm font-bold text-slate-700">
+                            {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
                     </div>
-                ))}
-            </div>
-
-            {/* Chart Section */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_40px_80px_-16px_rgba(0,0,0,0.04)] p-12 space-y-12 relative overflow-hidden group">
-                
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 relative z-10">
-                    <div className="space-y-2">
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Cash Flow Intelligence</h3>
-                        <p className="text-[12px] font-medium text-slate-400 leading-relaxed">
-                            Holistic visualization of <span className="text-slate-900 font-bold">revenue velocity</span> vs <span className="text-slate-900 font-bold">operational burn</span>.
-                        </p>
-                    </div>
-                    
-                    <div className="flex flex-col items-end gap-6">
-                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-sm">
-                            <button 
-                                onClick={() => setChartType('line')}
-                                className={clsx(
-                                    "px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center gap-2",
-                                    chartType === 'line' 
-                                        ? "bg-white text-slate-900 shadow-sm border border-slate-200" 
-                                        : "text-slate-400 hover:text-slate-600"
-                                )}
-                            >
-                                <LineChart size={14} />
-                                Line
-                            </button>
-                            <button 
-                                onClick={() => setChartType('bar')}
-                                className={clsx(
-                                    "px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center gap-2",
-                                    chartType === 'bar' 
-                                        ? "bg-white text-slate-900 shadow-sm border border-slate-200" 
-                                        : "text-slate-400 hover:text-slate-600"
-                                )}
-                            >
-                                <BarChart3 size={14} />
-                                Bar
-                            </button>
-                        </div>
-
-                        {/* Image-style Legend */}
-                        <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-secondary" />
-                                <span className="text-[11px] font-bold text-secondary tracking-tight">Revenue Stream</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-primary" />
-                                <span className="text-[11px] font-bold text-primary tracking-tight">Expense Log</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="h-[480px] relative z-10">
-                    <RevenueChart data={trends} type={chartType} />
-                </div>
-
-                {/* Footer Insight */}
-                <div className="pt-8 border-t border-slate-50 flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2 rounded-lg bg-secondary/10 text-secondary">
-                            <Sparkles size={16} />
-                        </div>
-                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                            AI Insight: <span className="text-secondary">Net profitability increased by 14.2%</span> this period.
-                        </p>
-                    </div>
-                    <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
-                        Download Report
+                    <button className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95">
+                        <Download size={16} /> Export
                     </button>
                 </div>
             </div>
 
-            {/* Recent Activity Section */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden group">
-                <div className="p-10 border-b border-slate-50 flex items-center justify-between">
-                    <div>
-                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Recent Ledger Activity</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Latest verified transactions and invoice flows.</p>
+            {/* KPI Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {kpiMetrics.map((kpi, i) => (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        key={i} 
+                        className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={clsx("p-2.5 rounded-xl transition-transform group-hover:scale-110", kpi.bg, kpi.color)}>
+                                <kpi.icon size={20} />
+                            </div>
+                            <div className={clsx("flex items-center gap-1 text-[10px] font-black uppercase tracking-tight", kpi.trend.startsWith('+') ? "text-emerald-600" : "text-rose-500")}>
+                                {kpi.trend.startsWith('+') ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                                {kpi.trend}
+                            </div>
+                        </div>
+                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">{kpi.label}</p>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{kpi.value}</h3>
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Analytics & Summary Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Revenue Overview Chart */}
+                <div className="lg:col-span-8 bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Revenue Overview</h3>
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Growth Analytics</p>
+                        </div>
+                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
+                            {['weekly', 'monthly', 'yearly'].map((t) => (
+                                <button 
+                                    key={t}
+                                    onClick={() => setTimeframe(t as any)}
+                                    className={clsx(
+                                        "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                        timeframe === t ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <Link href="/dashboard/invoices" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-900 hover:bg-slate-100 transition-all border border-slate-200/50">
-                        View All
-                        <ArrowRight size={14} />
-                    </Link>
+                    <div className="h-[340px]">
+                        <RevenueChart data={trends} />
+                    </div>
                 </div>
+
+                {/* Performance & Goals */}
+                <div className="lg:col-span-4 bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-lg font-black text-slate-900 tracking-tight">Revenue Goals</h3>
+                        <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                            <TrendingUp size={16} />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-8 flex-1">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-black uppercase tracking-widest text-slate-400">Monthly Target</span>
+                                <span className="text-sm font-black text-slate-900">$25,000</span>
+                            </div>
+                            <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${Math.min(((stats.metrics.paidAmount || 0) / 25000) * 100, 100)}%` }}
+                                    className="h-full bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.3)]" 
+                                />
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 text-right">
+                                {Math.round(((stats.metrics.paidAmount || 0) / 25000) * 100)}% Reached
+                            </p>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Top Clients</h4>
+                            <div className="space-y-4">
+                                {(stats.topClients || []).map((client, i) => (
+                                    <div key={i} className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-3">
+                                            <img src={client.avatar} alt="" className="h-8 w-8 rounded-xl bg-white border border-slate-200" />
+                                            <div>
+                                                <p className="text-[11px] font-black text-slate-900 tracking-tight">{client.name}</p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase">Total: ${(client.total || 0).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-emerald-600">Active</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="w-full py-3 bg-white border border-slate-200 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors mt-2">
+                                View All Clients
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Recent Activity Table */}
+            <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm overflow-hidden">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                    <div>
+                        <h3 className="text-lg font-black text-slate-900 tracking-tight">Recent Activity</h3>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Latest Ledger Entries</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                            <input 
+                                type="text" 
+                                placeholder="Search activity..." 
+                                className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all w-64"
+                            />
+                        </div>
+                        <button className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-900 transition-colors">
+                            <Filter size={16} />
+                        </button>
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <table className="w-full">
                         <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Tracking ID</th>
-                                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Counterparty</th>
-                                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Net Amount</th>
-                                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Fulfillment Status</th>
+                            <tr className="text-left border-b border-slate-50">
+                                <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4">Client Name</th>
+                                <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4">Invoice ID</th>
+                                <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4">Date</th>
+                                <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 text-right">Amount</th>
+                                <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 text-right">Status</th>
+                                <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {stats.recent_invoices.map((invoice) => (
-                                <tr key={invoice.id} className="hover:bg-slate-50/30 transition-colors group/row">
-                                    <td className="px-10 py-6">
-                                        <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="text-sm font-black text-primary tracking-tighter hover:text-secondary transition-colors uppercase">
-                                            {invoice.invoiceNumber}
-                                        </Link>
+                            {recentActivity.map((inv, i) => (
+                                <motion.tr 
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.05 }}
+                                    key={inv.id} 
+                                    className="group hover:bg-slate-50/50 transition-all cursor-pointer"
+                                >
+                                    <td className="py-5 px-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 font-black text-[10px]">
+                                                {inv.client?.name?.charAt(0) || 'U'}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[13px] font-black text-slate-900 truncate">{inv.client?.name || 'Unknown Client'}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 truncate">{inv.client?.email || 'No email'}</p>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td className="px-10 py-6 text-[13px] font-bold text-slate-900">{invoice.client?.name || 'Unknown Partner'}</td>
-                                    <td className="px-10 py-6 text-sm font-black text-slate-900 tracking-tight">₦{(invoice.totalAmount || 0).toLocaleString()}</td>
-                                    <td className="px-10 py-6">
-                                        <span className={clsx(
-                                            "inline-flex px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] shadow-sm border",
-                                            invoice.status === 'PAID' 
-                                                ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
-                                                : "bg-amber-50 text-amber-700 border-amber-100"
-                                        )}>
-                                            {invoice.status}
+                                    <td className="py-5 px-4">
+                                        <span className="text-[12px] font-bold text-slate-500">#{inv.invoice_number || inv.id.slice(0, 8)}</span>
+                                    </td>
+                                    <td className="py-5 px-4">
+                                        <span className="text-[12px] font-bold text-slate-400">
+                                            {new Date(inv.issue_date || inv.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </span>
                                     </td>
-                                </tr>
+                                    <td className="py-5 px-4 text-right">
+                                        <span className="text-[13px] font-black text-slate-900">${(inv.total_amount || 0).toLocaleString()}</span>
+                                    </td>
+                                    <td className="py-5 px-4 text-right">
+                                        <span className={clsx(
+                                            "inline-flex px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                                            inv.status === 'PAID' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                                            inv.status === 'OVERDUE' ? "bg-rose-50 text-rose-600 border-rose-100" :
+                                            "bg-amber-50 text-amber-600 border-amber-100"
+                                        )}>
+                                            {inv.status}
+                                        </span>
+                                    </td>
+                                    <td className="py-5 px-4 text-right">
+                                        <button className="p-2 text-slate-300 hover:text-slate-900 transition-colors">
+                                            <MoreHorizontal size={16} />
+                                        </button>
+                                    </td>
+                                </motion.tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
+    );
+}
 
+function DashboardSkeleton() {
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+            <div className="flex justify-between items-end">
+                <div className="space-y-3">
+                    <Skeleton className="h-10 w-64" />
+                    <Skeleton className="h-4 w-48" />
+                </div>
+                <div className="flex gap-3">
+                    <Skeleton className="h-10 w-32 rounded-2xl" />
+                    <Skeleton className="h-10 w-28 rounded-2xl" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-32 rounded-[24px]" />
+                ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <Skeleton className="lg:col-span-8 h-[450px] rounded-[32px]" />
+                <Skeleton className="lg:col-span-4 h-[450px] rounded-[32px]" />
+            </div>
+            <Skeleton className="h-[400px] rounded-[32px]" />
+        </div>
+    );
+}
+
+function OnboardingState() {
+    return (
+        <div className="min-h-[70vh] flex flex-col items-center justify-center text-center space-y-8 p-10 bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/50">
+            <div className="h-24 w-24 bg-emerald-50 rounded-[32px] flex items-center justify-center text-emerald-600 mb-4">
+                <Rocket size={48} />
+            </div>
+            <div className="space-y-3 max-w-lg">
+                <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Initialization Required</h2>
+                <p className="text-slate-500 font-medium text-lg leading-relaxed">
+                    Welcome to InvoiceOS. Establish your professional identity to begin financial operations.
+                </p>
+            </div>
+            <Link 
+                href="/dashboard/setup/branding" 
+                className="group flex items-center gap-6 px-12 py-6 bg-slate-900 text-white rounded-[24px] text-xs font-black uppercase tracking-[0.25em] shadow-2xl hover:bg-emerald-600 transition-all duration-500 active:scale-[0.98]"
+            >
+                <span>Initialize Profile</span>
+                <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
+            </Link>
+        </div>
+    );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+    return (
+        <div className="max-w-xl mx-auto py-32 text-center space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="h-20 w-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto border border-rose-100 shadow-sm">
+                <AlertCircle size={40} />
+            </div>
+            <div className="space-y-3">
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">System Desync Detected</h3>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-sm mx-auto">
+                    We're having trouble reaching the institutional ledger. This usually happens during network shifts or organization updates.
+                </p>
+            </div>
+            <button 
+                onClick={onRetry}
+                className="group flex items-center gap-4 px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-rose-600 transition-all active:scale-95 mx-auto"
+            >
+                <span>Retry Connection</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </button>
         </div>
     );
 }

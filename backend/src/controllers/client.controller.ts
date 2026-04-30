@@ -25,10 +25,18 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { businessId, ...data } = req.body;
+    const { businessId, name, contactName, email, phone, address, taxId } = req.body;
     const { data: client, error } = await supabase
       .from('clients')
-      .insert({ ...data, organization_id: businessId })
+      .insert({
+        organization_id: businessId,
+        name,
+        contact_name: contactName || null,
+        email,
+        phone: phone || null,
+        address: address || null,
+        tax_id: taxId || null,
+      })
       .select()
       .single();
 
@@ -56,11 +64,16 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { version, ...data } = req.body;
+    const { version, businessId, name, contactName, email, phone, address, taxId } = req.body;
     const { data: client, error } = await supabase
       .from('clients')
       .update({ 
-        ...data, 
+        name,
+        contact_name: contactName,
+        email,
+        phone: phone || null,
+        address: address || null,
+        tax_id: taxId || null,
         version: (version || 1) + 1,
         updated_at: new Date().toISOString()
       })

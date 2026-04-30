@@ -13,7 +13,7 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
     // 1. Fetch Invoices for aggregation
     const { data: invoices, error } = await supabase
       .from('invoices')
-      .select('status, total_amount')
+      .select('status, total_amount, client_id, clients(name)')
       .eq('organization_id', organizationId);
 
     if (error) throw error;
@@ -22,29 +22,51 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
       totalInvoiced: 0,
       paidAmount: 0,
       outstandingAmount: 0,
-      conversionRate: 0
+      conversionRate: 0,
+      invoicesSentCount: 0,
+      totalClients: 0
     };
 
-    let sentCount = 0;
+    const clientRevenue: { [key: string]: { name: string, total: number, balance: number } } = {};
     let paidCount = 0;
 
     invoices?.forEach(inv => {
       metrics.totalInvoiced += inv.total_amount;
+      
+      // Client aggregation
+      const clientId = inv.client_id;
+      const clientName = (inv.clients as any)?.name || 'Unknown Client';
+      
+      if (!clientRevenue[clientId]) {
+        clientRevenue[clientId] = { name: clientName, total: 0, balance: 0 };
+      }
+      
+      clientRevenue[clientId].total += inv.total_amount;
+
       if (inv.status === 'PAID') {
         metrics.paidAmount += inv.total_amount;
         paidCount++;
-      }
-      if (inv.status !== 'PAID' && inv.status !== 'CANCELLED') {
+      } else if (inv.status !== 'CANCELLED') {
         metrics.outstandingAmount += inv.total_amount;
+        clientRevenue[clientId].balance += inv.total_amount;
       }
+
       if (inv.status !== 'DRAFT') {
-        sentCount++;
+        metrics.invoicesSentCount++;
       }
     });
 
-    metrics.conversionRate = sentCount > 0 ? (paidCount / sentCount) * 100 : 0;
+    metrics.conversionRate = metrics.invoicesSentCount > 0 ? (paidCount / metrics.invoicesSentCount) * 100 : 0;
 
-    // 2. Fetch Expenses for aggregation (Resilient)
+    // 2. Fetch Total Clients count
+    const { count: clientCount } = await supabase
+      .from('clients')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', organizationId);
+    
+    metrics.totalClients = clientCount || 0;
+
+    // 3. Fetch Expenses for aggregation
     let totalExpenses = 0;
     try {
       const { data: expenses, error: expError } = await supabase
@@ -56,19 +78,27 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
         totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
       }
     } catch (e) {
-      console.error('Expenses table might not be migrated yet', e);
+      console.error('Expenses table fetch failed', e);
     }
+
+    // 4. Sort Top Clients
+    const topClients = Object.entries(clientRevenue)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
 
     res.json({ 
       metrics: {
         ...metrics,
         totalExpenses
-      }
+      },
+      topClients
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const getRevenueTrends = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

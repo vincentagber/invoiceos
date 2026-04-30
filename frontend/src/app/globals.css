@@ -30,9 +30,9 @@
   --error: #DC2626;
   --on-error: #FFFFFF;
 
-  /* Font Family Definitions */
-  --font-sans: "Figtree", sans-serif;
-  --font-heading: "Figtree", sans-serif;
+  /* Font Family Foundations */
+  --font-family-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-family-heading: "Figtree", sans-serif;
 }
 
 @theme inline {
@@ -50,24 +50,24 @@
   --color-error: var(--error);
 
   /* Font Family Aliases */
-  --font-sans: var(--font-sans);
-  --font-heading: var(--font-heading);
+  --font-sans: var(--font-family-sans);
+  --font-heading: var(--font-family-heading);
 
-  /* Corner Radius Precision */
-  --radius-sm: 0.25rem;
-  --radius-default: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-3xl: 2.5rem;
+  /* Corner Radius Precision (Reference Match) */
+  --radius-sm: 0.5rem;
+  --radius-default: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 2rem;
+  --radius-2xl: 2.5rem;
+  --radius-3xl: 3rem;
   --radius-full: 9999px;
 
-  /* Shadow Precision */
-  --shadow-sm: 0 1px 2px 0 rgba(11, 31, 58, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(11, 31, 58, 0.05), 0 2px 4px -2px rgba(11, 31, 58, 0.05);
-  --shadow-lg: 0 12px 20px -5px rgba(11, 31, 58, 0.04), 0 8px 10px -6px rgba(11, 31, 58, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  /* Shadow Precision (Soft & Deep) */
+  --shadow-sm: 0 2px 4px 0 rgba(11, 31, 58, 0.02);
+  --shadow-md: 0 4px 12px -2px rgba(11, 31, 58, 0.05), 0 2px 6px -1px rgba(11, 31, 58, 0.03);
+  --shadow-lg: 0 12px 32px -8px rgba(11, 31, 58, 0.08), 0 8px 16px -8px rgba(11, 31, 58, 0.05);
+  --shadow-xl: 0 24px 48px -12px rgba(0, 0, 0, 0.06), 0 12px 24px -12px rgba(0, 0, 0, 0.03);
 }
 
 html {
@@ -90,7 +90,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-heading);
+  font-family: var(--font-family-heading);
   color: var(--primary);
   font-weight: 700;
   letter-spacing: -0.02em;
