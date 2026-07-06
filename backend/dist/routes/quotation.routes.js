@@ -24,26 +24,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const invoiceController = __importStar(require("../controllers/invoice.controller"));
+const quotationController = __importStar(require("../controllers/quotation.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
-// Base Authentication
 router.use(auth_middleware_1.authenticate);
-// Organization Roles
-const ROLES = {
-    ANY: ['OWNER', 'ADMIN', 'MEMBER'],
-    MANAGE: ['OWNER', 'ADMIN'],
-    ROOT: ['OWNER']
-};
-// Routes with RBAC
-router.get('/', (0, auth_middleware_1.checkRole)(ROLES.ANY), invoiceController.getAll);
-router.post('/', (0, auth_middleware_1.checkRole)(ROLES.MANAGE), invoiceController.create);
-router.get('/:id', (0, auth_middleware_1.checkRole)(ROLES.ANY), invoiceController.getOne);
-router.put('/:id', (0, auth_middleware_1.checkRole)(ROLES.MANAGE), invoiceController.update);
-router.patch('/:id/status', (0, auth_middleware_1.checkRole)(ROLES.MANAGE), invoiceController.updateStatus);
-router.post('/:id/view', (0, auth_middleware_1.checkRole)(ROLES.ANY), invoiceController.trackView);
-router.post('/:id/send', (0, auth_middleware_1.checkRole)(ROLES.MANAGE), invoiceController.sendInvoice);
-router.post('/:id/payments', (0, auth_middleware_1.checkRole)(ROLES.MANAGE), invoiceController.addPayment);
-router.post('/:id/remind', (0, auth_middleware_1.checkRole)(ROLES.MANAGE), invoiceController.triggerReminder);
-router.delete('/:id', (0, auth_middleware_1.checkRole)(ROLES.ROOT), invoiceController.remove); // Only Owner can delete
+router.get('/', quotationController.getAll);
+router.post('/', quotationController.create);
+router.get('/:id', quotationController.getOne);
+router.put('/:id', quotationController.update);
+router.delete('/:id', quotationController.remove);
+router.post('/:id/convert', quotationController.convertToInvoice);
 exports.default = router;

@@ -24,13 +24,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const clientController = __importStar(require("../controllers/client.controller"));
-const auth_middleware_1 = require("../middlewares/auth.middleware");
+const billingController = __importStar(require("../controllers/billing.controller"));
 const router = (0, express_1.Router)();
-router.use(auth_middleware_1.authenticate);
-router.get('/', clientController.getAll);
-router.post('/', clientController.create);
-router.get('/:id', clientController.getOne);
-router.put('/:id', clientController.update);
-router.delete('/:id', clientController.remove);
+router.post('/verify', billingController.verifySubscription);
+router.get('/:businessId', billingController.getSubscription);
+router.get('/:businessId/history', billingController.getBillingHistory);
 exports.default = router;

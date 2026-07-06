@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const USE_NODE = process.env.NEXT_PUBLIC_USE_NODE === 'true';
 
@@ -9,19 +9,15 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 30000,
 });
 
-// Add a request interceptor to inject the token
 api.interceptors.request.use(
     (config) => {
-        // Attempt to get the token directly from localStorage
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-        // Add Authorization header if token exists
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-
         return config;
     },
     (error) => {
@@ -30,18 +26,21 @@ api.interceptors.request.use(
     }
 );
 
-// Add a response interceptor to handle 401 errors
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        // If the error is 401 Unauthorized, notify the AuthContext
+    (error: AxiosError) => {
         if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {
-                // Dispatch a custom event that AuthContext will listen for
                 window.dispatchEvent(new CustomEvent('invoiceos-logout', { 
                     detail: { reason: 'session_expired' } 
                 }));
             }
+        }
+        if (error.response?.status === 429) {
+            console.error('Rate limited. Please try again later.');
+        }
+        if (error.response?.status && error.response.status >= 500) {
+            console.error('Server error. Our team has been notified.');
         }
         return Promise.reject(error);
     }

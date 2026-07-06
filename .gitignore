@@ -1,2 +1,9 @@
 *.db
 backend/.env
+.env
+.env.local
+.env.*.local
+.env.production
+*.key
+*.pem
+**/secrets/

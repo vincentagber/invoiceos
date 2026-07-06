@@ -29,6 +29,7 @@ const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticate);
 router.get('/me', businessController.getCurrent);
+router.put('/me', businessController.updateCurrent);
 router.get('/:id', businessController.getOne);
 router.put('/:id', businessController.update);
 router.put('/:id/branding', businessController.updateBranding);
