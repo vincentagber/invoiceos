@@ -56,7 +56,6 @@ if (process.env.SENTRY_DSN) {
     tracesSampleRate: 0.1,
     integrations: [Sentry.expressIntegration()],
   });
-  app.use(Sentry.expressIntegration());
 }
 
 // Security: Remove server fingerprinting
@@ -192,7 +191,7 @@ app.set('io', io);
 
 // Sentry error handler (must be before express error handler)
 if (process.env.SENTRY_DSN) {
-  app.use(Sentry.expressErrorHandler());
+  Sentry.setupExpressErrorHandler(app);
 }
 
 // Error Handling

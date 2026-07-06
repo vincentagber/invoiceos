@@ -157,7 +157,7 @@ export default function DashboardPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Welcome back, {user.name}</h1>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Welcome back, {user?.name}</h1>
                     <p className="text-sm font-medium text-slate-500">Monitor and control what happens with your money today.</p>
                 </div>
                 <div className="flex items-center gap-3">
