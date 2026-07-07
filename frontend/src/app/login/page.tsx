@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { localAuth } from '@/lib/localAuth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,12 +39,13 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-
-            if (error) throw error;
+            if (isSupabaseConfigured()) {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+            } else {
+                const { error } = await localAuth.signInWithPassword(email, password);
+                if (error) throw error;
+            }
             router.push('/dashboard');
         } catch (err: any) {
             setError(err.message || 'Invalid email or password. Please try again.');
@@ -53,6 +55,10 @@ export default function LoginPage() {
     };
 
     const handleGoogleLogin = async () => {
+        if (!isSupabaseConfigured()) {
+            setError('Google login requires Supabase configuration');
+            return;
+        }
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',

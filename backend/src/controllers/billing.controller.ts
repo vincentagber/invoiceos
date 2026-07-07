@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
-import { supabase } from '../lib/supabase';
 import axios from 'axios';
 import { logger } from '../utils/logger';
 
@@ -12,7 +11,6 @@ export const verifySubscription = async (req: Request, res: Response) => {
     }
 
     try {
-        // 1. Verify with Paystack
         const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
             headers: {
                 Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
@@ -36,40 +34,53 @@ export const verifySubscription = async (req: Request, res: Response) => {
             endDate.setMonth(endDate.getMonth() + 1);
         }
 
-        // 3. Upsert subscription using Supabase fallback
-        const { data: subscription, error: subError } = await supabase
-            .from('subscriptions')
-            .upsert({
-                organization_id: businessId,
-                plan: plan.toUpperCase(),
-                status: 'ACTIVE',
-                amount: amount,
-                billing_cycle: billingCycle.toUpperCase(),
-                start_date: startDate.toISOString(),
-                end_date: endDate.toISOString(),
-                paystack_ref: reference,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'organization_id' })
-            .select()
-            .single();
+        const existingSub = await prisma.subscription.findUnique({
+            where: { businessId },
+        });
 
-        if (subError) throw subError;
-
-        // 4. Record transaction history
-        await supabase
-            .from('subscription_transactions')
-            .insert({
-                subscription_id: subscription.id,
-                plan: plan.toUpperCase(),
-                amount: amount,
-                billing_cycle: billingCycle.toUpperCase(),
-                paystack_ref: reference,
-                status: 'SUCCESS'
+        let subscription;
+        if (existingSub) {
+            subscription = await prisma.subscription.update({
+                where: { businessId },
+                data: {
+                    plan: plan.toUpperCase(),
+                    status: 'ACTIVE',
+                    amount,
+                    billingCycle: billingCycle.toUpperCase(),
+                    startDate,
+                    endDate,
+                    paystackRef: reference,
+                },
             });
+        } else {
+            subscription = await prisma.subscription.create({
+                data: {
+                    businessId,
+                    plan: plan.toUpperCase(),
+                    status: 'ACTIVE',
+                    amount,
+                    billingCycle: billingCycle.toUpperCase(),
+                    startDate,
+                    endDate,
+                    paystackRef: reference,
+                },
+            });
+        }
+
+        await prisma.subscriptionTransaction.create({
+            data: {
+                subscriptionId: subscription.id,
+                plan: plan.toUpperCase(),
+                amount,
+                billingCycle: billingCycle.toUpperCase(),
+                paystackRef: reference,
+                status: 'SUCCESS',
+            },
+        });
 
         res.json({
             message: 'Institutional Subscription Activated',
-            subscription
+            subscription,
         });
     } catch (error: any) {
         logger.error('Subscription verification failure:', error);
@@ -81,11 +92,9 @@ export const getSubscription = async (req: Request, res: Response) => {
     const businessId = req.params.businessId as string;
 
     try {
-        const { data: subscription, error } = await supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('organization_id', businessId)
-            .maybeSingle();
+        const subscription = await prisma.subscription.findUnique({
+            where: { businessId },
+        });
 
         res.json(subscription || { status: 'INACTIVE', plan: 'FREE' });
     } catch (error) {
@@ -98,21 +107,19 @@ export const getBillingHistory = async (req: Request, res: Response) => {
     const businessId = req.params.businessId as string;
 
     try {
-        const { data: subscription, error: subError } = await supabase
-            .from('subscriptions')
-            .select('id')
-            .eq('organization_id', businessId)
-            .maybeSingle();
+        const subscription = await prisma.subscription.findUnique({
+            where: { businessId },
+            select: { id: true },
+        });
 
         if (!subscription) return res.json([]);
 
-        const { data: transactions, error } = await supabase
-            .from('subscription_transactions')
-            .select('*')
-            .eq('subscription_id', subscription.id)
-            .order('created_at', { ascending: false });
+        const transactions = await prisma.subscriptionTransaction.findMany({
+            where: { subscriptionId: subscription.id },
+            orderBy: { createdAt: 'desc' },
+        });
 
-        res.json(transactions || []);
+        res.json(transactions);
     } catch (error) {
         logger.error('Failed to retrieve billing history', error);
         res.status(500).json({ error: 'Internal system error' });

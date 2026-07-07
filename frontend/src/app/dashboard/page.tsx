@@ -174,26 +174,30 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
                 {kpiMetrics.map((kpi, i) => (
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
                         key={i} 
-                        className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
+                        className="bg-white rounded-lg border border-slate-200"
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={clsx("p-2.5 rounded-xl transition-transform group-hover:scale-110", kpi.bg, kpi.color)}>
-                                <kpi.icon size={20} />
+                        <div className="px-4 py-3.5 border-b border-slate-100">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-medium text-slate-500">{kpi.label}</span>
+                                <div className={clsx("p-1.5 rounded-md", kpi.bg, kpi.color)}>
+                                    <kpi.icon size={14} />
+                                </div>
                             </div>
-                            <div className={clsx("flex items-center gap-1 text-[10px] font-black uppercase tracking-tight", kpi.trend.startsWith('+') ? "text-emerald-600" : "text-rose-500")}>
+                        </div>
+                        <div className="px-4 py-3.5">
+                            <div className="text-xl font-semibold text-slate-900">{kpi.value}</div>
+                            <div className={clsx("flex items-center gap-1 mt-1 text-[11px] font-medium", kpi.trend.startsWith('+') ? "text-emerald-600" : "text-rose-500")}>
                                 {kpi.trend.startsWith('+') ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                                 {kpi.trend}
                             </div>
                         </div>
-                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">{kpi.label}</p>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{kpi.value}</h3>
                     </motion.div>
                 ))}
             </div>

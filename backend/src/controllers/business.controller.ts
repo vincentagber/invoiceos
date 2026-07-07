@@ -1,20 +1,17 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
-import { supabase } from '../lib/supabase';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    // Temporary fallback to Supabase due to Prisma authentication failure
-    const { data: business, error } = await supabase
-      .from('organizations')
-      .select('*, clients(count), invoices(count)')
-      .eq('owner_id', req.user?.id as string)
-      .maybeSingle();
+    const business = await prisma.business.findFirst({
+      where: { ownerId: req.user?.id },
+      include: {
+        _count: { select: { clients: true, invoices: true } },
+      },
+    });
 
-    if (error) throw error;
-    if (!business) return res.status(404).json({ error: 'Institutional workspace not found' });
-
+    if (!business) return res.status(404).json({ message: 'Business not found' });
     res.json(business);
   } catch (error) {
     next(error);
@@ -23,18 +20,18 @@ export const getCurrent = async (req: AuthRequest, res: Response, next: NextFunc
 
 export const updateCurrent = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const business = await prisma.business.findFirst({
-      where: { ownerId: req.user?.id as string }
+    const existing = await prisma.business.findFirst({
+      where: { ownerId: req.user?.id },
     });
 
-    if (!business) return res.status(404).json({ error: 'Institutional workspace not found' });
+    if (!existing) return res.status(404).json({ message: 'Business not found' });
 
-    const updated = await prisma.business.update({
-      where: { id: business.id },
-      data: req.body
+    const business = await prisma.business.update({
+      where: { id: existing.id },
+      data: req.body,
     });
 
-    res.json(updated);
+    res.json(business);
   } catch (error) {
     next(error);
   }
@@ -43,15 +40,13 @@ export const updateCurrent = async (req: AuthRequest, res: Response, next: NextF
 export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const business = await prisma.business.findUnique({
-      where: { id: req.params.id as string },
+      where: { id: req.params.id },
       include: {
-        _count: {
-          select: { clients: true, invoices: true }
-        }
-      }
+        _count: { select: { clients: true, invoices: true } },
+      },
     });
 
-    if (!business) return res.status(404).json({ error: 'Institutional entity not found' });
+    if (!business) return res.status(404).json({ message: 'Business not found' });
     res.json(business);
   } catch (error) {
     next(error);
@@ -60,12 +55,12 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const updated = await prisma.business.update({
-      where: { id: req.params.id as string },
-      data: req.body
+    const business = await prisma.business.update({
+      where: { id: req.params.id },
+      data: req.body,
     });
 
-    res.json(updated);
+    res.json(business);
   } catch (error) {
     next(error);
   }
@@ -73,18 +68,17 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const updateBranding = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { logo, brandColor, customDomain } = req.body;
-    const updated = await prisma.business.update({
-      where: { id: req.params.id as string },
-      data: { 
-        // Note: logo is handled differently in settings.controller if it's binary
-        // but here we maintain backward compatibility if needed
-        brandColor, 
-        customDomain 
-      }
+    const { brandColor, customDomain } = req.body;
+
+    const business = await prisma.business.update({
+      where: { id: req.params.id },
+      data: {
+        brandColor: brandColor || undefined,
+        customDomain: customDomain || undefined,
+      },
     });
 
-    res.json(updated);
+    res.json(business);
   } catch (error) {
     next(error);
   }

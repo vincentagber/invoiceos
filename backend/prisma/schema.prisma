@@ -67,6 +67,7 @@ model Business {
   automationRules AutomationRule[]
   quotations      Quotation[]
   subscription    Subscription?
+  expenses        Expense[]
   
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -260,4 +261,18 @@ enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+model Expense {
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id])
+  userId       String?
+  amount       Float
+  category     String?
+  description  String?
+  date         DateTime @default(now())
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

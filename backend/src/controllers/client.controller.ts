@@ -1,22 +1,21 @@
 import { Response, NextFunction } from 'express';
-import { supabase } from '../lib/supabase';
+import prisma from '../lib/prisma';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const organizationId = req.query.businessId as string;
-    
-    if (!organizationId) {
+    const businessId = req.query.businessId as string;
+
+    if (!businessId) {
       return res.json([]);
     }
 
-    const { data: clients, error } = await supabase
-      .from('clients')
-      .select('*, invoices(count)')
-      .eq('organization_id', organizationId)
-      .order('name', { ascending: true });
+    const clients = await prisma.client.findMany({
+      where: { businessId },
+      include: { _count: { select: { invoices: true } } },
+      orderBy: { name: 'asc' },
+    });
 
-    if (error) throw error;
     res.json(clients);
   } catch (error) {
     next(error);
@@ -26,21 +25,18 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, name, contactName, email, phone, address, taxId } = req.body;
-    const { data: client, error } = await supabase
-      .from('clients')
-      .insert({
-        organization_id: businessId,
+    const client = await prisma.client.create({
+      data: {
+        businessId,
         name,
-        contact_name: contactName || null,
+        contactName: contactName || null,
         email,
         phone: phone || null,
         address: address || null,
-        tax_id: taxId || null,
-      })
-      .select()
-      .single();
+        taxId: taxId || null,
+      },
+    });
 
-    if (error) throw error;
     res.status(201).json(client);
   } catch (error) {
     next(error);
@@ -49,13 +45,12 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { data: client, error } = await supabase
-      .from('clients')
-      .select('*, invoices(*)')
-      .eq('id', req.params.id as string)
-      .single();
+    const client = await prisma.client.findUnique({
+      where: { id: req.params.id },
+      include: { invoices: true },
+    });
 
-    if (error) throw error;
+    if (!client) return res.status(404).json({ message: 'Client not found' });
     res.json(client);
   } catch (error) {
     next(error);
@@ -64,40 +59,34 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { version, businessId, name, contactName, email, phone, address, taxId } = req.body;
-    const { data: client, error } = await supabase
-      .from('clients')
-      .update({ 
+    const { version, name, contactName, email, phone, address, taxId } = req.body;
+    const clientId = req.params.id;
+
+    const current = await prisma.client.findUnique({ where: { id: clientId } });
+    if (!current) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+    if (current.version !== (version || 1)) {
+      return res.status(409).json({
+        message: 'Conflict detected',
+        currentVersion: current.version,
+        lastModified: current.updatedAt,
+      });
+    }
+
+    const client = await prisma.client.update({
+      where: { id: clientId },
+      data: {
         name,
-        contact_name: contactName,
+        contactName: contactName || null,
         email,
         phone: phone || null,
         address: address || null,
-        tax_id: taxId || null,
-        version: (version || 1) + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', req.params.id as string)
-      .eq('version', version || 1)
-      .select()
-      .single();
+        taxId: taxId || null,
+        version: current.version + 1,
+      },
+    });
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        const { data: current } = await supabase
-          .from('clients')
-          .select('version, updated_at')
-          .eq('id', req.params.id as string)
-          .single();
-          
-        return res.status(409).json({
-          message: 'Conflict detected',
-          currentVersion: current?.version,
-          lastModified: current?.updated_at
-        });
-      }
-      throw error;
-    }
     res.json(client);
   } catch (error) {
     next(error);
@@ -106,12 +95,7 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { error } = await supabase
-      .from('clients')
-      .delete()
-      .eq('id', req.params.id as string);
-
-    if (error) throw error;
+    await prisma.client.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (error) {
     next(error);

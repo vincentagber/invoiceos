@@ -1,17 +1,19 @@
 import { Response, NextFunction } from 'express';
-import { supabase } from '../lib/supabase';
+import prisma from '../lib/prisma';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const organizationId = req.query.businessId as string;
-    const { data: quotations, error } = await supabase
-      .from('quotations')
-      .select('*, client:clients(*), items:quotation_items(*)')
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false });
+    const businessId = req.query.businessId as string;
 
-    if (error) throw error;
+    if (!businessId) return res.json([]);
+
+    const quotations = await prisma.quotation.findMany({
+      where: { businessId },
+      include: { client: true, items: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
     res.json(quotations);
   } catch (error) {
     next(error);
@@ -21,30 +23,29 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, clientId, items, ...data } = req.body;
-    const quotationNumber = data.quotationNumber || `QT-${Date.now()}`;
 
-    const { data: quotation, error: qtError } = await supabase
-      .from('quotations')
-      .insert({
-        ...data,
-        quotation_number: quotationNumber,
-        organization_id: businessId,
-        client_id: clientId,
-      })
-      .select()
-      .single();
-
-    if (qtError) throw qtError;
-
-    if (items && items.length > 0) {
-      const { error: itemsError } = await supabase
-        .from('quotation_items')
-        .insert(items.map((item: any) => ({
-          ...item,
-          quotation_id: quotation.id
-        })));
-      if (itemsError) throw itemsError;
-    }
+    const quotation = await prisma.quotation.create({
+      data: {
+        quotationNumber: data.quotationNumber || `QT-${Date.now()}`,
+        businessId,
+        clientId,
+        status: 'DRAFT',
+        currency: data.currency || 'USD',
+        issueDate: data.issueDate ? new Date(data.issueDate) : new Date(),
+        expiryDate: data.expiryDate ? new Date(data.expiryDate) : new Date(),
+        taxRate: data.taxRate || 0,
+        discountAmount: data.discountAmount || 0,
+        totalAmount: data.totalAmount || 0,
+        items: items?.length ? {
+          create: items.map((item: any) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+        } : undefined,
+      },
+      include: { items: true, client: true },
+    });
 
     res.status(201).json(quotation);
   } catch (error) {
@@ -54,13 +55,11 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { data: quotation, error } = await supabase
-      .from('quotations')
-      .select('*, client:clients(*), items:quotation_items(*)')
-      .eq('id', req.params.id as string)
-      .single();
+    const quotation = await prisma.quotation.findUnique({
+      where: { id: req.params.id },
+      include: { client: true, items: true },
+    });
 
-    if (error) throw error;
     if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
     res.json(quotation);
   } catch (error) {
@@ -71,28 +70,22 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { items, ...data } = req.body;
-    
-    // Update main quotation
-    const { data: quotation, error: qtError } = await supabase
-      .from('quotations')
-      .update(data)
-      .eq('id', req.params.id as string)
-      .select()
-      .single();
 
-    if (qtError) throw qtError;
-
-    // Replace items
-    if (items) {
-      await supabase.from('quotation_items').delete().eq('quotation_id', req.params.id as string);
-      const { error: itemsError } = await supabase
-        .from('quotation_items')
-        .insert(items.map((item: any) => ({
-          ...item,
-          quotation_id: quotation.id
-        })));
-      if (itemsError) throw itemsError;
-    }
+    const quotation = await prisma.quotation.update({
+      where: { id: req.params.id },
+      data: {
+        ...data,
+        items: items ? {
+          deleteMany: {},
+          create: items.map((item: any) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+        } : undefined,
+      },
+      include: { items: true, client: true },
+    });
 
     res.json(quotation);
   } catch (error) {
@@ -102,12 +95,7 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { error } = await supabase
-      .from('quotations')
-      .delete()
-      .eq('id', req.params.id as string);
-
-    if (error) throw error;
+    await prisma.quotation.delete({ where: { id: req.params.id } });
     res.json({ success: true, message: 'Quotation deleted successfully' });
   } catch (error) {
     next(error);
@@ -116,52 +104,39 @@ export const remove = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const convertToInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
-    
-    const { data: quotation, error: fetchError } = await supabase
-      .from('quotations')
-      .select('*, items:quotation_items(*)')
-      .eq('id', id as string)
-      .single();
+    const quotation = await prisma.quotation.findUnique({
+      where: { id: req.params.id },
+      include: { items: true },
+    });
 
-    if (fetchError || !quotation) {
-      return res.status(404).json({ message: 'Quotation not found' });
-    }
+    if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
 
-    const invoiceNumber = `INV-${Date.now()}`;
-    const { data: invoice, error: invError } = await supabase
-      .from('invoices')
-      .insert({
-        invoice_number: invoiceNumber,
-        organization_id: quotation.organization_id,
-        client_id: quotation.client_id,
+    const invoice = await prisma.invoice.create({
+      data: {
+        invoiceNumber: `INV-${Date.now()}`,
+        businessId: quotation.businessId,
+        clientId: quotation.clientId,
         currency: quotation.currency,
-        issue_date: new Date(),
-        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        tax_rate: quotation.tax_rate,
-        discount_amount: quotation.discount_amount,
-        total_amount: quotation.total_amount,
+        issueDate: new Date(),
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        taxRate: quotation.taxRate,
+        discountAmount: quotation.discountAmount,
+        totalAmount: quotation.totalAmount,
         status: 'DRAFT',
-      })
-      .select()
-      .single();
+        items: {
+          create: quotation.items.map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+        },
+      },
+    });
 
-    if (invError) throw invError;
-
-    // Copy items
-    const { error: itemsError } = await supabase
-      .from('invoice_items')
-      .insert(quotation.items.map((item: any) => ({
-        description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        invoice_id: invoice.id
-      })));
-    
-    if (itemsError) throw itemsError;
-
-    // Update quotation status
-    await supabase.from('quotations').update({ status: 'ACCEPTED' }).eq('id', id as string);
+    await prisma.quotation.update({
+      where: { id: req.params.id },
+      data: { status: 'ACCEPTED' },
+    });
 
     res.status(201).json(invoice);
   } catch (error) {

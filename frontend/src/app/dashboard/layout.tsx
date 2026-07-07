@@ -15,7 +15,7 @@ import {
     Wallet,
     Search,
     Bell,
-    Sparkles,
+
     HelpCircle,
     PanelLeftClose,
     ShieldCheck,
@@ -98,18 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* Brand Header */}
                     <div className="h-20 flex items-center px-6 justify-between">
                         <Link href="/dashboard" className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                <Sparkles className="text-white" size={20} />
-                            </div>
-                            {!collapsed && (
-                                <motion.span 
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="text-xl font-black text-slate-900 tracking-tighter"
-                                >
-                                    Invoice<span className="text-emerald-500 text-lg">OS</span>
-                                </motion.span>
-                            )}
+                            <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto object-contain" />
                         </Link>
                     </div>
 
@@ -168,15 +157,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* Upgrade Card */}
                     {!collapsed && (
                         <div className="p-4 mt-auto">
-                            <div className="bg-slate-900 rounded-3xl p-5 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-8 -mt-8" />
-                                <h4 className="text-white font-black text-sm mb-1 relative z-10">Upgrade Pro! 🚀</h4>
-                                <p className="text-slate-400 text-[10px] font-medium mb-4 relative z-10 leading-relaxed">
-                                    Unlock advanced financial insights.
-                                </p>
-                                <button className="w-full bg-emerald-500 text-white py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-400 transition-colors relative z-10">
-                                    Upgrade
-                                </button>
+                            <div className="rounded-xl p-[1px] relative overflow-hidden bg-gradient-to-b from-slate-700/60 to-slate-800/10">
+                                <div className="rounded-xl p-4 bg-slate-900/95 h-full">
+                                    <div className="flex items-center gap-2.5 mb-3">
+                                        <div className="h-6 w-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-emerald-400">
+                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-400/70">Pro</span>
+                                    </div>
+                                    <p className="text-white font-semibold text-sm mb-0.5">Upgrade to Pro</p>
+                                    <p className="text-slate-400 text-[11px] leading-relaxed mb-3.5">
+                                        Unlock advanced financial insights.
+                                    </p>
+                                    <button className="w-full py-2 rounded-lg text-[11px] font-medium transition-all duration-200 border border-slate-600 text-slate-300 hover:bg-white hover:text-slate-900 hover:border-white">
+                                        Upgrade
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -315,7 +313,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             className="fixed inset-y-0 left-0 w-[280px] bg-white z-[70] lg:hidden flex flex-col shadow-2xl"
                         >
                             <div className="p-6 flex items-center justify-between border-b border-slate-50">
-                                <span className="text-xl font-black text-slate-900 tracking-tighter">Invoice<span className="text-emerald-500">OS</span></span>
+                                <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto object-contain" />
                                 <button onClick={() => setMobileOpen(false)} className="p-2 text-slate-400 hover:text-slate-900">
                                     <X size={20} />
                                 </button>

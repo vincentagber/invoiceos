@@ -289,7 +289,7 @@ export default function SettingsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-10">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Console Settings</h1>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none font-heading">Console Settings</h1>
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-3">Manage institutional identity and revenue protocols.</p>
                 </div>
                 <button 
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                 {/* 1. Business Profile */}
                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">1. Business Profile</h2>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight font-heading">1. Business Profile</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Core institutional data for generated documents.</p>
                     </div>
                     
@@ -343,7 +343,8 @@ export default function SettingsPage() {
                 {/* 2. Branding */}
                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">2. Institutional Branding</h2>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight font-heading">2. Institutional Branding</h2>
+                            
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -417,7 +418,7 @@ export default function SettingsPage() {
                 {/* 3. Invoice Defaults */}
                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">3. Ledger Defaults</h2>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight font-heading">3. Ledger Defaults</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Standardized values for newly minted documents.</p>
                     </div>
 
@@ -457,7 +458,7 @@ export default function SettingsPage() {
                 {/* 4. Workflow Preferences */}
                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">4. Workflow Engines</h2>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight font-heading">4. Workflow Engines</h2>
                     </div>
 
                     <div className="space-y-8">
@@ -503,7 +504,7 @@ export default function SettingsPage() {
                 {/* 5. Notifications & Automation */}
                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">5. Automation Protocols</h2>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight font-heading">5. Automation Protocols</h2>
                     </div>
 
                     <div className="space-y-8">
@@ -526,7 +527,7 @@ export default function SettingsPage() {
                 {/* 6. Email Integrations (SMTP) */}
                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">6. Communication Infrastructure</h2>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight font-heading">6. Communication Infrastructure</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Deploy your institutional domain for document transit.</p>
                     </div>
 
@@ -592,7 +593,7 @@ export default function SettingsPage() {
                 <div className="bg-white rounded-[2.5rem] border border-rose-100 shadow-sm overflow-hidden">
                     <div className="p-10 border-b border-rose-50 flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-black text-rose-600 uppercase tracking-tight flex items-center gap-3">
+                            <h2 className="text-xl font-black text-rose-600 uppercase tracking-tight flex items-center gap-3 font-heading">
                                 <AlertTriangle size={24} /> 7. Workspace Termination
                             </h2>
                             <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-2">Caution: Destructive protocols below. Proceed with care.</p>

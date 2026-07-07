@@ -159,53 +159,47 @@ export default function ExpensesPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6 transition-all hover:shadow-md group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Expenses (MTD)</span>
-                        <div className="p-2 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-600 transition-colors">
-                            <Wallet size={18} />
+                <div className="bg-white rounded-lg border border-slate-200">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-slate-500">Total Expenses (MTD)</span>
+                        <div className="p-1.5 rounded-md bg-slate-50 text-slate-400">
+                            <Wallet size={14} />
                         </div>
                     </div>
-                    <div>
-                        <div className="text-3xl font-black text-slate-900 tracking-tight">
-                            ₦{totalMTD.toLocaleString()}
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-2 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
-                            <ArrowUpRight size={12} />
-                            +5.2% vs last month
+                    <div className="px-5 py-4">
+                        <div className="text-2xl font-semibold text-slate-900">₦{totalMTD.toLocaleString()}</div>
+                        <div className="flex items-center gap-1 mt-1.5">
+                            <ArrowUpRight size={14} className="text-emerald-600" />
+                            <span className="text-xs font-medium text-emerald-600">+5.2% vs last month</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6 transition-all hover:shadow-md group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Reimbursement</span>
-                        <div className="p-2 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
-                            <Clock size={18} />
+                <div className="bg-white rounded-lg border border-slate-200">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-slate-500">Pending Reimbursement</span>
+                        <div className="p-1.5 rounded-md bg-slate-50 text-slate-400">
+                            <Clock size={14} />
                         </div>
                     </div>
-                    <div>
-                        <div className="text-3xl font-black text-slate-900 tracking-tight">
-                            ₦{pendingAmount.toLocaleString()}
-                        </div>
-                        <div className="mt-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <div className="px-5 py-4">
+                        <div className="text-2xl font-semibold text-slate-900">₦{pendingAmount.toLocaleString()}</div>
+                        <div className="mt-1.5 text-xs font-medium text-slate-400">
                             Across {expenses.filter(e => e.status === 'PENDING').length} active items
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6 transition-all hover:shadow-md group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Top Category</span>
-                        <div className="p-2 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                            <ReceiptText size={18} />
+                <div className="bg-white rounded-lg border border-slate-200">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-slate-500">Top Category</span>
+                        <div className="p-1.5 rounded-md bg-slate-50 text-slate-400">
+                            <ReceiptText size={14} />
                         </div>
                     </div>
-                    <div>
-                        <div className="text-2xl font-black text-slate-900 tracking-tight truncate">
-                            {topCategory[0]}
-                        </div>
-                        <div className="mt-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <div className="px-5 py-4">
+                        <div className="text-lg font-semibold text-slate-900 truncate">{topCategory[0]}</div>
+                        <div className="mt-1.5 text-xs font-medium text-slate-400">
                             ₦{(topCategory[1] as number).toLocaleString()} this month
                         </div>
                     </div>

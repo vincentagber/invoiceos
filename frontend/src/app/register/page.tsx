@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { localAuth } from '@/lib/localAuth';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -36,23 +37,21 @@ export default function RegisterPage() {
         setError(null);
 
         try {
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        full_name: name,
-                    }
+            if (isSupabaseConfigured()) {
+                const { data, error } = await supabase.auth.signUp({
+                    email, password,
+                    options: { data: { full_name: name } }
+                });
+                if (error) throw error;
+                if (data.user && data.session === null) {
+                    setError("Account created. Check your email for confirmation.");
+                    return;
                 }
-            });
-
-            if (error) throw error;
-            
-            if (data.user && data.session === null) {
-                setError("Account created. Check your email for confirmation.");
             } else {
-                router.push('/dashboard');
+                const { error } = await localAuth.signUp(email, password, name);
+                if (error) throw error;
             }
+            router.push('/dashboard');
         } catch (err: any) {
             setError(err.message || 'Failed to create account.');
         } finally {

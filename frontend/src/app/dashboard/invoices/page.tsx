@@ -159,51 +159,47 @@ export default function InvoicesPage() {
 
             {/* Summary Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Outstanding</span>
-                        <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
-                            <Clock size={16} />
+                <div className="bg-white rounded-lg border border-slate-200">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-slate-500">Total Outstanding</span>
+                        <div className="p-1.5 rounded-md bg-rose-50 text-rose-500">
+                            <Clock size={14} />
                         </div>
                     </div>
-                    <div>
-                        <div className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(totalOutstanding)}</div>
-                        <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-rose-600 uppercase tracking-widest">
-                            <TrendingUp size={12} />
-                            +12% from last month
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Paid this Month</span>
-                        <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-                            <CheckCircle size={16} />
-                        </div>
-                    </div>
-                    <div>
-                        <div className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(paidThisMonth)}</div>
-                        <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                            <FileText size={12} />
-                            {invoices.filter(i => i.status === 'PAID').length} Invoices Cleared
+                    <div className="px-5 py-4">
+                        <div className="text-2xl font-semibold text-slate-900">{formatCurrency(totalOutstanding)}</div>
+                        <div className="flex items-center gap-1 mt-1.5">
+                            <TrendingUp size={14} className="text-rose-500" />
+                            <span className="text-xs font-medium text-rose-500">+12% from last month</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Drafts</span>
-                        <div className="p-2 rounded-lg bg-slate-50 text-slate-400">
-                            <Pencil size={16} />
+                <div className="bg-white rounded-lg border border-slate-200">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-slate-500">Paid this Month</span>
+                        <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-500">
+                            <CheckCircle size={14} />
                         </div>
                     </div>
-                    <div>
-                        <div className="text-3xl font-black text-slate-900 tracking-tight">{draftsCount}</div>
-                        <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            <AlertCircle size={12} />
-                            Awaiting approval
+                    <div className="px-5 py-4">
+                        <div className="text-2xl font-semibold text-slate-900">{formatCurrency(paidThisMonth)}</div>
+                        <div className="mt-1.5 text-xs font-medium text-slate-400">
+                            {invoices.filter(i => i.status === 'PAID').length} invoices cleared
                         </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-lg border border-slate-200">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-slate-500">Drafts</span>
+                        <div className="p-1.5 rounded-md bg-slate-50 text-slate-400">
+                            <Pencil size={14} />
+                        </div>
+                    </div>
+                    <div className="px-5 py-4">
+                        <div className="text-2xl font-semibold text-slate-900">{draftsCount}</div>
+                        <div className="mt-1.5 text-xs font-medium text-slate-400">Awaiting approval</div>
                     </div>
                 </div>
             </div>

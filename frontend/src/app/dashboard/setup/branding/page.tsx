@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 
@@ -45,21 +45,25 @@ export default function BrandingSetupPage() {
 
         setUploading(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${user?.id}/${fileName}`;
+            if (isSupabaseConfigured()) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random()}.${fileExt}`;
+                const filePath = `${user?.id}/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('logos')
-                .upload(filePath, file);
+                const { error: uploadError } = await supabase.storage
+                    .from('logos')
+                    .upload(filePath, file);
 
-            if (uploadError) throw uploadError;
+                if (uploadError) throw uploadError;
 
-            const { data } = supabase.storage
-                .from('logos')
-                .getPublicUrl(filePath);
+                const { data } = supabase.storage
+                    .from('logos')
+                    .getPublicUrl(filePath);
 
-            setLogoUrl(data.publicUrl);
+                setLogoUrl(data.publicUrl);
+            } else {
+                alert('Logo upload requires Supabase Storage configuration.');
+            }
         } catch (error: any) {
             console.error('Upload error:', error);
             alert('Failed to upload logo. Make sure you created the "logos" bucket in Supabase Storage.');

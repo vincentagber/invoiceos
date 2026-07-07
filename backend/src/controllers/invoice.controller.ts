@@ -1,86 +1,77 @@
-import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../lib/supabase';
+import { Response, NextFunction } from 'express';
+import prisma from '../lib/prisma';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
-export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { 
-      businessId, 
-      clientId, 
-      status, 
-      startDate, 
-      endDate,
-      page = 1,
-      limit = 20,
-      sortBy = 'created_at',
-      sortOrder = 'desc'
-    } = req.query;
+    const { businessId, clientId, status, startDate, endDate, page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
-    const from = (Number(page) - 1) * Number(limit);
-    const to = from + Number(limit) - 1;
+    if (!businessId) {
+      return res.json({ data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } });
+    }
 
-    let query = supabase
-      .from('invoices')
-      .select('*, client:clients(id, name, email), items:invoice_items(*)', { count: 'exact' })
-      .eq('organization_id', businessId as string);
+    const where: any = { businessId: businessId as string };
+    if (clientId) where.clientId = clientId as string;
+    if (status) where.status = status as string;
+    if (startDate) where.createdAt = { ...where.createdAt, gte: new Date(startDate as string) };
+    if (endDate) where.createdAt = { ...where.createdAt, lte: new Date(endDate as string) };
 
-    if (clientId) query = query.eq('client_id', clientId as string);
-    if (status) query = query.eq('status', status as string);
-    if (startDate) query = query.gte('created_at', startDate as string);
-    if (endDate) query = query.lte('created_at', endDate as string);
+    const skip = (Number(page) - 1) * Number(limit);
+    const orderField = sortBy === 'created_at' ? 'createdAt' : (sortBy as string);
 
-    const { data: invoices, count, error } = await query
-      .order(sortBy as string, { ascending: sortOrder === 'asc' })
-      .range(from, to);
-
-    if (error) throw error;
+    const [invoices, total] = await Promise.all([
+      prisma.invoice.findMany({
+        where,
+        include: {
+          client: { select: { id: true, name: true, email: true } },
+          items: true,
+        },
+        orderBy: { [orderField]: sortOrder === 'asc' ? 'asc' : 'desc' },
+        skip,
+        take: Number(limit),
+      }),
+      prisma.invoice.count({ where }),
+    ]);
 
     res.json({
       data: invoices,
       pagination: {
-        total: count,
+        total,
         page: Number(page),
         limit: Number(limit),
-        totalPages: Math.ceil((count || 0) / Number(limit))
-      }
+        totalPages: Math.ceil(total / Number(limit)),
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const create = async (req: Request, res: Response, next: NextFunction) => {
+export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, clientId, items, ...data } = req.body;
-    const invoiceNumber = data.invoiceNumber || `INV-${Date.now()}`;
 
-    const { data: invoice, error: invError } = await supabase
-      .from('invoices')
-      .insert({
-        ...data,
-        invoice_number: invoiceNumber,
-        organization_id: businessId,
-        client_id: clientId,
-      })
-      .select()
-      .single();
-
-    if (invError) throw invError;
-
-    if (items && items.length > 0) {
-      const { error: itemsError } = await supabase
-        .from('invoice_items')
-        .insert(items.map((item: any) => ({
-          ...item,
-          invoice_id: invoice.id
-        })));
-      if (itemsError) throw itemsError;
-    }
-
-    await supabase.from('invoice_events').insert({
-      invoice_id: invoice.id,
-      event_type: 'CREATED',
-      metadata: { items_count: items?.length }
+    const invoice = await prisma.invoice.create({
+      data: {
+        invoiceNumber: data.invoiceNumber || `INV-${Date.now()}`,
+        businessId,
+        clientId,
+        status: 'DRAFT',
+        currency: data.currency || 'USD',
+        issueDate: data.issueDate ? new Date(data.issueDate) : new Date(),
+        dueDate: data.dueDate ? new Date(data.dueDate) : new Date(),
+        taxRate: data.taxRate || 0,
+        discountAmount: data.discountAmount || 0,
+        totalAmount: data.totalAmount || 0,
+        items: items?.length ? {
+          create: items.map((item: any) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+        } : undefined,
+      },
+      include: { items: true, client: true },
     });
 
     const io = req.app.get('io');
@@ -92,46 +83,37 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const getOne = async (req: Request, res: Response, next: NextFunction) => {
+export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .select('*, client:clients(*), items:invoice_items(*), payments:payments(*)')
-      .eq('id', req.params.id as string)
-      .single();
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: req.params.id },
+      include: {
+        client: true,
+        items: true,
+        payments: true,
+      },
+    });
 
-    if (error) throw error;
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
-    
     res.json(invoice);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateStatus = async (req: Request, res: Response, next: NextFunction) => {
+export const updateStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { status } = req.body;
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .update({ status })
-      .eq('id', req.params.id as string)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    await supabase.from('invoice_events').insert({
-      invoice_id: invoice.id,
-      event_type: status === 'SENT' ? 'SENT' : 'STATUS_UPDATED',
-      metadata: { new_status: status }
+    const invoice = await prisma.invoice.update({
+      where: { id: req.params.id },
+      data: { status },
     });
 
     const io = req.app.get('io');
-    io.to(invoice.organization_id).emit('invoice-status-updated', { 
-      id: invoice.id, 
-      status, 
-      invoiceNumber: invoice.invoice_number 
+    io.to(invoice.businessId).emit('invoice-status-updated', {
+      id: invoice.id,
+      status,
+      invoiceNumber: invoice.invoiceNumber,
     });
 
     res.json(invoice);
@@ -140,40 +122,22 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const trackView = async (req: Request, res: Response, next: NextFunction) => {
+export const trackView = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { data: currentInvoice, error: fetchError } = await supabase
-      .from('invoices')
-      .select('view_count, organization_id, invoice_number')
-      .eq('id', req.params.id as string)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .update({
-        view_count: (currentInvoice.view_count || 0) + 1,
-        last_viewed_at: new Date(),
-        status: 'VIEWED'
-      })
-      .eq('id', req.params.id as string)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    await supabase.from('invoice_events').insert({
-      invoice_id: invoice.id,
-      event_type: 'VIEWED',
-      metadata: { view_count: invoice.view_count }
+    const invoice = await prisma.invoice.update({
+      where: { id: req.params.id },
+      data: {
+        viewCount: { increment: 1 },
+        lastViewedAt: new Date(),
+        status: 'VIEWED',
+      },
     });
 
     const io = req.app.get('io');
-    io.to(invoice.organization_id).emit('invoice-viewed', { 
-      id: invoice.id, 
-      viewCount: invoice.view_count,
-      invoiceNumber: invoice.invoice_number
+    io.to(invoice.businessId).emit('invoice-viewed', {
+      id: invoice.id,
+      viewCount: invoice.viewCount,
+      invoiceNumber: invoice.invoiceNumber,
     });
 
     res.json({ success: true });
@@ -182,52 +146,42 @@ export const trackView = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export const addPayment = async (req: Request, res: Response, next: NextFunction) => {
+export const addPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { amount, method, transactionId } = req.body;
-    const invoiceId = req.params.id as string;
+    const invoiceId = req.params.id;
 
-    const { data: payment, error: payError } = await supabase
-      .from('payments')
-      .insert({
-        invoice_id: invoiceId,
+    const payment = await prisma.payment.create({
+      data: {
+        invoiceId,
         amount,
         method,
-        transaction_id: transactionId,
+        transactionId: transactionId || null,
         status: 'SUCCESS',
-        paid_at: new Date(),
-      })
-      .select('*, invoice:invoices(*)')
-      .single();
+        paidAt: new Date(),
+      },
+      include: { invoice: true },
+    });
 
-    if (payError) throw payError;
+    const allPayments = await prisma.payment.findMany({
+      where: { invoiceId, status: 'SUCCESS' },
+      select: { amount: true },
+    });
 
-    const { data: allPayments } = await supabase
-      .from('payments')
-      .select('amount')
-      .eq('invoice_id', invoiceId)
-      .eq('status', 'SUCCESS');
+    const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+    const newStatus = totalPaid >= payment.invoice.totalAmount ? 'PAID' : 'PARTIAL';
 
-    const totalPaid = (allPayments || []).reduce((sum, p) => sum + p.amount, 0);
-    const newStatus = totalPaid >= payment.invoice.total_amount ? 'PAID' : 'PARTIAL';
-
-    await supabase
-      .from('invoices')
-      .update({ status: newStatus })
-      .eq('id', invoiceId);
-
-    await supabase.from('invoice_events').insert({
-      invoice_id: invoiceId,
-      event_type: 'PAYMENT_COMPLETED',
-      metadata: { amount, total_paid: totalPaid }
+    await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { status: newStatus },
     });
 
     const io = req.app.get('io');
-    io.to(payment.invoice.organization_id).emit('payment-received', { 
-      id: payment.invoice.id, 
-      amount, 
-      invoiceNumber: payment.invoice.invoice_number,
-      totalPaid 
+    io.to(payment.invoice.businessId).emit('payment-received', {
+      id: payment.invoice.id,
+      amount,
+      invoiceNumber: payment.invoice.invoiceNumber,
+      totalPaid,
     });
 
     res.status(201).json(payment);
@@ -236,54 +190,46 @@ export const addPayment = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const update = async (req: Request, res: Response, next: NextFunction) => {
+export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { items, version, ...data } = req.body;
-    
-    // OCC Check: Update only if version matches
-    const { data: invoice, error: invError } = await supabase
-      .from('invoices')
-      .update({ 
-        ...data, 
-        version: (version || 1) + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', req.params.id as string)
-      .eq('version', version || 1)
-      .select()
-      .single();
+    const invoiceId = req.params.id;
 
-    if (invError) {
-      // PGRST116: No rows matched the filter (conflict or not found)
-      if (invError.code === 'PGRST116') {
-        const { data: current } = await supabase
-          .from('invoices')
-          .select('version, updated_at')
-          .eq('id', req.params.id as string)
-          .single();
-          
-        return res.status(409).json({
-          message: 'Conflict detected: The document has been modified by another user.',
-          currentVersion: current?.version,
-          lastModified: current?.updated_at
-        });
-      }
-      throw invError;
+    const current = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+    if (!current) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+    if (current.version !== (version || 1)) {
+      const io = req.app.get('io');
+      io.to(current.businessId).emit('invoice-updated', current);
+      return res.status(409).json({
+        message: 'Conflict detected: The document has been modified by another user.',
+        currentVersion: current.version,
+        lastModified: current.updatedAt,
+      });
     }
 
-    if (items) {
-      await supabase.from('invoice_items').delete().eq('invoice_id', req.params.id as string);
-      const { error: itemsError } = await supabase
-        .from('invoice_items')
-        .insert(items.map((item: any) => ({
-          ...item,
-          invoice_id: invoice.id
-        })));
-      if (itemsError) throw itemsError;
-    }
+    const invoice = await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: {
+        ...data,
+        version: current.version + 1,
+        ...(items ? {
+          items: {
+            deleteMany: {},
+            create: items.map((item: any) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            })),
+          },
+        } : {}),
+      },
+      include: { items: true, client: true },
+    });
 
     const io = req.app.get('io');
-    io.to(invoice.organization_id).emit('invoice-updated', invoice);
+    io.to(invoice.businessId).emit('invoice-updated', invoice);
 
     res.json(invoice);
   } catch (error) {
@@ -291,26 +237,20 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const triggerReminder = async (req: Request, res: Response, next: NextFunction) => {
+export const triggerReminder = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .select('*, client:clients(*)')
-      .eq('id', req.params.id as string)
-      .single();
-
-    if (error || !invoice) return res.status(404).json({ message: 'Invoice not found' });
-
-    await supabase.from('invoice_events').insert({
-      invoice_id: invoice.id,
-      event_type: 'REMINDER_SENT'
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: req.params.id },
+      include: { client: true },
     });
 
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
     const io = req.app.get('io');
-    io.to(invoice.organization_id).emit('notification', {
+    io.to(invoice.businessId).emit('notification', {
       title: 'Reminder Sent',
-      message: `Overdue reminder sent to ${invoice.client.name} for Invoice #${invoice.invoice_number}`,
-      type: 'info'
+      message: `Overdue reminder sent to ${invoice.client.name} for Invoice #${invoice.invoiceNumber}`,
+      type: 'info',
     });
 
     res.json({ success: true, message: 'Reminder triggered' });
@@ -319,26 +259,17 @@ export const triggerReminder = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const sendInvoice = async (req: Request, res: Response, next: NextFunction) => {
+export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .update({ status: 'SENT' })
-      .eq('id', req.params.id as string)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    await supabase.from('invoice_events').insert({
-      invoice_id: invoice.id,
-      event_type: 'SENT'
+    const invoice = await prisma.invoice.update({
+      where: { id: req.params.id },
+      data: { status: 'SENT' },
     });
 
     const io = req.app.get('io');
-    io.to(invoice.organization_id).emit('invoice-sent', { 
-      id: invoice.id, 
-      invoiceNumber: invoice.invoice_number 
+    io.to(invoice.businessId).emit('invoice-sent', {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
     });
 
     res.json({ success: true, message: 'Invoice sent successfully' });
@@ -347,14 +278,9 @@ export const sendInvoice = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const remove = async (req: Request, res: Response, next: NextFunction) => {
+export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { error } = await supabase
-      .from('invoices')
-      .delete()
-      .eq('id', req.params.id as string);
-
-    if (error) throw error;
+    await prisma.invoice.delete({ where: { id: req.params.id } });
     res.json({ success: true, message: 'Invoice deleted successfully' });
   } catch (error) {
     next(error);

@@ -1,47 +1,26 @@
 import { Response, NextFunction } from 'express';
-import { supabase } from '../lib/supabase';
+import prisma from '../lib/prisma';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import nodemailer from 'nodemailer';
 import { logger } from '../utils/logger';
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { data: business, error } = await supabase
-            .from('organizations')
-            .select('*, subscriptions(*)')
-            .eq('owner_id', req.user?.id as string)
-            .maybeSingle();
+        const business = await prisma.business.findFirst({
+            where: { ownerId: req.user?.id as string },
+            include: { subscription: true },
+        });
 
-        if (error) throw error;
         if (!business) return res.status(404).json({ error: 'Business not found' });
 
-        // Map Supabase snake_case to frontend camelCase
-        const result = {
+        res.json({
             ...business,
-            name: business.name,
             businessName: business.name,
-            brandColor: business.primary_color || business.brand_color || '#5E6AD2',
-            logo: business.logo_url || business.logo || null,
-            favicon: business.favicon_url || business.favicon || null,
-            icon: business.icon_url || business.icon || null,
-            taxNumber: business.tax_number || business.taxNumber || '',
-            paymentDetails: business.payment_details || business.paymentDetails || '',
-            defaultCurrency: business.default_currency || business.defaultCurrency || 'NGN',
-            invoicePrefix: business.invoice_prefix || business.invoicePrefix || 'INV',
-            defaultDuePeriod: business.default_due_period || business.defaultDuePeriod || 'Net 30 Days',
-            defaultDiscount: business.default_discount || business.defaultDiscount || 0,
-            defaultNotes: business.default_notes || business.defaultNotes || '',
-            invoiceReminders: business.invoice_reminders ?? business.invoiceReminders ?? false,
-            documentStyle: business.document_style || business.documentStyle || 'Professional',
-            estimatePrefix: business.estimate_prefix || business.estimatePrefix || 'EST',
-            bccEmails: business.bcc_emails ?? business.bccEmails ?? false,
-            autoSendInvoice: business.auto_send_invoice ?? business.autoSendInvoice ?? false,
-            paymentReminders: business.payment_reminders ?? business.paymentReminders ?? true,
-            dailySummary: business.daily_summary ?? business.dailySummary ?? false,
-            smtpConfig: business.smtp_config || business.smtpConfig || {},
-        };
-
-        res.json(result);
+            brandColor: business.brandColor || '#5E6AD2',
+            logo: null,
+            favicon: null,
+            icon: null,
+        });
     } catch (error) {
         next(error);
     }
@@ -50,24 +29,20 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const updateBusiness = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { businessName, address, email, phone, taxNumber, paymentDetails } = req.body;
-        
-        const { data: updated, error } = await supabase
-            .from('organizations')
-            .update({
-                name: businessName,
-                address,
-                email,
-                phone,
-                tax_number: taxNumber,
-                payment_details: paymentDetails,
-                updated_at: new Date().toISOString()
-            })
-            .eq('owner_id', req.user?.id as string)
-            .select()
-            .single();
 
-        if (error) throw error;
-        res.json(updated);
+        const updated = await prisma.business.updateMany({
+            where: { ownerId: req.user?.id as string },
+            data: {
+                name: businessName,
+                address: address || null,
+                email: email || null,
+                phone: phone || null,
+                taxNumber: taxNumber || null,
+                paymentDetails: paymentDetails || null,
+            },
+        });
+
+        res.json({ success: true, count: updated.count });
     } catch (error) {
         next(error);
     }
@@ -75,38 +50,18 @@ export const updateBusiness = async (req: AuthRequest, res: Response, next: Next
 
 export const updateBranding = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { brandColor, customDomain, logo, favicon, icon } = req.body;
-        
-        const data: any = { 
-            primary_color: brandColor, 
-            brand_color: brandColor,
-            custom_domain: customDomain,
-            updated_at: new Date().toISOString()
-        };
+        const { brandColor, customDomain } = req.body;
 
-        // Handle Base64 images or URLs
-        if (logo) {
-            if (logo.startsWith('http')) data.logo_url = logo;
-            else data.logo = logo; // Keep as base64 in text/bytea column
-        }
-        if (favicon) {
-            if (favicon.startsWith('http')) data.favicon_url = favicon;
-            else data.favicon = favicon;
-        }
-        if (icon) {
-            if (icon.startsWith('http')) data.icon_url = icon;
-            else data.icon = icon;
-        }
+        const data: any = {};
+        if (brandColor) data.brandColor = brandColor;
+        if (customDomain) data.customDomain = customDomain;
 
-        const { data: updated, error } = await supabase
-            .from('organizations')
-            .update(data)
-            .eq('owner_id', req.user?.id as string)
-            .select()
-            .single();
+        await prisma.business.updateMany({
+            where: { ownerId: req.user?.id as string },
+            data,
+        });
 
-        if (error) throw error;
-        res.json({ success: true, data: updated });
+        res.json({ success: true });
     } catch (error) {
         next(error);
     }
@@ -115,23 +70,19 @@ export const updateBranding = async (req: AuthRequest, res: Response, next: Next
 export const updateInvoiceDefaults = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { defaultCurrency, invoicePrefix, defaultDuePeriod, defaultDiscount, defaultNotes } = req.body;
-        
-        const { data: updated, error } = await supabase
-            .from('organizations')
-            .update({
-                default_currency: defaultCurrency,
-                invoice_prefix: invoicePrefix,
-                default_due_period: defaultDuePeriod,
-                default_discount: parseFloat(defaultDiscount) || 0,
-                default_notes: defaultNotes,
-                updated_at: new Date().toISOString()
-            })
-            .eq('owner_id', req.user?.id as string)
-            .select()
-            .single();
 
-        if (error) throw error;
-        res.json(updated);
+        await prisma.business.updateMany({
+            where: { ownerId: req.user?.id as string },
+            data: {
+                defaultCurrency: defaultCurrency || undefined,
+                invoicePrefix: invoicePrefix || undefined,
+                defaultDuePeriod: defaultDuePeriod || undefined,
+                defaultDiscount: parseFloat(defaultDiscount) || 0,
+                defaultNotes: defaultNotes || undefined,
+            },
+        });
+
+        res.json({ success: true });
     } catch (error) {
         next(error);
     }
@@ -140,22 +91,18 @@ export const updateInvoiceDefaults = async (req: AuthRequest, res: Response, nex
 export const updateWorkflow = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { invoiceReminders, documentStyle, estimatePrefix, bccEmails } = req.body;
-        
-        const { data: updated, error } = await supabase
-            .from('organizations')
-            .update({
-                invoice_reminders: invoiceReminders,
-                document_style: documentStyle,
-                estimate_prefix: estimatePrefix,
-                bcc_emails: bccEmails,
-                updated_at: new Date().toISOString()
-            })
-            .eq('owner_id', req.user?.id as string)
-            .select()
-            .single();
 
-        if (error) throw error;
-        res.json(updated);
+        await prisma.business.updateMany({
+            where: { ownerId: req.user?.id as string },
+            data: {
+                invoiceReminders: invoiceReminders ?? undefined,
+                documentStyle: documentStyle || undefined,
+                invoicePrefix: estimatePrefix || undefined,
+                bccEmails: bccEmails ?? undefined,
+            },
+        });
+
+        res.json({ success: true });
     } catch (error) {
         next(error);
     }
@@ -164,21 +111,17 @@ export const updateWorkflow = async (req: AuthRequest, res: Response, next: Next
 export const updateNotifications = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { autoSendInvoice, paymentReminders, dailySummary } = req.body;
-        
-        const { data: updated, error } = await supabase
-            .from('organizations')
-            .update({
-                auto_send_invoice: autoSendInvoice,
-                payment_reminders: paymentReminders,
-                daily_summary: dailySummary,
-                updated_at: new Date().toISOString()
-            })
-            .eq('owner_id', req.user?.id as string)
-            .select()
-            .single();
 
-        if (error) throw error;
-        res.json(updated);
+        await prisma.business.updateMany({
+            where: { ownerId: req.user?.id as string },
+            data: {
+                autoSendInvoice: autoSendInvoice ?? undefined,
+                paymentReminders: paymentReminders ?? undefined,
+                dailySummary: dailySummary ?? undefined,
+            },
+        });
+
+        res.json({ success: true });
     } catch (error) {
         next(error);
     }
@@ -187,26 +130,22 @@ export const updateNotifications = async (req: AuthRequest, res: Response, next:
 export const updateEmail = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { smtpHost, smtpPort, smtpUsername, smtpPassword, fromName, fromEmail } = req.body;
-        
-        const { data: updated, error } = await supabase
-            .from('organizations')
-            .update({
-                smtp_config: {
+
+        await prisma.business.updateMany({
+            where: { ownerId: req.user?.id as string },
+            data: {
+                smtpConfig: {
                     host: smtpHost,
                     port: smtpPort,
                     user: smtpUsername,
                     pass: smtpPassword,
                     fromName,
-                    fromEmail
+                    fromEmail,
                 },
-                updated_at: new Date().toISOString()
-            })
-            .eq('owner_id', req.user?.id as string)
-            .select()
-            .single();
+            },
+        });
 
-        if (error) throw error;
-        res.json(updated);
+        res.json({ success: true });
     } catch (error) {
         next(error);
     }
@@ -243,23 +182,18 @@ export const sendTestEmail = async (req: AuthRequest, res: Response, next: NextF
 
 export const deleteBusiness = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        // 1. Check for other workspaces
-        const { count, error: countError } = await supabase
-            .from('organizations')
-            .select('*', { count: 'exact', head: true })
-            .eq('owner_id', req.user?.id as string);
+        const count = await prisma.business.count({
+            where: { ownerId: req.user?.id as string },
+        });
 
-        if (countError) throw countError;
-        if (count && count <= 1) {
+        if (count <= 1) {
             return res.status(400).json({ error: 'Cannot delete your only institutional workspace. Create another before termination.' });
         }
 
-        const { error: delError } = await supabase
-            .from('organizations')
-            .delete()
-            .eq('owner_id', req.user?.id as string);
+        await prisma.business.deleteMany({
+            where: { ownerId: req.user?.id as string },
+        });
 
-        if (delError) throw delError;
         res.json({ success: true });
     } catch (error) {
         next(error);
@@ -269,23 +203,16 @@ export const deleteBusiness = async (req: AuthRequest, res: Response, next: Next
 export const updateProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { name, profilePicture } = req.body;
-        
-        const { data: updated, error } = await supabase
-            .from('users') 
-            .update({ 
-                name, 
-                profile_picture: profilePicture,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', req.user?.id as string)
-            .select()
-            .single();
 
-        if (error) throw error;
-        res.json({ success: true, data: updated });
+        await prisma.user.update({
+            where: { id: req.user?.id as string },
+            data: {
+                name: name || undefined,
+            },
+        });
+
+        res.json({ success: true });
     } catch (error) {
         next(error);
     }
 };
-
-

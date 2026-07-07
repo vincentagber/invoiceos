@@ -2,9 +2,16 @@ import { Response, NextFunction } from 'express';
 import { OpenAI } from 'openai';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let _openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || '',
+    });
+  }
+  return _openai;
+}
 
 export const analyzeInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -35,7 +42,7 @@ export const analyzeInvoice = async (req: AuthRequest, res: Response, next: Next
 
     let response;
     try {
-      response = await openai.chat.completions.create({
+      response = await getOpenAI().chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" }
@@ -73,7 +80,7 @@ export const generateDescription = async (req: AuthRequest, res: Response, next:
 
     let response;
     try {
-      response = await openai.chat.completions.create({
+      response = await getOpenAI().chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
       });
