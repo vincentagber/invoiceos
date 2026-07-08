@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePaystackPayment } from 'react-paystack';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { Crown, Check, Zap, Building2, ShieldCheck, CreditCard, Loader2, Lock, History, User } from 'lucide-react';
@@ -67,14 +66,45 @@ export default function SubscriptionPage() {
         ? plans[selectedPlan as keyof typeof plans].monthly 
         : plans[selectedPlan as keyof typeof plans].yearly;
 
-    const config = {
-        reference: (new Date()).getTime().toString(),
-        email: user?.email || '',
-        amount: amount * 100, // Paystack expects amount in kobo
-        publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+    const loadPaystackSdk = async () => {
+        if (typeof window === 'undefined') return;
+        if ((window as any).PaystackPop) return;
+
+        await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://js.paystack.co/v1/inline.js';
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Unable to load Paystack SDK.'));
+            document.body.appendChild(script);
+        });
     };
 
-    const initializePayment: any = usePaystackPayment(config);
+    const initializePayment = async () => {
+        if (!user?.email) {
+            alert('Please sign in before continuing with payment.');
+            return;
+        }
+
+        const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+
+        if (!publicKey) {
+            alert('Paystack public key is not configured.');
+            return;
+        }
+
+        await loadPaystackSdk();
+
+        const paystack = new (window as any).PaystackPop();
+        paystack.newTransaction({
+            key: publicKey,
+            email: user.email,
+            amount: amount * 100,
+            reference: `${Date.now()}`,
+            onSuccess: handleSuccess,
+            onClose: handleClose,
+        });
+    };
 
     const handleSuccess = async (reference: any) => {
         setProcessing(true);
@@ -216,7 +246,7 @@ export default function SubscriptionPage() {
                         <button 
                             onClick={(e) => {
                                 e.stopPropagation();
-                                initializePayment(handleSuccess, handleClose);
+                                initializePayment();
                             }}
                             className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl shadow-slate-200 flex items-center justify-center gap-3"
                         >
