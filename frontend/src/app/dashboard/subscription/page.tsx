@@ -3,19 +3,56 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
-import { Crown, Check, Zap, Building2, ShieldCheck, CreditCard, Loader2, Lock, History, User } from 'lucide-react';
+import { Check, Zap, ShieldCheck, Loader2, Lock, User } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import clsx from 'clsx';
 
+type PaystackSuccessResponse = {
+    reference: string;
+};
+
+interface BillingHistoryItem {
+    id: string;
+    createdAt: string;
+    plan: string;
+    amount: number;
+    status: string;
+    paystackRef?: string;
+}
+
+interface Subscription {
+    plan?: string;
+    status?: string;
+    endDate?: string;
+}
+
+interface PaystackOptions {
+    key: string;
+    email: string;
+    amount: number;
+    reference: string;
+    callback: (response: PaystackSuccessResponse) => void;
+    onClose: () => void;
+}
+
+interface PaystackHandler {
+    openIframe: () => void;
+}
+
+interface PaystackWindow extends Window {
+    PaystackPop?: {
+        setup: (options: PaystackOptions) => PaystackHandler;
+    };
+}
+
 export default function SubscriptionPage() {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [subscription, setSubscription] = useState<any>(null);
+    const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [selectedPlan, setSelectedPlan] = useState('PROFESSIONAL');
     const [billingCycle, setBillingCycle] = useState('MONTHLY');
     const [processing, setProcessing] = useState(false);
-    const [activeTab, setActiveTab] = useState<'plans' | 'history'>('plans');
-    const [billingHistory, setBillingHistory] = useState<any[]>([]);
+    const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
 
     const plans = {
         PROFESSIONAL: {
@@ -62,13 +99,15 @@ export default function SubscriptionPage() {
         if (user) fetchSubscription();
     }, [user]);
 
-    const amount = billingCycle === 'MONTHLY' 
-        ? plans[selectedPlan as keyof typeof plans].monthly 
+    const amount = billingCycle === 'MONTHLY'
+        ? plans[selectedPlan as keyof typeof plans].monthly
         : plans[selectedPlan as keyof typeof plans].yearly;
 
     const loadPaystackSdk = async () => {
         if (typeof window === 'undefined') return;
-        if ((window as any).PaystackPop) return;
+
+        const win = window as PaystackWindow;
+        if (win.PaystackPop) return;
 
         await new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
@@ -95,7 +134,13 @@ export default function SubscriptionPage() {
 
         await loadPaystackSdk();
 
-        const handler = (window as any).PaystackPop.setup({
+        const win = window as PaystackWindow;
+        if (!win.PaystackPop) {
+            alert('Paystack SDK failed to load. Please try again.');
+            return;
+        }
+
+        const handler = win.PaystackPop.setup({
             key: publicKey,
             email: user.email,
             amount: amount * 100,
@@ -107,12 +152,12 @@ export default function SubscriptionPage() {
         handler.openIframe();
     };
 
-    const handleSuccess = async (reference: any) => {
+    const handleSuccess = async (response: PaystackSuccessResponse) => {
         setProcessing(true);
         try {
             const bizRes = await api.get('/business/me');
             await api.post('/billing/verify', {
-                reference: reference.reference,
+                reference: response.reference,
                 businessId: bizRes.data.id,
                 plan: selectedPlan,
                 billingCycle: billingCycle.toLowerCase(),
@@ -174,8 +219,8 @@ export default function SubscriptionPage() {
                                 </h3>
                             </div>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed pt-4 border-t border-slate-100">
-                                {subscription?.status === 'ACTIVE' 
-                                    ? `Next billing cycle resumes on ${new Date(subscription.endDate).toLocaleDateString()}` 
+                                {subscription?.status === 'ACTIVE'
+                                    ? `Next billing cycle resumes on ${new Date(subscription.endDate).toLocaleDateString()}`
                                     : 'Upgrade to access premium financial intelligence tools.'}
                             </p>
                         </div>
@@ -183,7 +228,7 @@ export default function SubscriptionPage() {
 
                     {/* Billing Cycle Toggle */}
                     <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex shadow-sm relative z-10">
-                        <button 
+                        <button
                             onClick={() => setBillingCycle('MONTHLY')}
                             className={clsx(
                                 "flex-1 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all",
@@ -192,7 +237,7 @@ export default function SubscriptionPage() {
                         >
                             Monthly
                         </button>
-                        <button 
+                        <button
                             onClick={() => setBillingCycle('YEARLY')}
                             className={clsx(
                                 "flex-1 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all relative flex items-center justify-center gap-2",
@@ -218,12 +263,12 @@ export default function SubscriptionPage() {
                         "bg-white rounded-[2.5rem] p-10 border-2 flex flex-col h-full relative transition-all duration-500",
                         selectedPlan === 'PROFESSIONAL' ? "border-slate-900 shadow-2xl scale-[1.02] z-20" : "border-slate-100 hover:border-slate-200 z-10"
                     )}
-                    onClick={() => setSelectedPlan('PROFESSIONAL')}
+                        onClick={() => setSelectedPlan('PROFESSIONAL')}
                     >
                         <div className="absolute -top-4 right-10 bg-slate-900 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
                             Recommended
                         </div>
-                        
+
                         <div className="space-y-6 mb-8">
                             <h3 className="text-2xl font-black text-slate-900">Professional</h3>
                             <div className="flex items-baseline gap-1">
@@ -244,7 +289,7 @@ export default function SubscriptionPage() {
                             ))}
                         </div>
 
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 initializePayment();
@@ -263,7 +308,7 @@ export default function SubscriptionPage() {
                         "bg-white rounded-[2.5rem] p-10 border-2 flex flex-col h-full relative transition-all duration-500",
                         selectedPlan === 'ENTERPRISE' ? "border-slate-900 shadow-2xl scale-[1.02] z-20" : "border-slate-100 hover:border-slate-200 z-10"
                     )}
-                    onClick={() => setSelectedPlan('ENTERPRISE')}
+                        onClick={() => setSelectedPlan('ENTERPRISE')}
                     >
                         <div className="space-y-6 mb-8">
                             <h3 className="text-2xl font-black text-slate-900">Enterprise</h3>
@@ -285,7 +330,7 @@ export default function SubscriptionPage() {
                             ))}
                         </div>
 
-                        <button 
+                        <button
                             className="w-full border-2 border-slate-100 hover:border-slate-900 text-slate-900 font-black py-5 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all bg-transparent"
                         >
                             Contact Sales
