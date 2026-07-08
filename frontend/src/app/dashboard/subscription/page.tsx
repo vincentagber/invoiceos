@@ -95,15 +95,16 @@ export default function SubscriptionPage() {
 
         await loadPaystackSdk();
 
-        const paystack = new (window as any).PaystackPop();
-        paystack.newTransaction({
+        const handler = (window as any).PaystackPop.setup({
             key: publicKey,
             email: user.email,
             amount: amount * 100,
             reference: `${Date.now()}`,
-            onSuccess: handleSuccess,
+            callback: handleSuccess,
             onClose: handleClose,
         });
+
+        handler.openIframe();
     };
 
     const handleSuccess = async (reference: any) => {
