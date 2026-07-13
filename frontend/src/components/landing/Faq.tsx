@@ -8,52 +8,58 @@ import clsx from 'clsx';
 const faqs = [
   {
     q: 'How does InvoiceOS handle dual-jurisdiction compliance?',
-    a: 'InvoiceOS operates a dual-ledger system. For Nigerian entities, we automate FIRS-compliant VAT (7.5%) and WHT deductions with automated credit note generation. For US entities, we manage W-9 collection, 1099 reporting, and IRS-ready transactional records.',
+    a: 'InvoiceOS operates a dual-ledger system. For Nigerian entities, we automate FIRS-compliant VAT (7.5%) and WHT deductions with automated credit note generation. For US entities, we manage W-9 collection, 1099 reporting, and IRS-ready transactional records. Our tax automation engine applies the correct rates based on the client jurisdiction and generates compliant invoices with the appropriate tax breakdowns.',
   },
   {
     q: 'Can I automate recurring invoices?',
-    a: 'Yes. You can set up recurring invoices on daily, weekly, monthly, or custom schedules. Our system will automatically generate and send invoices to your clients on the specified dates.',
+    a: 'Yes. InvoiceOS features an Automation Engine that handles scheduled invoice generation and payment reminders. Configure automation rules in Settings > Workflow — set triggers (e.g., invoice.sent), actions (e.g., send_reminder or create_invoice), and delay days. The system also supports auto-send invoicing and recurring payment reminders via the Business settings panel. Advanced recurring schedules (daily, weekly, monthly, custom) are available on the Enterprise plan.',
   },
   {
     q: 'Is my financial data secure?',
-    a: 'Security is our highest priority. InvoiceOS uses bank-grade AES-256 encryption for all data. We undergo regular third-party security audits and maintain strict data residency protocols.',
+    a: 'Absolutely. InvoiceOS implements bank-grade security: AES-256-GCM encryption for sensitive data at rest, bcrypt with 12 salt rounds for password hashing, and JWT-based authentication with refresh token rotation for session management. We deploy Helmet security headers (CSP, HSTS, XSS protection, noSniff), strict rate limiting (200 req/15min general, 5 req/15min on auth endpoints), and CORS restricted to approved origins. All data is transmitted over TLS. We undergo regular third-party security audits and maintain strict data residency protocols.',
   },
   {
     q: 'What payment methods are supported?',
-    a: 'We support Stripe, PayPal, bank transfers, and mobile money payments. Your clients can pay with credit/debit cards, bank accounts, or their preferred local payment method.',
+    a: 'InvoiceOS supports Paystack for subscription billing (credit/debit cards with 1-time and recurring payments). For invoices, we track payments across multiple methods: bank transfers, credit cards, and crypto. Our reconciliation engine automatically matches bank statement CSV uploads to outstanding invoices and supports manual payment matching, refunds, and dispute management. Stripe Connect and PayPal Business integrations are available as setup options for direct payment collection on invoices.',
   },
   {
     q: 'Can I customize invoice templates?',
-    a: 'Absolutely. You can customize colors, fonts, add your logo, set custom fields, and create multiple templates for different types of invoices or clients.',
+    a: 'Yes. InvoiceOS provides full template customization. Each business can store multiple InvoiceTemplate variants with JSON-based configuration for layout, colors, and fields. Our built-in PDF engine (jsPDF) generates professional invoices with your logo, brand color, company details, itemized tables with auto-calculated totals, tax and discount breakdowns, and custom notes. Configure defaults in Settings: brand color, invoice prefix, default due period (e.g., Net 30), document style, and default discount rate.',
   },
   {
     q: 'Do you offer multi-currency support?',
-    a: 'Yes, you can create invoices in USD, EUR, GBP, NGN, and 30+ other currencies. Our system automatically handles currency conversion and displays the amount in your preferred currency.',
+    a: 'Yes. InvoiceOS supports invoicing in NGN (₦), USD ($), EUR (€), and GBP (£). Each invoice and quotation carries its own currency setting, independent of your business default currency. Amounts are formatted using locale-aware Intl.NumberFormat (en-NG for NGN, en-US for USD, en-IE for EUR, en-GB for GBP). Multi-currency reporting and automated FX-rate conversion are available on the Enterprise plan.',
   },
 ];
 
-export default function Faq() {
+interface FaqProps {
+  showHeader?: boolean;
+}
+
+export default function Faq({ showHeader = true }: FaqProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="py-24 bg-white">
+    <section id="faq" className="py-16 lg:py-24 bg-white">
       <div className="max-w-3xl mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-4 block">
-            FAQ
-          </span>
-          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Everything you need to know about InvoiceOS.
-          </p>
-        </motion.div>
+        {showHeader && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 lg:mb-16"
+          >
+            <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-4 block">
+              FAQ
+            </span>
+            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+              Everything you need to know about InvoiceOS.
+            </p>
+          </motion.div>
+        )}
 
         <div className="space-y-3">
           {faqs.map((faq, i) => (
@@ -69,7 +75,7 @@ export default function Faq() {
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
                 className="w-full flex items-center justify-between px-6 py-5 text-left group"
               >
-                <span className="font-semibold text-gray-900 group-hover:text-primary transition-colors">
+                <span className="font-semibold text-gray-900 group-hover:text-primary transition-colors text-sm md:text-base">
                   {faq.q}
                 </span>
                 <ChevronDown

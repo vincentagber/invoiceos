@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react';
 
 export default function Cta() {
   return (
-    <section id="contact" className="py-24 bg-gradient-to-br from-primary to-primary-dark relative overflow-hidden">
+    <section id="contact" className="py-16 lg:py-24 bg-gradient-to-br from-primary to-primary-dark relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/5 rounded-full blur-3xl" />

@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { localAuth } from '@/lib/localAuth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import AuthFooter from '@/components/AuthFooter';
 
-export default function LoginPage() {
+function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -18,6 +18,9 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const { session } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const selectedPlan = searchParams?.get('plan');
+    const selectedCycle = searchParams?.get('cycle');
 
     useEffect(() => {
         if (session) {
@@ -214,7 +217,7 @@ export default function LoginPage() {
                         <div className="text-center pt-2">
                             <p className="text-sm text-text-secondary">
                                 Don't have an account?{' '}
-                                <Link className="font-semibold text-primary hover:text-primary/80 transition-colors" href="/register">Create an account</Link>
+                                <Link className="font-semibold text-primary hover:text-primary/80 transition-colors" href={selectedPlan ? `/register?plan=${selectedPlan}&cycle=${selectedCycle}` : '/register'}>Create an account</Link>
                             </p>
                         </div>
                     </form>
@@ -224,5 +227,13 @@ export default function LoginPage() {
 
             <AuthFooter />
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={null}>
+            <LoginForm />
+        </Suspense>
     );
 }

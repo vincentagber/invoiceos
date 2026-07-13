@@ -2,58 +2,46 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Receipt, 
-  CreditCard, 
-  TrendingUp, 
-  Repeat, 
-  Globe, 
-  Users, 
-  ArrowRight 
+import {
+  FileText,
+  ShieldCheck,
+  BarChart3,
+  ArrowRight,
+  Repeat,
+  Globe,
+  Users,
 } from 'lucide-react';
 
 const features = [
   {
-    icon: Receipt,
+    icon: FileText,
     title: 'Professional Invoices',
     desc: 'Create stunning invoices with customizable templates. Add your logo, set payment terms, and send in seconds.',
-    gradient: 'from-violet-500 to-purple-600',
-    light: 'bg-violet-50',
   },
   {
-    icon: CreditCard,
+    icon: ShieldCheck,
     title: 'Secure Payments',
     desc: 'Accept payments via Stripe, PayPal, and bank transfers. All transactions are encrypted and PCI compliant.',
-    gradient: 'from-emerald-500 to-teal-600',
-    light: 'bg-emerald-50',
   },
   {
-    icon: TrendingUp,
+    icon: BarChart3,
     title: 'Analytics & Reports',
     desc: 'Track your revenue, outstanding invoices, and payment trends with beautiful real-time charts and reports.',
-    gradient: 'from-blue-500 to-indigo-600',
-    light: 'bg-blue-50',
   },
   {
     icon: Repeat,
     title: 'Automation',
     desc: 'Automate recurring invoices, payment reminders, and late fees. Save hours every month on manual tasks.',
-    gradient: 'from-amber-500 to-orange-600',
-    light: 'bg-amber-50',
   },
   {
     icon: Globe,
     title: 'Multi-Currency',
     desc: 'Send invoices in USD, EUR, NGN, and more. Accept payments in your clients preferred currency.',
-    gradient: 'from-cyan-500 to-sky-600',
-    light: 'bg-cyan-50',
   },
   {
     icon: Users,
     title: 'Team Collaboration',
     desc: 'Invite your team members, assign roles, and collaborate on invoices and client management in real time.',
-    gradient: 'from-rose-500 to-pink-600',
-    light: 'bg-rose-50',
   },
 ];
 
@@ -61,22 +49,25 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.08 },
+    transition: { staggerChildren: 0.06 },
   },
 };
 
 const cardVariants = {
   hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] },
+  },
 };
 
 export default function Features() {
   return (
-    <section id="features" className="py-28 bg-white relative overflow-hidden">
-      {/* subtle background mesh */}
+    <section id="features" className="py-16 lg:py-28 bg-white relative overflow-hidden">
+      {/* Quiet background texture */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#F8F9FC] rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-7xl mx-auto px-6 relative">
@@ -85,21 +76,17 @@ export default function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-          className="text-center mb-20"
+          className="text-center mb-12 lg:mb-20"
         >
-          <motion.span
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-semibold tracking-widest uppercase mb-6"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+          <span className="inline-flex items-center gap-2.5 text-[11px] font-bold text-[#0F172A] uppercase tracking-[0.2em] mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0F172A]" />
             Features
-          </motion.span>
-          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-5 leading-[1.1]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0F172A]" />
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#0F172A] mb-5 leading-[1.1]">
             Everything you need to run your business
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-lg text-[#64748B] max-w-2xl mx-auto leading-relaxed">
             InvoiceOS provides all the tools you need to create, send, and manage invoices like a pro.
           </p>
         </motion.div>
@@ -109,30 +96,30 @@ export default function Features() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-60px' }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
         >
           {features.map((feature, i) => (
             <motion.div
               key={feature.title}
               variants={cardVariants}
-              whileHover={{ y: -6, transition: { duration: 0.3 } }}
-              className="group relative bg-white border border-gray-100 rounded-2xl p-8 hover:border-gray-200 hover:shadow-[0_8px_40px_rgba(0,0,0,0.06)] transition-all duration-500"
+              whileHover={{ y: -3, transition: { duration: 0.3 } }}
+              className="group relative bg-white border border-[#E2E8F0] rounded-xl p-7 hover:border-[#CBD5E1] hover:shadow-[0_4px_24px_-6px_rgba(15,23,42,0.06)] transition-all duration-300"
             >
-              <div className="flex items-center gap-4 mb-5">
-                <div className={`w-12 h-12 rounded-xl ${feature.light} flex items-center justify-center shrink-0`}>
-                  <feature.icon size={22} className={`bg-gradient-to-br ${feature.gradient} bg-clip-text text-transparent`} strokeWidth={1.5} />
-                </div>
-                <div className="h-px flex-1 bg-gradient-to-r from-gray-100 to-transparent" />
+              <div className="w-10 h-10 rounded-lg bg-[#F8F9FC] border border-[#E2E8F0] flex items-center justify-center mb-5 group-hover:border-[#CBD5E1] transition-colors duration-300">
+                <feature.icon
+                  size={18}
+                  className="text-[#64748B] group-hover:text-[#0F172A] transition-colors duration-300"
+                  strokeWidth={1.5}
+                />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-gray-900 transition-colors">
-                {feature.title}
-              </h3>
-              <p className="text-[15px] text-gray-500 leading-relaxed group-hover:text-gray-600 transition-colors">
-                {feature.desc}
-              </p>
-              <div className="mt-6 flex items-center gap-1.5 text-sm font-medium text-gray-400 group-hover:text-primary transition-colors duration-300">
+              <h3 className="text-base font-bold text-[#0F172A] mb-2.5">{feature.title}</h3>
+              <p className="text-sm text-[#64748B] leading-relaxed">{feature.desc}</p>
+              <div className="mt-5 flex items-center gap-1 text-[13px] font-medium text-[#64748B] group-hover:text-[#0F172A] transition-colors duration-300">
                 <span>Learn more</span>
-                <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+                <ArrowRight
+                  size={13}
+                  className="transition-transform duration-300 group-hover:translate-x-0.5"
+                />
               </div>
             </motion.div>
           ))}

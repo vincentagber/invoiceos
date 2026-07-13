@@ -3,17 +3,17 @@
 import React from 'react';
 import Link from 'next/link';
 
-const footerLinks = {
-  Company: ['About', 'Careers', 'Blog', 'Press'],
-  Resources: ['Documentation', 'API Reference', 'Guides', 'Support'],
-  Support: ['Contact', 'Privacy', 'Terms', 'Cookies'],
+const footerLinks: Record<string, [string, string][]> = {
+  Company: [['About', '#'], ['Careers', '#'], ['Blog', '/blog'], ['Press', '#']],
+  Resources: [['Documentation', '#'], ['API Reference', '#'], ['Guides', '#'], ['Support', '/contact']],
+  Support: [['FAQ', '/faq'], ['Contact', '/contact'], ['Privacy', '/privacy'], ['Terms', '/terms']],
 };
 
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white pt-20 pb-12">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-12 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 sm:gap-12 mb-16">
           <div className="col-span-2">
             <div className="mb-5">
               <img src="/logo.png" alt="InvoiceOS" className="h-12 w-auto object-contain brightness-0 invert" />
@@ -30,13 +30,13 @@ export default function Footer() {
                 {category}
               </h4>
               <ul className="space-y-4">
-                {links.map((link) => (
-                  <li key={link}>
+                {links.map(([label, href]) => (
+                  <li key={label}>
                     <Link
-                      href="#"
+                      href={href}
                       className="text-sm text-gray-400 hover:text-white transition-colors"
                     >
-                      {link}
+                      {label}
                     </Link>
                   </li>
                 ))}

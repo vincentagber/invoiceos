@@ -84,6 +84,8 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
         taxRate: data.taxRate || 0,
         discountAmount: data.discountAmount || 0,
         totalAmount: data.totalAmount || 0,
+        isRecurring: data.isRecurring || false,
+        recurringFrequency: data.recurringFrequency || null,
         items: items?.length ? {
           create: items.map((item: any) => ({
             description: item.description,

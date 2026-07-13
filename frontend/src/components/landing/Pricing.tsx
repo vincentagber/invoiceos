@@ -10,8 +10,8 @@ const plans = [
   {
     name: 'Starter',
     desc: 'Perfect for freelancers getting started.',
-    monthlyPrice: '₦3,000',
-    yearlyPrice: '₦2,400',
+    monthlyPrice: '₦1,500',
+    yearlyPrice: '₦1,200',
     features: ['Up to 20 invoices/month', '3 invoice templates', 'Payment tracking', 'Email support'],
     cta: 'Get Started',
     popular: false,
@@ -19,8 +19,8 @@ const plans = [
   {
     name: 'Professional',
     desc: 'Best for growing businesses and agencies.',
-    monthlyPrice: '₦7,500',
-    yearlyPrice: '₦6,000',
+    monthlyPrice: '₦4,000',
+    yearlyPrice: '₦3,200',
     features: ['Unlimited invoices', 'All templates', 'Recurring invoices', 'Analytics & reports', 'Priority support'],
     cta: 'Start Free Trial',
     popular: true,
@@ -28,8 +28,8 @@ const plans = [
   {
     name: 'Enterprise',
     desc: 'For large teams with advanced needs.',
-    monthlyPrice: '₦15,000',
-    yearlyPrice: '₦12,000',
+    monthlyPrice: '₦8,000',
+    yearlyPrice: '₦6,400',
     features: ['Everything in Professional', 'Multi-entity management', 'Custom integrations', 'White-label invoices', 'Dedicated account manager', '99.99% SLA'],
     cta: 'Contact Sales',
     popular: false,
@@ -40,13 +40,13 @@ export default function Pricing() {
   const [isYearly, setIsYearly] = useState(false);
 
   return (
-    <section id="pricing" className="py-24 bg-gray-50/50">
+    <section id="pricing" className="py-16 lg:py-24 bg-gray-50/50">
       <div className="max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12 lg:mb-16"
         >
           <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-4 block">
             Pricing
@@ -77,7 +77,7 @@ export default function Pricing() {
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.name}
@@ -88,7 +88,7 @@ export default function Pricing() {
               className={clsx(
                 'relative bg-white rounded-2xl p-8 flex flex-col transition-all duration-300',
                 plan.popular
-                  ? 'border-2 border-primary shadow-xl shadow-primary/10 scale-105 md:scale-110'
+                  ? 'border-2 border-primary shadow-xl shadow-primary/10 scale-100 md:scale-105'
                   : 'border border-gray-100 hover:border-primary/30 hover:shadow-lg'
               )}
             >
@@ -99,7 +99,7 @@ export default function Pricing() {
               )}
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                <p className="text-sm text-gray-500 mb-6">{plan.desc}</p>
+                <p className="text-sm text-gray-500 mb-4 lg:mb-6">{plan.desc}</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold text-gray-900">
                     {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
@@ -123,7 +123,7 @@ export default function Pricing() {
               </ul>
 
               <Link
-                href="/register"
+                href={`/register?plan=${plan.name.toLowerCase()}&cycle=${isYearly ? 'yearly' : 'monthly'}`}
                 className={clsx(
                   'w-full py-3.5 rounded-xl text-center text-sm font-semibold transition-all active:scale-[0.98]',
                   plan.popular

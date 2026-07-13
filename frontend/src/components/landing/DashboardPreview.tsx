@@ -23,13 +23,13 @@ export default function DashboardPreview() {
           </div>
 
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {[
                 { label: 'Revenue', value: '$24,500', icon: DollarSign, change: '+12.5%', color: 'text-green-500', bg: 'bg-green-50' },
                 { label: 'Invoices', value: '142', icon: TrendingUp, change: '+8.2%', color: 'text-primary', bg: 'bg-primary/5' },
                 { label: 'Clients', value: '48', icon: Users, change: '+4.1%', color: 'text-blue-500', bg: 'bg-blue-50' },
               ].map((stat, i) => (
-                <div key={i} className="bg-gray-50 rounded-xl p-4">
+                <div key={i} className="bg-gray-50 rounded-xl p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className={`w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center`}>
                       <stat.icon size={16} className={stat.color} />

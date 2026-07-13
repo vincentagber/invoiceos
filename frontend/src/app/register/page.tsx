@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { localAuth } from '@/lib/localAuth';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import AuthFooter from '@/components/AuthFooter';
 
-export default function RegisterPage() {
+function RegisterForm() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,10 +17,12 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    // Validation States
     const [passwordStrength, setPasswordStrength] = useState(0);
 
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const selectedPlan = searchParams?.get('plan');
+    const selectedCycle = searchParams?.get('cycle');
 
     useEffect(() => {
         // Password Strength Logic
@@ -75,13 +77,23 @@ export default function RegisterPage() {
                     className="w-full max-w-md bg-white rounded-2xl shadow-[0_20px_60px_-12px_rgba(11,31,58,0.08)] border border-border/40 p-10 z-10 relative"
                 >
                     {/* Header */}
-                    <div className="text-center mb-10">
+                    <div className="text-center mb-8">
                         <div className="flex justify-center items-center gap-2 mb-6">
                             <img src="/logo.png" alt="InvoiceOS" className="h-14 w-auto object-contain" />
                         </div>
                         <h2 className="text-2xl font-bold text-primary tracking-tight mb-1.5">Create your account</h2>
                         <p className="text-sm text-text-secondary">Institutional Grade Finance. Secured.</p>
                     </div>
+
+                    {selectedPlan && (
+                        <div className="mb-8 p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-text-secondary font-medium">Selected Plan</p>
+                                <p className="text-sm font-bold text-primary capitalize">{selectedPlan}</p>
+                            </div>
+                            <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full capitalize">{selectedCycle}ly</span>
+                        </div>
+                    )}
 
                     {/* Form */}
                     <form className="space-y-5" onSubmit={handleSubmit}>
@@ -219,7 +231,7 @@ export default function RegisterPage() {
                         <div className="text-center pt-2">
                             <p className="text-sm text-text-secondary">
                                 Already have an account?{' '}
-                                <Link className="font-semibold text-primary hover:text-primary/80 transition-colors" href="/login">Sign in</Link>
+                                <Link className="font-semibold text-primary hover:text-primary/80 transition-colors" href={selectedPlan ? `/login?plan=${selectedPlan}&cycle=${selectedCycle}` : '/login'}>Sign in</Link>
                             </p>
                         </div>
                     </form>
@@ -229,5 +241,13 @@ export default function RegisterPage() {
 
             <AuthFooter />
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={null}>
+            <RegisterForm />
+        </Suspense>
     );
 }

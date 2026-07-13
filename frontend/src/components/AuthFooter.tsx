@@ -11,7 +11,6 @@ export default function AuthFooter() {
                 <Link className="text-text-secondary hover:text-primary transition-colors" href="/privacy">Privacy Policy</Link>
                 <Link className="text-text-secondary hover:text-primary transition-colors" href="/terms">Terms of Service</Link>
                 <Link className="text-text-secondary hover:text-primary transition-colors" href="/security">Security Overview</Link>
-                <Link className="text-text-secondary hover:text-primary transition-colors" href="/cookies">Cookie Policy</Link>
             </nav>
         </footer>
     );

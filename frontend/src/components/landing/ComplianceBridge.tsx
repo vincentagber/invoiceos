@@ -5,16 +5,16 @@ import { motion } from 'framer-motion';
 
 export default function ComplianceBridge() {
     return (
-        <section className="py-32 bg-white overflow-hidden">
+        <section className="py-16 lg:py-32 bg-white overflow-hidden">
             <div className="max-w-7xl mx-auto px-6">
-                <div className="text-center mb-20">
+                <div className="text-center mb-12 lg:mb-20">
                     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#dce9ff] text-[#000000] text-[10px] font-black tracking-widest uppercase mb-6">
                         Infrastructure
                     </span>
-                    <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-[#0b1c30] mb-6">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter text-[#0b1c30] mb-4 md:mb-6">
                         One Unified Core. Dual Jurisdiction Precision.
                     </h2>
-                    <p className="text-lg text-[#45464d] max-w-2xl mx-auto">
+                    <p className="text-sm sm:text-lg text-[#45464d] max-w-2xl mx-auto">
                         InvoiceOS acts as the institutional bridge, translating every transaction into compliant records for both FIRS and IRS simultaneously.
                     </p>
                 </div>
@@ -44,7 +44,7 @@ export default function ComplianceBridge() {
                         initial={{ opacity: 0, x: -50 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="z-10 w-full lg:w-[380px] bg-white rounded-2xl border border-slate-200 p-8 shadow-xl shadow-slate-200/50 relative overflow-hidden group"
+                        className="z-10 w-full lg:w-[380px] bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-xl shadow-slate-200/50 relative overflow-hidden group"
                     >
                         <div className="absolute top-0 left-0 w-1 h-full bg-[#006c49]"></div>
                         <div className="flex items-center gap-3 mb-6">
@@ -106,7 +106,7 @@ export default function ComplianceBridge() {
                         initial={{ opacity: 0, x: 50 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="z-10 w-full lg:w-[380px] bg-[#0b1c30] rounded-2xl border border-white/5 p-8 shadow-2xl shadow-blue-900/20 relative overflow-hidden group"
+                        className="z-10 w-full lg:w-[380px] bg-[#0b1c30] rounded-2xl border border-white/5 p-6 md:p-8 shadow-2xl shadow-blue-900/20 relative overflow-hidden group"
                     >
                         <div className="absolute top-0 right-0 w-1 h-full bg-blue-500"></div>
                         <div className="flex items-center gap-3 mb-6">
@@ -134,8 +134,8 @@ export default function ComplianceBridge() {
                 </div>
 
                 {/* Bottom Trust Badge */}
-                <div className="mt-24 flex justify-center">
-                    <div className="inline-flex items-center gap-8 px-8 py-4 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm">
+                <div className="mt-16 lg:mt-24 flex justify-center">
+                    <div className="inline-flex items-center gap-4 sm:gap-8 px-4 sm:px-8 py-4 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm">
                         <div className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-emerald-600">verified_user</span>
                             <span className="text-xs font-bold text-slate-600">SOC2 Type II</span>

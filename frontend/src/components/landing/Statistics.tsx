@@ -36,9 +36,9 @@ const stats = [
 
 export default function Statistics() {
   return (
-    <section className="py-24 bg-gradient-to-br from-primary/5 via-background to-accent/5">
+    <section className="py-16 lg:py-24 bg-gradient-to-br from-primary/5 via-background to-accent/5">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -48,13 +48,13 @@ export default function Statistics() {
               transition={{ delay: i * 0.1 }}
               className="text-center"
             >
-              <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center mx-auto mb-5`}>
-                <stat.icon size={28} className={stat.color} />
+              <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl ${stat.bg} flex items-center justify-center mx-auto mb-3 md:mb-5`}>
+                <stat.icon size={24} className={stat.color} />
               </div>
-              <div className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+              <div className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-1 md:mb-2">
                 <Counter value={stat.value} suffix={stat.suffix || ''} />
               </div>
-              <p className="text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-xs sm:text-sm md:text-base text-gray-500 font-medium">{stat.label}</p>
             </motion.div>
           ))}
         </div>

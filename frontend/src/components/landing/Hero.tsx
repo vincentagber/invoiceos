@@ -14,8 +14,8 @@ export default function Hero() {
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-24 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="max-w-7xl mx-auto px-6 pt-20 lg:pt-32 pb-16 lg:pb-24 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -26,14 +26,14 @@ export default function Hero() {
               Trusted by 12,000+ businesses
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.1] mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.1] mb-6">
               Create Beautiful{' '}
               <span className="text-primary">Invoices</span>
               <br />
               In Minutes.
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-10 max-w-xl">
+            <p className="text-base sm:text-lg md:text-xl text-gray-500 leading-relaxed mb-8 sm:mb-10 max-w-xl">
               Professional invoicing software for freelancers and businesses.
               Send invoices, track payments, and get paid faster.
             </p>
@@ -41,14 +41,14 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-primary-dark transition-all shadow-xl shadow-primary/25 active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 bg-primary text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-semibold hover:bg-primary-dark transition-all shadow-xl shadow-primary/25 active:scale-[0.98]"
               >
                 Start Free
                 <ArrowRight size={18} />
               </Link>
               <Link
                 href="#features"
-                className="inline-flex items-center justify-center gap-2 bg-white text-gray-900 px-8 py-4 rounded-xl text-base font-semibold border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 bg-white text-gray-900 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-semibold border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-[0.98]"
               >
                 <Play size={18} />
                 Live Demo

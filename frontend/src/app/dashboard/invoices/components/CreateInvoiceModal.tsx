@@ -44,6 +44,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, 
     const [taxRate, setTaxRate] = useState(0);
     const [discount, setDiscount] = useState(0);
     const [isRecurring, setIsRecurring] = useState(false);
+    const [recurringFrequency, setRecurringFrequency] = useState('monthly');
 
     // Status Modal
     const [showStatus, setShowStatus] = useState(false);
@@ -106,6 +107,8 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, 
                 totalAmount: total,
                 status,
                 notes,
+                isRecurring,
+                recurringFrequency: isRecurring ? recurringFrequency : null,
             };
             await api.post('/invoices', payload);
             setStatusConfig({
@@ -397,6 +400,21 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, 
                                 )} />
                             </button>
                         </div>
+                        {isRecurring && (
+                            <div className="mt-4 pl-12">
+                                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Repeat every</label>
+                                <select
+                                    value={recurringFrequency}
+                                    onChange={(e) => setRecurringFrequency(e.target.value)}
+                                    className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none appearance-none pr-8 focus:border-[#5E6AD2]"
+                                >
+                                    <option value="daily">Day</option>
+                                    <option value="weekly">Week</option>
+                                    <option value="monthly">Month</option>
+                                    <option value="yearly">Year</option>
+                                </select>
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -144,6 +144,9 @@ model Invoice {
   viewCount       Int           @default(0)
   lastViewedAt    DateTime?
 
+  isRecurring     Boolean       @default(false)
+  recurringFrequency String?    // daily, weekly, monthly, custom
+
   payments        Payment[]
 
   createdAt       DateTime      @default(now())
