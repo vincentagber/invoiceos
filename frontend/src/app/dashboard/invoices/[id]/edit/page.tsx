@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Plus, Trash, Save, ArrowLeft, Eye, User as UserIcon, FileText } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { StatusModal } from '@/components/ui/StatusModal';
 
 interface Client {
     id: string;
@@ -31,14 +32,19 @@ export default function EditInvoicePage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    // Form Stats
     const [clientId, setClientId] = useState('');
     const [invoiceNumber, setInvoiceNumber] = useState('');
     const [issueDate, setIssueDate] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [items, setItems] = useState<InvoiceItem[]>([]);
     const [notes, setNotes] = useState('');
+    const [currency, setCurrency] = useState('USD');
+    const [taxRate, setTaxRate] = useState(0);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [status, setStatus] = useState('DRAFT');
 
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const [showPreviewMobile, setShowPreviewMobile] = useState(false);
 
     useEffect(() => {
@@ -46,15 +52,14 @@ export default function EditInvoicePage() {
 
         const init = async () => {
             try {
-                const [clientsRes, settingsRes, invoiceRes] = await Promise.all([
-                    api.get('/clients'),
-                    api.get('/business/me'),
+                const settingsRes = await api.get('/business/me');
+                const [clientsRes, invoiceRes] = await Promise.all([
+                    api.get('/clients', { params: { businessId: (settingsRes as any)?.data?.id } }).catch(() => ({ data: [] })),
                     api.get(`/invoices/${invoiceId}`)
                 ]);
-                setClients(clientsRes.data);
+                setClients(clientsRes.data || []);
                 if (settingsRes.data) setSettings(settingsRes.data);
 
-                // Populate Invoice Data
                 const inv = invoiceRes.data;
                 if (inv) {
                     setClientId(inv.clientId);
@@ -62,8 +67,11 @@ export default function EditInvoicePage() {
                     setIssueDate(new Date(inv.issueDate).toISOString().split('T')[0]);
                     setDueDate(new Date(inv.dueDate).toISOString().split('T')[0]);
                     setNotes(inv.notes || '');
+                    setCurrency(inv.currency || 'USD');
+                    setTaxRate(Number(inv.taxRate) || 0);
+                    setDiscountAmount(Number(inv.discountAmount) || 0);
+                    setStatus(inv.status || 'DRAFT');
 
-                    // Map items (ensure numbers are numbers)
                     const mappedItems = inv.items.map((i: any) => ({
                         description: i.description,
                         quantity: Number(i.quantity),
@@ -74,8 +82,12 @@ export default function EditInvoicePage() {
 
             } catch (error) {
                 console.error(error);
-                alert("Failed to load invoice data");
-                router.push('/dashboard/invoices');
+                setModalConfig({
+                    title: 'Load Error',
+                    message: 'Failed to load invoice data',
+                    type: 'error'
+                });
+                setShowModal(true);
             } finally {
                 setLoading(false);
             }
@@ -92,33 +104,47 @@ export default function EditInvoicePage() {
     };
 
     const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
-        const newItems = [...items];
-        // @ts-ignore
-        newItems[index][field] = value;
-        setItems(newItems);
+        setItems(items.map((item, i) => i === index ? { ...item, [field]: value } : item));
     };
 
     const calculateSubtotal = () => items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const calculateTotal = () => calculateSubtotal();
+    const calculateTax = () => calculateSubtotal() * (taxRate / 100);
+    const calculateTotal = () => calculateSubtotal() + calculateTax() - discountAmount;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!clientId) return alert('Please select a client');
+        if (!clientId) {
+            setModalConfig({
+                title: 'Validation Error',
+                message: 'Please select a client.',
+                type: 'warning'
+            });
+            setShowModal(true);
+            return;
+        }
 
         setSubmitting(true);
         try {
-            // Include ID for update
             await api.put(`/invoices/${invoiceId}`, {
-                clientId: clientId,
+                clientId,
                 issueDate: new Date(issueDate).toISOString(),
                 dueDate: new Date(dueDate).toISOString(),
-                items: items,
-                notes: notes,
-                totalAmount: calculateTotal()
+                items,
+                notes,
+                currency,
+                taxRate,
+                discountAmount,
+                totalAmount: calculateTotal(),
+                version: undefined,
             });
             router.push('/dashboard/invoices');
         } catch (error) {
-            alert('Failed to update invoice');
+            setModalConfig({
+                title: 'Update Failed',
+                message: 'Failed to update invoice',
+                type: 'error'
+            });
+            setShowModal(true);
             console.error(error);
         } finally {
             setSubmitting(false);
@@ -129,7 +155,6 @@ export default function EditInvoicePage() {
 
     const InvoicePreview = () => (
         <div className="bg-white shadow-lg rounded-none sm:rounded-lg aspect-[1/1.414] w-full max-w-[210mm] mx-auto p-[10mm] text-xs sm:text-sm leading-relaxed border border-gray-200">
-            {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
                     <div className="flex items-center gap-2 mb-4">
@@ -143,10 +168,10 @@ export default function EditInvoicePage() {
                 <div className="text-right">
                     <h1 className="text-2xl font-bold text-gray-900">INVOICE</h1>
                     <p className="text-gray-500"># {invoiceNumber || 'DRAFT'}</p>
+                    <p className="text-xs text-gray-400 uppercase mt-1">{status}</p>
                 </div>
             </div>
 
-            {/* Bill To & Dates */}
             <div className="mt-8 flex justify-between">
                 <div>
                     <h3 className="text-gray-500 font-medium mb-1">Bill To:</h3>
@@ -171,10 +196,13 @@ export default function EditInvoicePage() {
                             <span className="font-medium">{dueDate}</span>
                         </div>
                     )}
+                    <div>
+                        <span className="text-gray-500 mr-4">Currency:</span>
+                        <span className="font-medium">{currency}</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Items Table */}
             <div className="mt-8">
                 <table className="w-full">
                     <thead>
@@ -198,21 +226,31 @@ export default function EditInvoicePage() {
                 </table>
             </div>
 
-            {/* Totals */}
             <div className="mt-6 flex justify-end">
                 <div className="w-48 space-y-2">
                     <div className="flex justify-between text-gray-500">
                         <span>Subtotal</span>
                         <span>{formatCurrency(calculateSubtotal())}</span>
                     </div>
+                    {taxRate > 0 && (
+                        <div className="flex justify-between text-gray-500">
+                            <span>Tax ({taxRate}%)</span>
+                            <span>{formatCurrency(calculateTax())}</span>
+                        </div>
+                    )}
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between text-gray-500">
+                            <span>Discount</span>
+                            <span>-{formatCurrency(discountAmount)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between font-bold text-gray-900 text-lg border-t pt-2 border-gray-200">
-                        <span>Total</span>
+                        <span>Total ({currency})</span>
                         <span>{formatCurrency(calculateTotal())}</span>
                     </div>
                 </div>
             </div>
 
-            {/* Footer */}
             {(notes || settings.footer_note) && (
                 <div className="mt-12 pt-4 border-t border-gray-100 text-gray-500 text-sm">
                     {notes && <p className="whitespace-pre-wrap">{notes}</p>}
@@ -232,7 +270,6 @@ export default function EditInvoicePage() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col h-screen overflow-hidden">
-            {/* Top Bar */}
             <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 flex-shrink-0 z-30">
                 <div className="flex items-center gap-4">
                     <Link href="/dashboard/invoices" className="text-gray-500 hover:text-gray-900 transition-colors">
@@ -262,17 +299,12 @@ export default function EditInvoicePage() {
                 </div>
             </header>
 
-            {/* Main Editor Area */}
             <main className="flex-1 flex overflow-hidden relative">
-
-                {/* Left Panel: Form Editor */}
                 <div className={clsx(
                     "flex-1 overflow-y-auto p-6 lg:p-10 transition-all duration-300",
                     showPreviewMobile ? "hidden lg:block w-full lg:w-1/2" : "w-full lg:w-1/2"
                 )}>
                     <div className="max-w-2xl mx-auto space-y-8">
-
-                        {/* Section: Who & When */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
                             <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 uppercase tracking-widest text-[11px]">
                                 <UserIcon size={16} className="text-emerald-500" />
@@ -316,10 +348,48 @@ export default function EditInvoicePage() {
                                         />
                                     </div>
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Currency</label>
+                                        <select
+                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 font-bold"
+                                            value={currency}
+                                            onChange={(e) => setCurrency(e.target.value)}
+                                        >
+                                            <option value="USD">USD</option>
+                                            <option value="NGN">NGN</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="GBP">GBP</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tax Rate (%)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 font-bold"
+                                            value={taxRate}
+                                            onChange={(e) => setTaxRate(Number(e.target.value))}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Discount Amount</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm border p-2.5 font-bold"
+                                        value={discountAmount}
+                                        onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Section: Items */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 uppercase tracking-widest text-[11px]">
@@ -381,7 +451,6 @@ export default function EditInvoicePage() {
                             </button>
                         </div>
 
-                        {/* Section: Notes */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                             <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Notes & Terms</label>
                             <textarea
@@ -395,7 +464,6 @@ export default function EditInvoicePage() {
                     </div>
                 </div>
 
-                {/* Right Panel: Live Preview */}
                 <div className={clsx(
                     "hidden lg:flex flex-1 bg-slate-900 overflow-y-auto p-10 justify-center items-start shadow-inner",
                     showPreviewMobile && "!flex absolute inset-0 z-20"
@@ -405,6 +473,19 @@ export default function EditInvoicePage() {
                     </div>
                 </div>
             </main>
+            <StatusModal
+                isOpen={showModal}
+                onClose={() => {
+                    setShowModal(false);
+                    if (modalConfig.title === 'Load Error') {
+                        router.push('/dashboard/invoices');
+                    }
+                }}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel="Proceed"
+            />
         </div>
     );
 }

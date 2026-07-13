@@ -9,6 +9,7 @@ import { Plus, Download, Search, FileText, Filter, Loader2, File, ArrowRightCirc
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { StatusModal } from '@/components/ui/StatusModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Quotation {
     id: string;
@@ -27,6 +28,7 @@ export default function QuotationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
     const [convertingId, setConvertingId] = useState<string | null>(null);
+    const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
     const [settings, setSettings] = useState<any>({});
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
@@ -82,31 +84,36 @@ export default function QuotationsPage() {
         }
     };
 
-    const handleConvertToInvoice = async (id: string) => {
-        if (!confirm("Convert this quotation to an invoice? This will create a new invoice draft.")) return;
-        setConvertingId(id);
-        try {
-            await api.post(`/quotations/${id}/convert`);
-            setModalConfig({
-                title: 'Pipeline Deployment',
-                message: 'Quotation has been successfully converted to a revenue-generating invoice draft.',
-                type: 'success'
-            });
-            setShowModal(true);
-            // We'll redirect after the user closes the modal or just let them see it?
-            // Actually, let's redirect after a small delay or on close.
-        } catch (error) {
-            console.error("Conversion failed", error);
-            setModalConfig({
-                title: 'Conversion Error',
-                message: 'Failed to deploy quotation to invoice pipeline. Please check system logs.',
-                type: 'error'
-            });
-            setShowModal(true);
-        } finally {
-            setConvertingId(null);
-        }
-    }
+    const handleConvertToInvoice = (id: string) => {
+        setConfirmDialog({
+            isOpen: true,
+            onConfirm: async () => {
+                setConvertingId(id);
+                try {
+                    await api.post(`/quotations/${id}/convert`);
+                    setModalConfig({
+                        title: 'Pipeline Deployment',
+                        message: 'Quotation has been successfully converted to a revenue-generating invoice draft.',
+                        type: 'success'
+                    });
+                    setShowModal(true);
+                } catch (error) {
+                    console.error("Conversion failed", error);
+                    setModalConfig({
+                        title: 'Conversion Error',
+                        message: 'Failed to deploy quotation to invoice pipeline. Please check system logs.',
+                        type: 'error'
+                    });
+                    setShowModal(true);
+                } finally {
+                    setConvertingId(null);
+                }
+            },
+            title: 'Convert to Invoice',
+            message: 'Convert this quotation to an invoice? This will create a new invoice draft.',
+            variant: 'warning'
+        });
+    };
 
     const StatusBadge = ({ status }: { status: string }) => {
         return (
@@ -287,6 +294,14 @@ export default function QuotationsPage() {
                 )}
             </div>
 
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, isOpen: false })); }}
+                onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                variant={confirmDialog.variant || 'danger'}
+            />
             <StatusModal 
                 isOpen={showModal}
                 onClose={() => {

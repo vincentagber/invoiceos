@@ -13,6 +13,7 @@ import {
     UploadCloud
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { StatusModal } from '@/components/ui/StatusModal';
 import { RemittanceTracker } from '@/app/dashboard/components/RemittanceTracker';
 
 export default function TaxesPage() {
@@ -20,6 +21,8 @@ export default function TaxesPage() {
     const [loading, setLoading] = useState(true);
     const [summary, setSummary] = useState<any>(null);
     const [uploading, setUploading] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     useEffect(() => {
         if (token) {
@@ -71,10 +74,20 @@ export default function TaxesPage() {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            alert('Document uploaded successfully!');
+            setModalConfig({
+                title: 'Upload Complete',
+                message: 'Document uploaded successfully!',
+                type: 'success'
+            });
+            setShowModal(true);
         } catch (error) {
             console.error(error);
-            alert('Failed to upload document.');
+            setModalConfig({
+                title: 'Upload Failed',
+                message: 'Failed to upload document.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setUploading(false);
         }
@@ -224,6 +237,14 @@ export default function TaxesPage() {
                     </p>
                 </div>
             </div>
+            <StatusModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel="Proceed"
+            />
         </div>
     );
 }

@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
-import { AuthRequest } from '../middlewares/auth.middleware';
+import { AuthRequest, verifyBusinessOwnership } from '../middlewares/auth.middleware';
+import { logger } from '../utils/logger';
 
 export const getSummary = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -8,6 +9,11 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
 
     if (!businessId) {
       return res.status(400).json({ message: 'Organization ID is required' });
+    }
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
     }
 
     const invoices = await prisma.invoice.findMany({
@@ -28,7 +34,8 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
     let paidCount = 0;
 
     invoices.forEach(inv => {
-      metrics.totalInvoiced += inv.totalAmount;
+      const amount = Number(inv.totalAmount);
+      metrics.totalInvoiced += amount;
 
       const clientId = inv.clientId;
       const clientName = inv.client?.name || 'Unknown Client';
@@ -37,14 +44,14 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
         clientRevenue[clientId] = { name: clientName, total: 0, balance: 0 };
       }
 
-      clientRevenue[clientId].total += inv.totalAmount;
+      clientRevenue[clientId].total += amount;
 
       if (inv.status === 'PAID') {
-        metrics.paidAmount += inv.totalAmount;
+        metrics.paidAmount += amount;
         paidCount++;
       } else if (inv.status !== 'CANCELLED') {
-        metrics.outstandingAmount += inv.totalAmount;
-        clientRevenue[clientId].balance += inv.totalAmount;
+        metrics.outstandingAmount += amount;
+        clientRevenue[clientId].balance += amount;
       }
 
       if (inv.status !== 'DRAFT') {
@@ -63,9 +70,9 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
         where: { businessId },
         select: { amount: true },
       });
-      totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+      totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
     } catch (e) {
-      console.error('Expenses fetch failed', e);
+      logger.error('Expenses fetch failed', e);
     }
 
     const topClients = Object.entries(clientRevenue)
@@ -85,6 +92,12 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
 export const getRevenueTrends = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const businessId = req.query.businessId as string;
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -114,7 +127,7 @@ export const getRevenueTrends = async (req: AuthRequest, res: Response, next: Ne
       const month = new Date(inv.issueDate).toLocaleString('default', { month: 'short' });
       const trend = trends.find(t => t.name === month);
       if (trend) {
-        trend.revenue += inv.totalAmount;
+        trend.revenue += Number(inv.totalAmount);
       }
     });
 
@@ -131,11 +144,11 @@ export const getRevenueTrends = async (req: AuthRequest, res: Response, next: Ne
         const month = new Date(exp.date).toLocaleString('default', { month: 'short' });
         const trend = trends.find(t => t.name === month);
         if (trend) {
-          trend.expenses += exp.amount;
+          trend.expenses += Number(exp.amount);
         }
       });
     } catch (e) {
-      console.error('Expenses trends fetch failed', e);
+      logger.error('Expenses trends fetch failed', e);
     }
 
     res.json(trends);

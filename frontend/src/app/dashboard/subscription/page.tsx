@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { Check, Zap, ShieldCheck, Loader2, Lock, User } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { StatusModal } from '@/components/ui/StatusModal';
 import clsx from 'clsx';
 
 type PaystackSuccessResponse = {
@@ -53,6 +54,8 @@ export default function SubscriptionPage() {
     const [billingCycle, setBillingCycle] = useState('MONTHLY');
     const [processing, setProcessing] = useState(false);
     const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     const plans = {
         PROFESSIONAL: {
@@ -121,14 +124,24 @@ export default function SubscriptionPage() {
 
     const initializePayment = async () => {
         if (!user?.email) {
-            alert('Please sign in before continuing with payment.');
+            setModalConfig({
+                title: 'Authentication Required',
+                message: 'Please sign in before continuing with payment.',
+                type: 'warning'
+            });
+            setShowModal(true);
             return;
         }
 
         const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
 
         if (!publicKey) {
-            alert('Paystack public key is not configured.');
+            setModalConfig({
+                title: 'Configuration Error',
+                message: 'Paystack public key is not configured.',
+                type: 'error'
+            });
+            setShowModal(true);
             return;
         }
 
@@ -136,7 +149,12 @@ export default function SubscriptionPage() {
 
         const win = window as PaystackWindow;
         if (!win.PaystackPop) {
-            alert('Paystack SDK failed to load. Please try again.');
+            setModalConfig({
+                title: 'SDK Error',
+                message: 'Paystack SDK failed to load. Please try again.',
+                type: 'error'
+            });
+            setShowModal(true);
             return;
         }
 
@@ -165,7 +183,12 @@ export default function SubscriptionPage() {
             });
             await fetchSubscription();
         } catch (error) {
-            alert('Verification failed. Please contact support.');
+            setModalConfig({
+                title: 'Verification Failed',
+                message: 'Verification failed. Please contact support.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setProcessing(false);
         }
@@ -219,8 +242,8 @@ export default function SubscriptionPage() {
                                 </h3>
                             </div>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed pt-4 border-t border-slate-100">
-                                {subscription?.status === 'ACTIVE'
-                                    ? `Next billing cycle resumes on ${new Date(subscription.endDate).toLocaleDateString()}`
+                                {subscription?.status === 'ACTIVE' && subscription?.endDate
+                                    ? `Next billing cycle resumes on ${new Date(subscription.endDate!).toLocaleDateString()}`
                                     : 'Upgrade to access premium financial intelligence tools.'}
                             </p>
                         </div>
@@ -398,6 +421,14 @@ export default function SubscriptionPage() {
                     </table>
                 </div>
             </div>
+            <StatusModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type as any}
+                actionLabel="Proceed"
+            />
         </div>
     );
 }

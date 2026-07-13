@@ -1,12 +1,15 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
-import { AuthRequest } from '../middlewares/auth.middleware';
+import { AuthRequest, verifyBusinessOwnership } from '../middlewares/auth.middleware';
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const businessId = req.query.businessId as string;
 
     if (!businessId) return res.json([]);
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) return res.status(403).json({ message: 'Unauthorized' });
 
     const quotations = await prisma.quotation.findMany({
       where: { businessId },
@@ -23,6 +26,9 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, clientId, items, ...data } = req.body;
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) return res.status(403).json({ message: 'Unauthorized' });
 
     const quotation = await prisma.quotation.create({
       data: {
@@ -56,11 +62,15 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const quotation = await prisma.quotation.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: { client: true, items: true },
     });
 
     if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, quotation.businessId);
+    if (!owns) return res.status(404).json({ message: 'Quotation not found' });
+
     res.json(quotation);
   } catch (error) {
     next(error);
@@ -69,10 +79,16 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const current = await prisma.quotation.findUnique({ where: { id: req.params.id as string } });
+    if (!current) return res.status(404).json({ message: 'Quotation not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, current.businessId);
+    if (!owns) return res.status(404).json({ message: 'Quotation not found' });
+
     const { items, ...data } = req.body;
 
     const quotation = await prisma.quotation.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: {
         ...data,
         items: items ? {
@@ -95,7 +111,13 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await prisma.quotation.delete({ where: { id: req.params.id } });
+    const current = await prisma.quotation.findUnique({ where: { id: req.params.id as string } });
+    if (!current) return res.status(404).json({ message: 'Quotation not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, current.businessId);
+    if (!owns) return res.status(404).json({ message: 'Quotation not found' });
+
+    await prisma.quotation.delete({ where: { id: req.params.id as string } });
     res.json({ success: true, message: 'Quotation deleted successfully' });
   } catch (error) {
     next(error);
@@ -105,11 +127,14 @@ export const remove = async (req: AuthRequest, res: Response, next: NextFunction
 export const convertToInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const quotation = await prisma.quotation.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: { items: true },
     });
 
     if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, quotation.businessId);
+    if (!owns) return res.status(404).json({ message: 'Quotation not found' });
 
     const invoice = await prisma.invoice.create({
       data: {
@@ -134,7 +159,7 @@ export const convertToInvoice = async (req: AuthRequest, res: Response, next: Ne
     });
 
     await prisma.quotation.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status: 'ACCEPTED' },
     });
 

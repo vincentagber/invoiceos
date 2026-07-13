@@ -5,6 +5,7 @@ import { RecordExpenseModal } from './components/RecordExpenseModal';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { 
     Search, 
     ChevronLeft,
@@ -45,6 +46,7 @@ export default function ExpensesPage() {
     const [editForm, setEditForm] = useState<any>({});
     const [editLoading, setEditLoading] = useState(false);
     const [actionsOpen, setActionsOpen] = useState<string | null>(null);
+    const [confirmState, setConfirmState] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
 
     const fetchExpenses = async () => {
         try {
@@ -96,14 +98,21 @@ export default function ExpensesPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this expense?')) return;
-        try {
-            await api.delete(`/expenses/${id}`);
-            setExpenses(expenses.filter(e => e.id !== id));
-        } catch (error) {
-            console.error('Failed to delete expense', error);
-        }
+    const handleDelete = (id: string) => {
+        setConfirmState({
+            isOpen: true,
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/expenses/${id}`);
+                    setExpenses(expenses.filter(e => e.id !== id));
+                } catch (error) {
+                    console.error('Failed to delete expense', error);
+                }
+            },
+            title: 'Delete Expense',
+            message: 'Are you sure you want to delete this expense?',
+            variant: 'danger'
+        });
     };
 
     const filteredExpenses = expenses.filter(exp => 
@@ -373,6 +382,15 @@ export default function ExpensesPage() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={fetchExpenses}
+            />
+
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onConfirm={() => { confirmState.onConfirm(); setConfirmState(prev => ({ ...prev, isOpen: false })); }}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant || 'danger'}
             />
 
             {/* Edit Expense Modal */}

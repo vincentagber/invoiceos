@@ -1,6 +1,16 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
-import { AuthRequest } from '../middlewares/auth.middleware';
+import { AuthRequest, verifyBusinessOwnership } from '../middlewares/auth.middleware';
+
+const verifyInvoiceAccess = async (userId: string, invoiceId: string): Promise<{ allowed: boolean; invoice?: any }> => {
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { businessId: true, id: true, invoiceNumber: true, totalAmount: true, status: true, version: true, updatedAt: true, client: { select: { name: true } } },
+  });
+  if (!invoice) return { allowed: false };
+  const allowed = await verifyBusinessOwnership(userId, invoice.businessId);
+  return { allowed, invoice };
+};
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -10,6 +20,11 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
       return res.json({ data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } });
     }
 
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId as string);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
     const where: any = { businessId: businessId as string };
     if (clientId) where.clientId = clientId as string;
     if (status) where.status = status as string;
@@ -17,7 +32,8 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
     if (endDate) where.createdAt = { ...where.createdAt, lte: new Date(endDate as string) };
 
     const skip = (Number(page) - 1) * Number(limit);
-    const orderField = sortBy === 'created_at' ? 'createdAt' : (sortBy as string);
+    const allowedSortFields = ['createdAt', 'updatedAt', 'issueDate', 'dueDate', 'totalAmount', 'status', 'invoiceNumber'];
+    const orderField = allowedSortFields.includes(sortBy as string) ? (sortBy as string) : 'createdAt';
 
     const [invoices, total] = await Promise.all([
       prisma.invoice.findMany({
@@ -50,6 +66,11 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, clientId, items, ...data } = req.body;
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
 
     const invoice = await prisma.invoice.create({
       data: {
@@ -85,8 +106,11 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const { allowed } = await verifyInvoiceAccess(req.user!.id, req.params.id as string);
+    if (!allowed) return res.status(404).json({ message: 'Invoice not found' });
+
     const invoice = await prisma.invoice.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         client: true,
         items: true,
@@ -94,7 +118,6 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
       },
     });
 
-    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
     res.json(invoice);
   } catch (error) {
     next(error);
@@ -104,8 +127,11 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 export const updateStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { status } = req.body;
+    const { allowed } = await verifyInvoiceAccess(req.user!.id, req.params.id as string);
+    if (!allowed) return res.status(404).json({ message: 'Invoice not found' });
+
     const invoice = await prisma.invoice.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status },
     });
 
@@ -125,7 +151,7 @@ export const updateStatus = async (req: AuthRequest, res: Response, next: NextFu
 export const trackView = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const invoice = await prisma.invoice.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: {
         viewCount: { increment: 1 },
         lastViewedAt: new Date(),
@@ -149,7 +175,10 @@ export const trackView = async (req: AuthRequest, res: Response, next: NextFunct
 export const addPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { amount, method, transactionId } = req.body;
-    const invoiceId = req.params.id;
+    const invoiceId = req.params.id as string;
+
+    const { allowed, invoice: inv } = await verifyInvoiceAccess(req.user!.id, invoiceId);
+    if (!allowed) return res.status(404).json({ message: 'Invoice not found' });
 
     const payment = await prisma.payment.create({
       data: {
@@ -168,8 +197,9 @@ export const addPayment = async (req: AuthRequest, res: Response, next: NextFunc
       select: { amount: true },
     });
 
-    const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
-    const newStatus = totalPaid >= payment.invoice.totalAmount ? 'PAID' : 'PARTIAL';
+    const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const fullInvoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { totalAmount: true, businessId: true } });
+    const newStatus = totalPaid >= Number(fullInvoice?.totalAmount || 0) ? 'PAID' : 'PARTIAL';
 
     await prisma.invoice.update({
       where: { id: invoiceId },
@@ -177,10 +207,10 @@ export const addPayment = async (req: AuthRequest, res: Response, next: NextFunc
     });
 
     const io = req.app.get('io');
-    io.to(payment.invoice.businessId).emit('payment-received', {
-      id: payment.invoice.id,
+    io.to(fullInvoice!.businessId).emit('payment-received', {
+      id: invoiceId,
       amount,
-      invoiceNumber: payment.invoice.invoiceNumber,
+      invoiceNumber: inv.invoiceNumber,
       totalPaid,
     });
 
@@ -193,10 +223,10 @@ export const addPayment = async (req: AuthRequest, res: Response, next: NextFunc
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { items, version, ...data } = req.body;
-    const invoiceId = req.params.id;
+    const invoiceId = req.params.id as string;
 
-    const current = await prisma.invoice.findUnique({ where: { id: invoiceId } });
-    if (!current) {
+    const { allowed, invoice: current } = await verifyInvoiceAccess(req.user!.id, invoiceId);
+    if (!allowed) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
     if (current.version !== (version || 1)) {
@@ -239,8 +269,11 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const triggerReminder = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const { allowed } = await verifyInvoiceAccess(req.user!.id, req.params.id as string);
+    if (!allowed) return res.status(404).json({ message: 'Invoice not found' });
+
     const invoice = await prisma.invoice.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: { client: true },
     });
 
@@ -261,8 +294,11 @@ export const triggerReminder = async (req: AuthRequest, res: Response, next: Nex
 
 export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const { allowed } = await verifyInvoiceAccess(req.user!.id, req.params.id as string);
+    if (!allowed) return res.status(404).json({ message: 'Invoice not found' });
+
     const invoice = await prisma.invoice.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status: 'SENT' },
     });
 
@@ -280,7 +316,10 @@ export const sendInvoice = async (req: AuthRequest, res: Response, next: NextFun
 
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await prisma.invoice.delete({ where: { id: req.params.id } });
+    const { allowed } = await verifyInvoiceAccess(req.user!.id, req.params.id as string);
+    if (!allowed) return res.status(404).json({ message: 'Invoice not found' });
+
+    await prisma.invoice.delete({ where: { id: req.params.id as string } });
     res.json({ success: true, message: 'Invoice deleted successfully' });
   } catch (error) {
     next(error);

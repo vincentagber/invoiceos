@@ -7,7 +7,10 @@ import { Server } from 'socket.io';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import jwt from 'jsonwebtoken';
 import * as Sentry from "@sentry/node";
+import prisma from './lib/prisma';
 import authRoutes from './routes/auth.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import clientRoutes from './routes/client.routes';
@@ -19,6 +22,7 @@ import billingRoutes from './routes/billing.routes';
 import expenseRoutes from './routes/expense.routes';
 import settingsRoutes from './routes/settings.routes';
 import documentRoutes from './routes/document.routes';
+import reconciliationRoutes from './routes/reconciliation.routes';
 import { errorHandler } from './middlewares/errorHandler';
 import { logger } from './utils/logger';
 
@@ -49,6 +53,9 @@ validateEnvironment();
 const app = express();
 const httpServer = createServer(app);
 
+// Trust proxy for rate limiting behind Render/Vercel
+app.set('trust proxy', 1);
+
 // Sentry error tracking
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -62,9 +69,21 @@ if (process.env.SENTRY_DSN) {
 // Security: Remove server fingerprinting
 app.disable('x-powered-by');
 
-// Security headers
+// Security headers with Content Security Policy enabled
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", process.env.FRONTEND_URL || ''],
+      fontSrc: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  },
   hsts: { maxAge: 31536000, includeSubDomains: true },
   frameguard: { action: 'deny' },
   noSniff: true,
@@ -109,13 +128,47 @@ const io = new Server(httpServer, {
   },
 });
 
+// Socket.io authentication middleware
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+  if (!token) {
+    return next(new Error('Authentication required'));
+  }
+  try {
+    const decoded = jwt.verify(token.toString(), process.env.JWT_SECRET!, {
+      issuer: 'invoiceos',
+      audience: 'invoiceos-client',
+    }) as { id: string; email: string };
+    socket.data.user = decoded;
+    next();
+  } catch {
+    next(new Error('Authentication failed'));
+  }
+});
+
 // Socket.io Connection
 io.on('connection', (socket) => {
-  logger.info(`Client connected: ${socket.id}`);
+  logger.info(`Client connected: ${socket.id} (user: ${socket.data.user?.id})`);
 
-  socket.on('join-business', (businessId) => {
-    socket.join(businessId);
-    logger.info(`Socket ${socket.id} joined business ${businessId}`);
+  socket.on('join-business', async (businessId) => {
+    if (!businessId || !socket.data.user?.id) {
+      socket.emit('error', { message: 'Authentication required to join business room' });
+      return;
+    }
+    // Verify user owns or is a member of the business
+    const business = await prisma.business.findFirst({
+      where: {
+        id: businessId,
+        ownerId: socket.data.user.id,
+      },
+      select: { id: true },
+    });
+    if (business) {
+      socket.join(businessId);
+      logger.info(`Socket ${socket.id} joined business ${businessId}`);
+    } else {
+      socket.emit('error', { message: 'Unauthorized: not a member of this business' });
+    }
   });
 
   socket.on('disconnect', () => {
@@ -123,12 +176,12 @@ io.on('connection', (socket) => {
   });
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Serve uploaded files through controller (removed public static serving)
 
 // Body parsing with size limits
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ limit: '1mb', extended: true }));
+app.use(cookieParser());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -143,7 +196,6 @@ app.use('/api/', limiter);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -151,10 +203,40 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
+// Input validation rate limiter
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/ai', aiLimiter);
+
 // Request timeout
 app.use((req, res, next) => {
   req.setTimeout(30000);
   next();
+});
+
+// Health check endpoint (before routes so it is always accessible)
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({
+      status: 'healthy',
+      database: 'connected',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(503).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Routes
@@ -169,26 +251,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/documents', documentRoutes);
-
-// Health check endpoint
-app.get('/api/health', async (req, res) => {
-  try {
-    const prisma = (await import('./lib/prisma')).default;
-    await prisma.$queryRaw`SELECT 1`;
-    res.status(200).json({
-      status: 'healthy',
-      database: 'connected',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    res.status(503).json({
-      status: 'unhealthy',
-      database: 'disconnected',
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
+app.use('/api/reconciliation', reconciliationRoutes);
 
 // Attach IO to request for use in controllers
 app.set('io', io);

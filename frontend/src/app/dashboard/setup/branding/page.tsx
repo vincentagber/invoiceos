@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
+import { StatusModal } from '@/components/ui/StatusModal';
 
 export default function BrandingSetupPage() {
     const [businessName, setBusinessName] = useState('');
@@ -28,6 +29,8 @@ export default function BrandingSetupPage() {
     
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const { user, refreshUser } = useAuth();
     const router = useRouter();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -62,11 +65,21 @@ export default function BrandingSetupPage() {
 
                 setLogoUrl(data.publicUrl);
             } else {
-                alert('Logo upload requires Supabase Storage configuration.');
+                setModalConfig({
+                    title: 'Storage Not Configured',
+                    message: 'Logo upload requires Supabase Storage configuration.',
+                    type: 'warning'
+                });
+                setShowModal(true);
             }
         } catch (error: any) {
             console.error('Upload error:', error);
-            alert('Failed to upload logo. Make sure you created the "logos" bucket in Supabase Storage.');
+            setModalConfig({
+                title: 'Upload Failed',
+                message: 'Failed to upload logo. Make sure you created the "logos" bucket in Supabase Storage.',
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setUploading(false);
         }
@@ -74,7 +87,12 @@ export default function BrandingSetupPage() {
 
     const handleSubmit = async () => {
         if (!businessName) {
-            alert("Please enter your business name.");
+            setModalConfig({
+                title: 'Validation Error',
+                message: 'Please enter your business name.',
+                type: 'warning'
+            });
+            setShowModal(true);
             return;
         }
 
@@ -113,7 +131,12 @@ export default function BrandingSetupPage() {
             router.push('/dashboard/setup/financials');
         } catch (error: any) {
             console.error('Branding Setup Error:', error);
-            alert(error.message || "Failed to create business profile");
+            setModalConfig({
+                title: 'Setup Failed',
+                message: error.message || "Failed to create business profile",
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setLoading(false);
         }
@@ -346,6 +369,14 @@ export default function BrandingSetupPage() {
                     <Link href="#" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">Security</Link>
                 </div>
             </footer>
+            <StatusModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel="Proceed"
+            />
         </div>
     );
 }

@@ -74,48 +74,51 @@ export default function LoginPage() {
 
     return (
         <div className="bg-background text-primary min-h-screen flex flex-col antialiased font-sans selection:bg-secondary/30 selection:text-secondary">
-            <main className="flex-grow flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                {/* Subtle Background Element for depth */}
-                <div 
-                    className="absolute top-0 left-0 w-full h-80 bg-soft-tint pointer-events-none" 
-                    style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 40%)' }}
-                ></div>
+            <main className="flex-grow flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
+                {/* Subtle Background Elements */}
+                <div className="absolute inset-0 z-0 pointer-events-none flex justify-center items-center opacity-40">
+                    <div className="w-[800px] h-[800px] bg-soft-tint rounded-full blur-3xl absolute -top-[400px] -right-[200px]"></div>
+                    <div className="w-[600px] h-[600px] bg-soft-tint rounded-full blur-3xl absolute -bottom-[300px] -left-[100px]"></div>
+                </div>
 
-                <div className="w-full max-w-[440px] relative z-10 flex flex-col items-center">
-                    {/* Brand Header */}
-                    <div className="flex items-center gap-2 mb-10">
-                        <img src="/logo.png" alt="InvoiceOS" className="h-16 w-auto object-contain" />
+                {/* Login Card */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-md bg-white rounded-2xl shadow-[0_20px_60px_-12px_rgba(11,31,58,0.08)] border border-border/40 p-10 z-10 relative"
+                >
+                    {/* Header */}
+                    <div className="text-center mb-10">
+                        <div className="flex justify-center items-center gap-2 mb-6">
+                            <img src="/logo.png" alt="InvoiceOS" className="h-14 w-auto object-contain" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-primary tracking-tight mb-1.5">Sign in to your account</h2>
+                        <p className="text-sm text-text-secondary">Access your precision financial dashboard.</p>
                     </div>
 
-                    {/* Auth Card */}
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="w-full bg-white rounded-xl border border-border shadow-[0_12px_40px_-12px_rgba(11,31,58,0.06)] p-8 md:p-10"
-                    >
-                        <div className="mb-8">
-                            <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.01em] text-primary mb-2">Sign in to your account</h1>
-                            <p className="text-text-secondary text-[14px] leading-[1.5]">Access your precision financial dashboard.</p>
-                        </div>
+                    <form className="space-y-5" onSubmit={handleSubmit}>
+                        <AnimatePresence mode="wait">
+                            {error && (
+                                <motion.div 
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="p-3.5 rounded-xl border border-rose-100 bg-rose-50 text-xs font-semibold text-rose-600 flex items-center gap-3"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                                    {error}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-                        <form className="space-y-5" onSubmit={handleSubmit}>
-                            <AnimatePresence mode="wait">
-                                {error && (
-                                    <motion.div 
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="p-3 rounded-lg border border-rose-100 bg-rose-50 text-xs font-bold text-rose-600 mb-4"
-                                    >
-                                        {error}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            <div>
-                                <label className="block text-[12px] font-semibold leading-[1.2] tracking-[0.05em] uppercase text-text-secondary mb-2" htmlFor="email">Email Address</label>
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-semibold text-primary uppercase tracking-wider" htmlFor="email">Email Address</label>
+                            <div className="relative group">
+                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                </div>
                                 <input 
-                                    className="w-full bg-white border border-border rounded-lg px-4 py-2.5 text-primary text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm placeholder:text-slate-400 outline-none" 
+                                    className="w-full bg-white border border-border text-primary text-sm rounded-xl focus:ring-2 focus:ring-primary/8 focus:border-primary block pl-11 pr-4 py-3 transition-all placeholder:text-slate-400 outline-none" 
                                     id="email" 
                                     name="email" 
                                     placeholder="name@company.com" 
@@ -125,55 +128,71 @@ export default function LoginPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
+                        </div>
 
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-[12px] font-semibold leading-[1.2] tracking-[0.05em] uppercase text-text-secondary" htmlFor="password">Password</label>
-                                    <Link className="text-[13px] font-medium text-primary hover:underline transition-colors" href="#">Forgot password?</Link>
-                                </div>
-                                <div className="relative">
-                                    <input 
-                                        className="w-full bg-white border border-border rounded-lg px-4 py-2.5 text-primary text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm placeholder:text-slate-400 outline-none pr-10" 
-                                        id="password" 
-                                        name="password" 
-                                        placeholder="••••••••" 
-                                        required 
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                    <button 
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors" 
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        <span className="material-symbols-outlined text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                                    </button>
-                                </div>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className="block text-xs font-semibold text-primary uppercase tracking-wider" htmlFor="password">Password</label>
+                                <Link className="text-[13px] font-medium text-primary hover:text-primary/80 transition-colors" href="#">Forgot password?</Link>
                             </div>
-
-                            <div className="pt-2">
+                            <div className="relative group">
+                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                </div>
+                                <input 
+                                    className="w-full bg-white border border-border text-primary text-sm rounded-xl focus:ring-2 focus:ring-primary/8 focus:border-primary block pl-11 pr-12 py-3 transition-all placeholder:text-slate-400 outline-none" 
+                                    id="password" 
+                                    name="password" 
+                                    placeholder="••••••••" 
+                                    required 
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
                                 <button 
-                                    className="w-full bg-secondary text-white rounded-lg py-3 px-4 font-semibold text-[14px] hover:bg-secondary/90 hover:shadow-lg hover:shadow-secondary/20 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50" 
-                                    type="submit"
-                                    disabled={loading}
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors p-0.5"
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
                                 >
-                                    {loading ? 'Signing in...' : 'Sign In'}
-                                    {!loading && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
+                                    {showPassword ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" x2="23" y1="1" y2="23"/></svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    )}
                                 </button>
                             </div>
-                        </form>
+                        </div>
 
-                        <div className="mt-8 mb-6 flex items-center justify-center">
+                        <motion.button 
+                            whileHover={{ scale: 1.005 }}
+                            whileTap={{ scale: 0.99 }}
+                            className="w-full text-white bg-secondary hover:bg-secondary/90 hover:shadow-lg hover:shadow-secondary/20 focus:ring-4 focus:outline-none focus:ring-secondary/10 font-semibold rounded-xl text-sm px-5 py-3.5 text-center transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+                            type="submit"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <span className="flex items-center gap-2">
+                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    Signing in...
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    Sign In
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                </span>
+                            )}
+                        </motion.button>
+
+                        <div className="flex items-center justify-center gap-3 pt-2">
                             <div className="flex-grow border-t border-border"></div>
-                            <span className="px-3 bg-white text-[12px] font-medium text-text-secondary uppercase tracking-[0.05em]">Or continue with</span>
+                            <span className="text-xs font-medium text-text-secondary uppercase tracking-wider">Or continue with</span>
                             <div className="flex-grow border-t border-border"></div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <button 
                                 onClick={handleGoogleLogin}
-                                className="flex items-center justify-center gap-2 bg-white border border-border rounded-lg py-2.5 px-4 hover:bg-soft-tint transition-colors text-[14px] font-medium text-primary shadow-sm" 
+                                className="flex items-center justify-center gap-2.5 bg-white border border-border rounded-xl py-3 hover:bg-soft-tint transition-colors text-sm font-medium text-primary shadow-sm" 
                                 type="button"
                             >
                                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -184,29 +203,26 @@ export default function LoginPage() {
                                 </svg>
                                 Google
                             </button>
-                            <button className="flex items-center justify-center gap-2 bg-white border border-border rounded-lg py-2.5 px-4 hover:bg-soft-tint transition-colors text-[14px] font-medium text-primary shadow-sm" type="button">
+                            <button className="flex items-center justify-center gap-2.5 bg-white border border-border rounded-xl py-3 hover:bg-soft-tint transition-colors text-sm font-medium text-primary shadow-sm" type="button">
                                 <svg className="w-[18px] h-[18px]" fill="#0A66C2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
                                 </svg>
                                 LinkedIn
                             </button>
                         </div>
-                    </motion.div>
 
-                    <p className="mt-8 text-[14px] text-text-secondary text-center">
-                        Don't have an account? 
-                        <Link className="font-semibold text-primary hover:underline ml-1" href="/register">Create an account</Link>
-                    </p>
-                </div>
+                        <div className="text-center pt-2">
+                            <p className="text-sm text-text-secondary">
+                                Don't have an account?{' '}
+                                <Link className="font-semibold text-primary hover:text-primary/80 transition-colors" href="/register">Create an account</Link>
+                            </p>
+                        </div>
+                    </form>
+
+                </motion.div>
             </main>
 
             <AuthFooter />
-
-            <style jsx>{`
-                .font-fill {
-                    font-variation-settings: 'FILL' 1;
-                }
-            `}</style>
         </div>
     );
 }

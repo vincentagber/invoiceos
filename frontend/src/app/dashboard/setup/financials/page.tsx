@@ -18,7 +18,9 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import clsx from 'clsx';
+import { StatusModal } from '@/components/ui/StatusModal';
 
 export default function FinancialSetupPage() {
     const [taxId, setTaxId] = useState('');
@@ -29,6 +31,8 @@ export default function FinancialSetupPage() {
     const [paypalBusiness, setPaypalBusiness] = useState(false);
     
     const [loading, setLoading] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const { user, refreshUser } = useAuth();
     const router = useRouter();
 
@@ -41,7 +45,12 @@ export default function FinancialSetupPage() {
 
     const handleSubmit = async () => {
         if (!user || user.organizations.length === 0) {
-            alert("Please complete the Branding step first.");
+            setModalConfig({
+                title: 'Setup Incomplete',
+                message: 'Please complete the Branding step first.',
+                type: 'warning'
+            });
+            setShowModal(true);
             router.push('/dashboard/setup/branding');
             return;
         }
@@ -74,7 +83,12 @@ export default function FinancialSetupPage() {
             router.push('/dashboard?setup=complete');
         } catch (error: any) {
             console.error('Finalization Error:', error);
-            alert(error.message || "Failed to finalize setup");
+            setModalConfig({
+                title: 'Finalization Failed',
+                message: error.message || "Failed to finalize setup",
+                type: 'error'
+            });
+            setShowModal(true);
         } finally {
             setLoading(false);
         }
@@ -328,6 +342,14 @@ export default function FinancialSetupPage() {
                     <Link href="#" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">Security</Link>
                 </div>
             </footer>
+            <StatusModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel="Proceed"
+            />
         </div>
     );
 }

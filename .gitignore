@@ -7,3 +7,7 @@ backend/.env
 *.key
 *.pem
 **/secrets/
+*.log
+backend/dist/
+backend/uploads/
+.next/

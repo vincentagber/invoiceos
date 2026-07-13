@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
-import { AuthRequest } from '../middlewares/auth.middleware';
+import { AuthRequest, verifyBusinessOwnership } from '../middlewares/auth.middleware';
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -8,6 +8,11 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 
     if (!businessId) {
       return res.json([]);
+    }
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
     }
 
     const clients = await prisma.client.findMany({
@@ -25,6 +30,12 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, name, contactName, email, phone, address, taxId } = req.body;
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
     const client = await prisma.client.create({
       data: {
         businessId,
@@ -46,11 +57,15 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const client = await prisma.client.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: { invoices: true },
     });
 
     if (!client) return res.status(404).json({ message: 'Client not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, client.businessId);
+    if (!owns) return res.status(404).json({ message: 'Client not found' });
+
     res.json(client);
   } catch (error) {
     next(error);
@@ -60,12 +75,16 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { version, name, contactName, email, phone, address, taxId } = req.body;
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
 
     const current = await prisma.client.findUnique({ where: { id: clientId } });
     if (!current) {
       return res.status(404).json({ message: 'Client not found' });
     }
+
+    const owns = await verifyBusinessOwnership(req.user!.id, current.businessId);
+    if (!owns) return res.status(404).json({ message: 'Client not found' });
+
     if (current.version !== (version || 1)) {
       return res.status(409).json({
         message: 'Conflict detected',
@@ -95,7 +114,13 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await prisma.client.delete({ where: { id: req.params.id } });
+    const current = await prisma.client.findUnique({ where: { id: req.params.id as string } });
+    if (!current) return res.status(404).json({ message: 'Client not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, current.businessId);
+    if (!owns) return res.status(404).json({ message: 'Client not found' });
+
+    await prisma.client.delete({ where: { id: req.params.id as string } });
     res.json({ success: true });
   } catch (error) {
     next(error);

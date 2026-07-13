@@ -13,6 +13,7 @@ import {
     Briefcase
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { StatusModal } from '@/components/ui/StatusModal';
 
 export default function AccountingPage() {
     const { token } = useAuth();
@@ -20,6 +21,8 @@ export default function AccountingPage() {
     const [summary, setSummary] = useState<any>(null);
     const [expenses, setExpenses] = useState<any[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
     // Form State
     const [newExpense, setNewExpense] = useState({
@@ -64,7 +67,12 @@ export default function AccountingPage() {
             });
             fetchData(); // Reload
         } catch (error) {
-            alert('Failed to add expense');
+            setModalConfig({
+                title: 'Operation Failed',
+                message: 'Failed to add expense. Please try again.',
+                type: 'error'
+            });
+            setShowModal(true);
         }
     };
 
@@ -319,6 +327,14 @@ export default function AccountingPage() {
                     </div>
                 </div>
             )}
+            <StatusModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                actionLabel="Proceed"
+            />
         </div>
     );
 }

@@ -20,10 +20,7 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        console.error('API Request Error:', error);
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 api.interceptors.response.use(
@@ -35,12 +32,6 @@ api.interceptors.response.use(
                     detail: { reason: 'session_expired' } 
                 }));
             }
-        }
-        if (error.response?.status === 429) {
-            console.error('Rate limited. Please try again later.');
-        }
-        if (error.response?.status && error.response.status >= 500) {
-            console.error('Server error. Our team has been notified.');
         }
         return Promise.reject(error);
     }

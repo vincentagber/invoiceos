@@ -137,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         );
 
                                         if (item.onClick) {
-                                            return <button key={item.name} onClick={item.onClick} className={navItemClasses}>{content}</button>;
+                                            return <button key={item.name} onClick={() => item.onClick?.()} className={navItemClasses}>{content}</button>;
                                         }
 
                                         return (

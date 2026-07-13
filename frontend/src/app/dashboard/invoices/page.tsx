@@ -24,6 +24,7 @@ import { generateInvoicePDF } from '@/lib/pdfGenerator';
 import { formatCurrency } from '@/lib/utils';
 import clsx from 'clsx';
 import { StatusModal } from '@/components/ui/StatusModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Invoice {
     id: string;
@@ -42,6 +43,7 @@ export default function InvoicesPage() {
     const [settings, setSettings] = useState<any>({});
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+    const [confirmState, setConfirmState] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
 
     useEffect(() => {
         fetchInvoices();
@@ -91,27 +93,33 @@ export default function InvoicesPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
-
-        try {
-            await api.delete(`/invoices/${id}`);
-            setInvoices(invoices.filter(inv => inv.id !== id));
-            setModalConfig({
-                title: 'Revenue Stream Terminated',
-                message: 'The invoice has been successfully removed from your active ledger.',
-                type: 'info'
-            });
-            setShowModal(true);
-        } catch (error) {
-            console.error("Failed to delete invoice", error);
-            setModalConfig({
-                title: 'Deletion Error',
-                message: 'An error occurred while attempting to remove the invoice. Access denied or system error.',
-                type: 'error'
-            });
-            setShowModal(true);
-        }
+    const handleDelete = (id: string) => {
+        setConfirmState({
+            isOpen: true,
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/invoices/${id}`);
+                    setInvoices(invoices.filter(inv => inv.id !== id));
+                    setModalConfig({
+                        title: 'Revenue Stream Terminated',
+                        message: 'The invoice has been successfully removed from your active ledger.',
+                        type: 'info'
+                    });
+                    setShowModal(true);
+                } catch (error) {
+                    console.error("Failed to delete invoice", error);
+                    setModalConfig({
+                        title: 'Deletion Error',
+                        message: 'An error occurred while attempting to remove the invoice. Access denied or system error.',
+                        type: 'error'
+                    });
+                    setShowModal(true);
+                }
+            },
+            title: 'Delete Invoice',
+            message: 'Are you sure you want to delete this invoice? This action cannot be undone.',
+            variant: 'danger'
+        });
     };
 
     const filteredInvoices = invoices.filter(inv =>
@@ -348,6 +356,14 @@ export default function InvoicesPage() {
                 </div>
             </div>
 
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onConfirm={() => { confirmState.onConfirm(); setConfirmState(prev => ({ ...prev, isOpen: false })); }}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant || 'danger'}
+            />
             <StatusModal 
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}

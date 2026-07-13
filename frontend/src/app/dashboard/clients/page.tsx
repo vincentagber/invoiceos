@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { Plus, Edit, Trash, Search, Mail, Phone, Users, Download, Filter, Handshake, UserPlus, ShieldCheck } from 'lucide-react';
 import { StatusModal } from '@/components/ui/StatusModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AddClientModal } from '@/components/ui/AddClientModal';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
@@ -32,6 +33,7 @@ export default function ClientsPage() {
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState('');
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+    const [confirmState, setConfirmState] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
 
     useEffect(() => {
         fetchClients();
@@ -55,25 +57,32 @@ export default function ClientsPage() {
         setClients([newClient, ...clients]);
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to terminate this partner relationship?')) return;
-        try {
-            await api.delete(`/clients/${id}`);
-            setClients(clients.filter(c => c.id !== id));
-            setModalConfig({
-                title: 'Relationship Terminated',
-                message: 'The partner has been successfully purged from your active database.',
-                type: 'info'
-            });
-            setShowModal(true);
-        } catch (error) {
-            setModalConfig({
-                title: 'Termination Failed',
-                message: 'We could not remove this partner. They may be linked to active revenue streams.',
-                type: 'error'
-            });
-            setShowModal(true);
-        }
+    const handleDelete = (id: string) => {
+        setConfirmState({
+            isOpen: true,
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/clients/${id}`);
+                    setClients(clients.filter(c => c.id !== id));
+                    setModalConfig({
+                        title: 'Relationship Terminated',
+                        message: 'The partner has been successfully purged from your active database.',
+                        type: 'info'
+                    });
+                    setShowModal(true);
+                } catch (error) {
+                    setModalConfig({
+                        title: 'Termination Failed',
+                        message: 'We could not remove this partner. They may be linked to active revenue streams.',
+                        type: 'error'
+                    });
+                    setShowModal(true);
+                }
+            },
+            title: 'Terminate Relationship',
+            message: 'Are you sure you want to terminate this partner relationship?',
+            variant: 'danger'
+        });
     };
 
     const openEditModal = (client: Client) => {
@@ -282,6 +291,14 @@ export default function ClientsPage() {
                 onSuccess={handleClientCreated}
             />
 
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onConfirm={() => { confirmState.onConfirm(); setConfirmState(prev => ({ ...prev, isOpen: false })); }}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant || 'danger'}
+            />
             <StatusModal 
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}

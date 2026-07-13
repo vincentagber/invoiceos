@@ -82,7 +82,12 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, 
 
     const handleSubmit = async (status: 'DRAFT' | 'SENT') => {
         if (!selectedClient) {
-            alert('Please select a client.');
+            setStatusConfig({
+                title: 'Validation Error',
+                message: 'Please select a client.',
+                type: 'warning'
+            });
+            setShowStatus(true);
             return;
         }
         setSubmitting(true);

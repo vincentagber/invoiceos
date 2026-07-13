@@ -2,7 +2,33 @@ import { Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 import { logger } from '../utils/logger';
+
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET!;
+const ALGORITHM = 'aes-256-gcm';
+
+const encrypt = (text: string): string => {
+  const key = crypto.scryptSync(ENCRYPTION_KEY, 'invoiceos-salt', 32);
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  return `${iv.toString('hex')}:${authTag}:${encrypted}`;
+};
+
+const decrypt = (encryptedText: string): string => {
+  const key = crypto.scryptSync(ENCRYPTION_KEY, 'invoiceos-salt', 32);
+  const [ivHex, authTagHex, encrypted] = encryptedText.split(':');
+  const iv = Buffer.from(ivHex, 'hex');
+  const authTag = Buffer.from(authTagHex, 'hex');
+  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+  decipher.setAuthTag(authTag);
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+};
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -13,8 +39,15 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 
         if (!business) return res.status(404).json({ error: 'Business not found' });
 
+        // Mask SMTP password in response
+        const smtpConfig = business.smtpConfig as any || {};
+        if (smtpConfig.pass) {
+          smtpConfig.pass = '••••••••';
+        }
+
         res.json({
             ...business,
+            smtpConfig,
             businessName: business.name,
             brandColor: business.brandColor || '#5E6AD2',
             logo: null,
@@ -131,6 +164,8 @@ export const updateEmail = async (req: AuthRequest, res: Response, next: NextFun
     try {
         const { smtpHost, smtpPort, smtpUsername, smtpPassword, fromName, fromEmail } = req.body;
 
+        const encryptedPassword = smtpPassword ? encrypt(smtpPassword) : undefined;
+
         await prisma.business.updateMany({
             where: { ownerId: req.user?.id as string },
             data: {
@@ -138,7 +173,7 @@ export const updateEmail = async (req: AuthRequest, res: Response, next: NextFun
                     host: smtpHost,
                     port: smtpPort,
                     user: smtpUsername,
-                    pass: smtpPassword,
+                    pass: encryptedPassword,
                     fromName,
                     fromEmail,
                 },

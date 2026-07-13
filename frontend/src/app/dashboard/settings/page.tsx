@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { StatusModal } from '@/components/ui/StatusModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (val: boolean) => void }) => (
     <button 
@@ -43,6 +44,7 @@ export default function SettingsPage() {
     const [testingEmail, setTestingEmail] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+    const [confirmState, setConfirmState] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
 
     const [settings, setSettings] = useState({
         businessName: '',
@@ -250,27 +252,33 @@ export default function SettingsPage() {
         }
     };
 
-    const handleDeleteBusiness = async () => {
-        if (!confirm('CRITICAL: Are you sure you want to terminate this institutional workspace? This action is permanent.')) return;
-        
-        try {
-            await api.delete('/settings/business');
-            setModalConfig({
-                title: 'Workspace Terminated',
-                message: 'The institutional business has been successfully decommissioned.',
-                type: 'success'
-            });
-            setShowModal(true);
-            setTimeout(() => window.location.href = '/dashboard', 2000);
-        } catch (error: any) {
-            const msg = error.response?.data?.error || error.message;
-            setModalConfig({
-                title: 'Termination Refused',
-                message: `The system blocked the deletion: ${msg}`,
-                type: 'error'
-            });
-            setShowModal(true);
-        }
+    const handleDeleteBusiness = () => {
+        setConfirmState({
+            isOpen: true,
+            onConfirm: async () => {
+                try {
+                    await api.delete('/settings/business');
+                    setModalConfig({
+                        title: 'Workspace Terminated',
+                        message: 'The institutional business has been successfully decommissioned.',
+                        type: 'success'
+                    });
+                    setShowModal(true);
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                } catch (error: any) {
+                    const msg = error.response?.data?.error || error.message;
+                    setModalConfig({
+                        title: 'Termination Refused',
+                        message: `The system blocked the deletion: ${msg}`,
+                        type: 'error'
+                    });
+                    setShowModal(true);
+                }
+            },
+            title: 'Terminate Workspace',
+            message: 'CRITICAL: Are you sure you want to terminate this institutional workspace? This action is permanent.',
+            variant: 'danger'
+        });
     };
 
     if (loading) return (
@@ -624,6 +632,14 @@ export default function SettingsPage() {
 
             </div>
 
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onConfirm={() => { confirmState.onConfirm(); setConfirmState(prev => ({ ...prev, isOpen: false })); }}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant || 'danger'}
+            />
             <StatusModal 
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}

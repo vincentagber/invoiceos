@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
-import { AuthRequest } from '../middlewares/auth.middleware';
+import { AuthRequest, verifyBusinessOwnership } from '../middlewares/auth.middleware';
+import { logger } from '../utils/logger';
 
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -8,6 +9,11 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 
     if (!businessId) {
       return res.status(400).json({ message: 'Business ID is required' });
+    }
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId as string);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
     }
 
     const expenses = await prisma.expense.findMany({
@@ -24,6 +30,11 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { businessId, ...data } = req.body;
+
+    const owns = await verifyBusinessOwnership(req.user!.id, businessId);
+    if (!owns) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
 
     const expense = await prisma.expense.create({
       data: {
@@ -45,10 +56,16 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const current = await prisma.expense.findUnique({ where: { id: req.params.id as string } });
+    if (!current) return res.status(404).json({ message: 'Expense not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, current.businessId);
+    if (!owns) return res.status(404).json({ message: 'Expense not found' });
+
     const { businessId, ...data } = req.body;
 
     const expense = await prisma.expense.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: {
         ...data,
         date: data.date ? new Date(data.date) : undefined,
@@ -63,7 +80,13 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
 
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await prisma.expense.delete({ where: { id: req.params.id } });
+    const current = await prisma.expense.findUnique({ where: { id: req.params.id as string } });
+    if (!current) return res.status(404).json({ message: 'Expense not found' });
+
+    const owns = await verifyBusinessOwnership(req.user!.id, current.businessId);
+    if (!owns) return res.status(404).json({ message: 'Expense not found' });
+
+    await prisma.expense.delete({ where: { id: req.params.id as string } });
     res.json({ success: true });
   } catch (error) {
     next(error);

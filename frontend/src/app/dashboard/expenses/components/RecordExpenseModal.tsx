@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { X, Mic, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import api from '@/lib/api';
+import { StatusModal } from '@/components/ui/StatusModal';
 
 interface RecordExpenseModalProps {
     isOpen: boolean;
@@ -13,6 +14,8 @@ interface RecordExpenseModalProps {
 
 export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const [saving, setSaving] = useState(false);
+    const [showAlertModal, setShowAlertModal] = useState(false);
+    const [alertModalConfig, setAlertModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const [formData, setFormData] = useState({
         merchant: '',
         amount: '',
@@ -50,7 +53,12 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ isOpen, 
             });
         } catch (error) {
             console.error('Failed to save expense', error);
-            alert('Failed to save expense. Please try again.');
+            setAlertModalConfig({
+                title: 'Save Failed',
+                message: 'Failed to save expense. Please try again.',
+                type: 'error'
+            });
+            setShowAlertModal(true);
         } finally {
             setSaving(false);
         }
@@ -204,6 +212,14 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ isOpen, 
                 </div>
 
             </div>
+            <StatusModal
+                isOpen={showAlertModal}
+                onClose={() => setShowAlertModal(false)}
+                title={alertModalConfig.title}
+                message={alertModalConfig.message}
+                type={alertModalConfig.type}
+                actionLabel="Proceed"
+            />
         </div>
     );
 };
