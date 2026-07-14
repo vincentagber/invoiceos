@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { RecordExpenseModal } from './components/RecordExpenseModal';
+import { ExcelUploadModal } from './components/ExcelUploadModal';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/utils';
@@ -37,6 +38,7 @@ import clsx from 'clsx';
 export default function ExpensesPage() {
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
     const [currency, setCurrency] = useState('NGN');
     const [searchQuery, setSearchQuery] = useState('');
     const [expenses, setExpenses] = useState<any[]>([]);
@@ -150,6 +152,13 @@ export default function ExpensesPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setIsExcelModalOpen(true)}
+                        className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
+                    >
+                        <FileUp size={14} />
+                        Upload Excel
+                    </button>
                     <button 
                         className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
                     >
@@ -381,6 +390,12 @@ export default function ExpensesPage() {
             <RecordExpenseModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchExpenses}
+            />
+
+            <ExcelUploadModal
+                isOpen={isExcelModalOpen}
+                onClose={() => setIsExcelModalOpen(false)}
                 onSuccess={fetchExpenses}
             />
 

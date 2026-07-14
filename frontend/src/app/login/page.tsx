@@ -16,7 +16,7 @@ function LoginForm() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const { session } = useAuth();
+    const { session, refreshUser } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const selectedPlan = searchParams?.get('plan');
@@ -48,6 +48,7 @@ function LoginForm() {
             } else {
                 const { error } = await localAuth.signInWithPassword(email, password);
                 if (error) throw error;
+                await refreshUser();
             }
             router.push('/dashboard');
         } catch (err: any) {

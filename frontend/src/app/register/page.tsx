@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { localAuth } from '@/lib/localAuth';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -21,6 +22,7 @@ function RegisterForm() {
 
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { refreshUser } = useAuth();
     const selectedPlan = searchParams?.get('plan');
     const selectedCycle = searchParams?.get('cycle');
 
@@ -52,6 +54,7 @@ function RegisterForm() {
             } else {
                 const { error } = await localAuth.signUp(email, password, name);
                 if (error) throw error;
+                await refreshUser();
             }
             router.push('/dashboard');
         } catch (err: any) {

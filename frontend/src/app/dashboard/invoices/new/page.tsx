@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/utils';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { AddClientModal } from '@/components/ui/AddClientModal';
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { 
     Plus, 
     Trash, 
@@ -73,6 +74,11 @@ export default function NewInvoicePage() {
                     setClients(clientsRes.data || []);
                 }
             } catch (error) {
+                const axiosError = error as AxiosError;
+                if (axiosError.response?.status === 404) {
+                    router.push('/dashboard/setup/branding');
+                    return;
+                }
                 console.error('Initialization failure:', error);
             } finally {
                 setLoading(false);
