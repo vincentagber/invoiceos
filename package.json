@@ -2,6 +2,7 @@
   "scripts": {
     "start": "npm run --prefix backend start",
     "build": "npm run --prefix backend prisma:generate && npm run --prefix backend build",
+    "postinstall": "npm run --prefix backend prisma:generate && npm run --prefix backend build",
     "seed": "npm run --prefix backend seed"
   },
   "devDependencies": {
