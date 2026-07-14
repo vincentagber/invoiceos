@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: invoiceos-api
+    env: node
+    plan: standard
+    region: oregon
+
+    buildCommand: npm install && npm run build && npx prisma migrate deploy
+    startCommand: npm start
+
+    healthCheckPath: /api/health
+    healthCheckInterval: 30
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: LOG_LEVEL
+        value: info
+
+    disk:
+      name: invoice_logs
+      mountPath: /var/data
+      sizeGB: 5
+
+    autoDeploy: true
+    branch: main
+
+    maxInstances: 3
+    minInstances: 1
