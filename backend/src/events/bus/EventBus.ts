@@ -4,9 +4,14 @@ import { DomainEvent } from '../contracts/BaseEvent';
 import { logger } from '../../utils/logger';
 
 const queueMap = new Map<string, IQueue>();
+const topics = new Set<string>();
 
 export function registerQueue(eventName: string, queue: IQueue): void {
   queueMap.set(eventName, queue);
+}
+
+export function registerTopic(eventName: string): void {
+  topics.add(eventName);
 }
 
 export const eventBus: IEventBus = {
@@ -14,6 +19,9 @@ export const eventBus: IEventBus = {
     const queue = queueMap.get(event.eventName);
 
     if (!queue) {
+      if (topics.has(event.eventName)) {
+        return;
+      }
       logger.warn(`No queue registered for event ${event.eventName} — dropping event ${event.eventId}`);
       return;
     }

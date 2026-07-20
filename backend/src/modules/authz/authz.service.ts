@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma';
 import type { PermissionKey, PolicyEvaluation } from './authz.types';
+import { publishPermissionCheck } from './authz.events';
 
 let permissionCache: Map<string, string> | null = null;
 let rolePermissionCache = new Map<string, Set<string>>();
@@ -62,12 +63,16 @@ export async function can(
 
   const role = await getRoleForUser(businessId, userId);
   if (!role) {
-    return { allowed: false, reason: 'User has no role in this business' };
+    const result: PolicyEvaluation = { allowed: false, reason: 'User has no role in this business' };
+    publishPermissionCheck(userId, businessId, permission, result);
+    return result;
   }
 
   // Owner role has all permissions
   if (role.roleName === 'Owner') {
-    return { allowed: true, rule: 'Owner:unrestricted' };
+    const result: PolicyEvaluation = { allowed: true, rule: 'Owner:unrestricted' };
+    publishPermissionCheck(userId, businessId, permission, result);
+    return result;
   }
 
   const rolePerms = rolePermissionCache.get(role.roleId);
@@ -85,14 +90,20 @@ export async function can(
 
     if (overrideRule) {
       if (overrideRule.effect === 'GRANT') {
-        return { allowed: true, rule: `PolicyRule:${overrideRule.id}`, reason: 'Granted by policy' };
+        const result: PolicyEvaluation = { allowed: true, rule: `PolicyRule:${overrideRule.id}`, reason: 'Granted by policy' };
+        publishPermissionCheck(userId, businessId, permission, result);
+        return result;
       }
       if (overrideRule.effect === 'DENY') {
-        return { allowed: false, rule: `PolicyRule:${overrideRule.id}`, reason: 'Denied by policy' };
+        const result: PolicyEvaluation = { allowed: false, rule: `PolicyRule:${overrideRule.id}`, reason: 'Denied by policy' };
+        publishPermissionCheck(userId, businessId, permission, result);
+        return result;
       }
     }
 
-    return { allowed: false, reason: `Role ${role.roleName} lacks permission ${permission}` };
+    const result: PolicyEvaluation = { allowed: false, reason: `Role ${role.roleName} lacks permission ${permission}` };
+    publishPermissionCheck(userId, businessId, permission, result);
+    return result;
   }
 
   // Permission granted by role — check for DENY policy override
@@ -108,10 +119,14 @@ export async function can(
   });
 
   if (denyRule) {
-    return { allowed: false, rule: `PolicyRule:${denyRule.id}`, reason: 'Overridden by deny policy' };
+    const result: PolicyEvaluation = { allowed: false, rule: `PolicyRule:${denyRule.id}`, reason: 'Overridden by deny policy' };
+    publishPermissionCheck(userId, businessId, permission, result);
+    return result;
   }
 
-  return { allowed: true, rule: `Role:${role.roleName}` };
+  const result: PolicyEvaluation = { allowed: true, rule: `Role:${role.roleName}` };
+  publishPermissionCheck(userId, businessId, permission, result);
+  return result;
 }
 
 export async function getEffectivePermissions(userId: string, businessId: string): Promise<string[]> {
