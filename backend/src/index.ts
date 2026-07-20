@@ -25,8 +25,11 @@ import documentRoutes from './routes/document.routes';
 import reconciliationRoutes from './routes/reconciliation.routes';
 import accountingRoutes from './routes/accounting.routes';
 import complianceRoutes from './routes/compliance.routes';
+import authzRoutes from './routes/authz.routes';
 import { errorHandler } from './middlewares/errorHandler';
 import { logger } from './utils/logger';
+import { eventBus, registerQueue, BullQueue, startAllWorkers, closeRedisConnection, EVENT_INVOICE_CREATED } from './events';
+import { seedPermissionsAndRoles } from './modules/authz';
 
 dotenv.config();
 
@@ -185,6 +188,22 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
 app.use(cookieParser());
 
+// Request logging
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`, {
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      duration,
+      userId: (req as any).user?.id || 'anonymous',
+    });
+  });
+  next();
+});
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -256,6 +275,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/reconciliation', reconciliationRoutes);
 app.use('/api/accounting', accountingRoutes);
 app.use('/api/compliance', complianceRoutes);
+app.use('/api/authz', authzRoutes);
 
 // Attach IO to request for use in controllers
 app.set('io', io);
@@ -268,7 +288,45 @@ if (process.env.SENTRY_DSN) {
 // Error Handling
 app.use(errorHandler);
 
+// Event System: Register queues and start workers
+async function initEventSystem(): Promise<void> {
+  if (!process.env.REDIS_URL) {
+    logger.warn('REDIS_URL not set — background jobs disabled');
+    return;
+  }
+  try {
+    registerQueue(EVENT_INVOICE_CREATED, new BullQueue('pdf'));
+    registerQueue(EVENT_INVOICE_CREATED, new BullQueue('email'));
+    registerQueue(EVENT_INVOICE_CREATED, new BullQueue('analytics'));
+    registerQueue(EVENT_INVOICE_CREATED, new BullQueue('audit'));
+
+    await startAllWorkers();
+    logger.info('Event system initialized — workers started');
+  } catch (err) {
+    logger.error('Failed to initialize event system — running without background jobs', err);
+  }
+}
+
 const PORT = process.env.PORT || 4000;
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, async () => {
   logger.info(`InvoiceOS Backend running on http://localhost:${PORT}`);
+  try {
+    await seedPermissionsAndRoles();
+  } catch (err) {
+    logger.error('Failed to seed permissions (non-fatal)', err);
+  }
+  await initEventSystem();
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received — shutting down...');
+  await closeRedisConnection();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received — shutting down...');
+  await closeRedisConnection();
+  process.exit(0);
 });

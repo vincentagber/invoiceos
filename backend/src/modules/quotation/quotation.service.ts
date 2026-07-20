@@ -98,33 +98,35 @@ export const quotationService = {
     const owns = await verifyBusinessOwnership(userId, quotation.businessId);
     if (!owns) throw new NotFoundError('Quotation', id);
 
-    const invoice = await prisma.invoice.create({
-      data: {
-        invoiceNumber: `INV-${Date.now()}`,
-        businessId: quotation.businessId,
-        clientId: quotation.clientId,
-        currency: quotation.currency,
-        issueDate: new Date(),
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        taxRate: quotation.taxRate,
-        discountAmount: quotation.discountAmount,
-        totalAmount: quotation.totalAmount,
-        status: 'DRAFT',
-        items: {
-          create: quotation.items.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          })),
+    return prisma.$transaction(async (tx) => {
+      const invoice = await tx.invoice.create({
+        data: {
+          invoiceNumber: `INV-${Date.now()}`,
+          businessId: quotation.businessId,
+          clientId: quotation.clientId,
+          currency: quotation.currency,
+          issueDate: new Date(),
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          taxRate: quotation.taxRate,
+          discountAmount: quotation.discountAmount,
+          totalAmount: quotation.totalAmount,
+          status: 'DRAFT',
+          items: {
+            create: quotation.items.map((item) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            })),
+          },
         },
-      },
-    });
+      });
 
-    await prisma.quotation.update({
-      where: { id },
-      data: { status: 'ACCEPTED' },
-    });
+      await tx.quotation.update({
+        where: { id },
+        data: { status: 'ACCEPTED' },
+      });
 
-    return invoice;
+      return invoice;
+    });
   },
 };

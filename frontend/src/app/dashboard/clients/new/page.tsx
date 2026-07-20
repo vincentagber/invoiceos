@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/lib/useToast';
 import { 
     ChevronRight, 
     Save, 
@@ -45,6 +46,7 @@ export default function NewClientPage() {
     });
 
     const [submitting, setSubmitting] = useState(false);
+    const toast = useToast();
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
@@ -80,7 +82,7 @@ export default function NewClientPage() {
             });
             setShowModal(true);
         } catch (error) {
-            console.error(error);
+            toast.error('Failed to create client');
             setModalConfig({
                 title: 'Registration Failed',
                 message: 'We encountered an error while adding this partner. Please check all fields.',

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useToast } from '@/lib/useToast';
 import { 
     Save, 
     Upload, 
@@ -39,6 +40,7 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (val: boole
 );
 
 export default function SettingsPage() {
+    const toast = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [testingEmail, setTestingEmail] = useState(false);
@@ -128,7 +130,7 @@ export default function SettingsPage() {
                     });
                 }
             } catch (error) {
-                console.error(error);
+                toast.error('Failed to load settings');
             } finally {
                 setLoading(false);
             }

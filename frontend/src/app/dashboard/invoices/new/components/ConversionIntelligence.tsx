@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, TrendingUp, Clock, ShieldCheck, AlertTriangle, Sparkles, Loader } from 'lucide-react';
 import clsx from 'clsx';
+import { useToast } from '@/lib/useToast';
 import api from '@/lib/api';
 
 interface Insight {
@@ -21,6 +22,7 @@ interface ConversionIntelligenceProps {
 
 export const ConversionIntelligence = ({ total, clientName, dueDate, items, notes }: ConversionIntelligenceProps) => {
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
     const [aiResult, setAiResult] = useState<{ score: number, insights: Insight[], recommendation: string } | null>(null);
 
     const analyze = async () => {
@@ -36,7 +38,7 @@ export const ConversionIntelligence = ({ total, clientName, dueDate, items, note
             });
             setAiResult(res.data);
         } catch (error) {
-            console.error("AI Analysis failed", error);
+            toast.error('AI analysis failed');
         } finally {
             setLoading(false);
         }

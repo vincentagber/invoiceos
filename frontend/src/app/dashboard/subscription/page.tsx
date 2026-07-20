@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { Check, Zap, ShieldCheck, Loader2, Lock, User } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/lib/useToast';
 import { StatusModal } from '@/components/ui/StatusModal';
 import clsx from 'clsx';
 
@@ -48,6 +49,7 @@ interface PaystackWindow extends Window {
 
 export default function SubscriptionPage() {
     const { user } = useAuth();
+    const toast = useToast();
     const [loading, setLoading] = useState(true);
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [selectedPlan, setSelectedPlan] = useState('PROFESSIONAL');
@@ -92,7 +94,7 @@ export default function SubscriptionPage() {
             setSubscription(subRes.data);
             setBillingHistory(historyRes.data || []);
         } catch (error) {
-            console.error('Failed to fetch subscription data', error);
+            toast.error('Failed to load subscription data');
         } finally {
             setLoading(false);
         }

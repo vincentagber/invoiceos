@@ -17,6 +17,33 @@ model User {
   updatedAt     DateTime   @updatedAt
   deletedAt     DateTime?
   businesses    Business[]
+  memberships   OrganizationMember[]
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   OrganizationMember[]
+  businesses Business[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId         String
+  role           Role         @relation(fields: [roleId], references: [id])
+  joinedAt       DateTime     @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
 }
 
 model Business {
@@ -62,6 +89,11 @@ model Business {
   quotations      Quotation[]
   subscription    Subscription?
   expenses        Expense[]
+  organizationId  String?
+  organization    Organization?    @relation(fields: [organizationId], references: [id])
+  branches        Branch[]
+  departments     Department[]
+  teams           Team[]
 
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -283,6 +315,116 @@ model Expense {
 
   @@index([businessId, date])
   @@index([category])
+}
+
+model Branch {
+  id         String     @id @default(cuid())
+  businessId String
+  business   Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  address    String?
+  phone      String?
+  email      String?
+  managerId  String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  departments Department[]
+
+  @@index([businessId])
+}
+
+model Department {
+  id         String     @id @default(cuid())
+  businessId String
+  business   Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId   String?
+  branch     Branch?    @relation(fields: [branchId], references: [id])
+  name       String
+  managerId  String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([businessId])
+  @@index([branchId])
+}
+
+model Team {
+  id         String     @id @default(cuid())
+  businessId String
+  business   Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  memberIds  String[]   // user IDs
+
+  @@index([businessId])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  name        String
+  group       String           // e.g. "invoices", "clients", "settings"
+  description String?
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  permissions RolePermission[]
+  members     OrganizationMember[]
+}
+
+model RolePermission {
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@id([roleId, permissionId])
+}
+
+model PolicyRule {
+  id            String   @id @default(cuid())
+  organizationId String?
+  businessId    String?
+  roleId        String?
+  userId        String?
+  permissionKey String
+  effect        String   // "GRANT" or "DENY"
+  conditions    Json?    // e.g. { maxAmount: 500000, departmentId: "..." }
+  priority      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  enabled       Boolean  @default(true)
+
+  @@index([organizationId, permissionKey])
+  @@index([businessId, permissionKey])
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  eventName     String
+  eventId       String
+  correlationId String
+  businessId    String
+  actorId       String
+  payload       Json
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([eventName, createdAt])
+  @@index([correlationId])
+  @@unique([eventId])
 }
 
 enum InvoiceStatus {

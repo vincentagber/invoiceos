@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useToast } from '@/lib/useToast';
 import { 
     Check, 
     ChevronLeft, 
@@ -31,6 +32,7 @@ export default function FinancialSetupPage() {
     const [paypalBusiness, setPaypalBusiness] = useState(false);
     
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const { user, refreshUser } = useAuth();
@@ -82,7 +84,7 @@ export default function FinancialSetupPage() {
             // Success! Redirect to dashboard
             router.push('/dashboard?setup=complete');
         } catch (error: any) {
-            console.error('Finalization Error:', error);
+            toast.error('Failed to finalize setup');
             setModalConfig({
                 title: 'Finalization Failed',
                 message: error.message || "Failed to finalize setup",

@@ -8,6 +8,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Plus, Download, Search, FileText, Filter, Loader2, File, ArrowRightCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
+import { useToast } from '@/lib/useToast';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
@@ -28,6 +29,7 @@ export default function QuotationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
     const [convertingId, setConvertingId] = useState<string | null>(null);
+    const toast = useToast();
     const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
     const [settings, setSettings] = useState<any>({});
     const [showModal, setShowModal] = useState(false);
@@ -44,7 +46,7 @@ export default function QuotationsPage() {
             const res = await api.get('/business/me');
             if (res.data) setSettings(res.data);
         } catch (e) {
-            console.error("Failed to fetch settings", e);
+            toast.error('Failed to load settings');
         }
     }
 
@@ -58,7 +60,7 @@ export default function QuotationsPage() {
                 }
             }
         } catch (error) {
-            console.error("Failed to fetch quotations", error);
+            toast.error('Failed to load quotations');
             setQuotations([]);
         } finally {
             setLoading(false);
@@ -72,7 +74,7 @@ export default function QuotationsPage() {
             const data = res.data;
             await generateInvoicePDF(data, settings, 'quotation');
         } catch (error) {
-            console.error("Failed to download PDF", error);
+            toast.error('Failed to download PDF');
             setModalConfig({
                 title: 'Export Failed',
                 message: 'We could not generate the PDF proposal. Please try again.',
@@ -98,7 +100,7 @@ export default function QuotationsPage() {
                     });
                     setShowModal(true);
                 } catch (error) {
-                    console.error("Conversion failed", error);
+                    toast.error('Failed to convert quotation');
                     setModalConfig({
                         title: 'Conversion Error',
                         message: 'Failed to deploy quotation to invoice pipeline. Please check system logs.',

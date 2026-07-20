@@ -20,6 +20,7 @@ import {
     ChevronRight,
     ArrowUpRight
 } from 'lucide-react';
+import { useToast } from '@/lib/useToast';
 import { generateInvoicePDF } from '@/lib/pdfGenerator';
 import { formatCurrency } from '@/lib/utils';
 import clsx from 'clsx';
@@ -32,7 +33,7 @@ interface Invoice {
     issueDate: string;
     totalAmount: number;
     status: string;
-    client: { name: string };
+    client: { id: string; name: string; email: string };
 }
 
 export default function InvoicesPage() {
@@ -43,6 +44,7 @@ export default function InvoicesPage() {
     const [settings, setSettings] = useState<any>({});
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+    const toast = useToast();
     const [confirmState, setConfirmState] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
 
     useEffect(() => {
@@ -55,7 +57,7 @@ export default function InvoicesPage() {
             const res = await api.get('/business/me');
             if (res.data) setSettings(res.data);
         } catch (e) {
-            console.error("Failed to fetch settings", e);
+            toast.error('Failed to load settings');
         }
     }
 
@@ -68,7 +70,7 @@ export default function InvoicesPage() {
                 setInvoices(data);
             }
         } catch (error) {
-            console.error("Failed to fetch invoices", error);
+            toast.error('Failed to load invoices');
         } finally {
             setLoading(false);
         }
@@ -81,7 +83,7 @@ export default function InvoicesPage() {
             const invoiceData = res.data;
             await generateInvoicePDF(invoiceData, settings);
         } catch (error) {
-            console.error("Failed to download PDF", error);
+            toast.error('Failed to download PDF');
             setModalConfig({
                 title: 'Export Failed',
                 message: 'We could not generate the PDF for this invoice. Please check your network connection.',
@@ -107,7 +109,7 @@ export default function InvoicesPage() {
                     });
                     setShowModal(true);
                 } catch (error) {
-                    console.error("Failed to delete invoice", error);
+                    toast.error('Failed to delete invoice');
                     setModalConfig({
                         title: 'Deletion Error',
                         message: 'An error occurred while attempting to remove the invoice. Access denied or system error.',

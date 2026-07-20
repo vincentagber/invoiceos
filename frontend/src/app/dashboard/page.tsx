@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useToast } from '@/lib/useToast';
 import {
     Wallet,
     AlertCircle,
@@ -67,6 +68,8 @@ export default function DashboardPage() {
     const { user, token, loading: authLoading } = useAuth();
     const { socket } = useSocket();
 
+    const toast = useToast();
+
     const fetchDashboardData = async () => {
         try {
             setLoadingStats(true);
@@ -101,7 +104,7 @@ export default function DashboardPage() {
             setTrends(trendsRes.data || []);
             setRecentActivity(invoicesRes.data.data || []);
         } catch (error) {
-            console.error('Failed to fetch dashboard data', error);
+            toast.error('Failed to load dashboard data');
         } finally {
             setLoadingStats(false);
         }

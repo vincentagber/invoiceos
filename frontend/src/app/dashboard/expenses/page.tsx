@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/lib/useToast';
 import { RecordExpenseModal } from './components/RecordExpenseModal';
 import { ExcelUploadModal } from './components/ExcelUploadModal';
 import api from '@/lib/api';
@@ -35,18 +36,32 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
+interface Expense {
+    id: string;
+    description: string;
+    amount: number;
+    category?: string;
+    currency: string;
+    date: string;
+    merchant?: string;
+    notes?: string;
+    receiptUrl?: string;
+    status?: string;
+}
+
 export default function ExpensesPage() {
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
     const [currency, setCurrency] = useState('NGN');
     const [searchQuery, setSearchQuery] = useState('');
-    const [expenses, setExpenses] = useState<any[]>([]);
+    const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingExpense, setEditingExpense] = useState<any>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editForm, setEditForm] = useState<any>({});
     const [editLoading, setEditLoading] = useState(false);
+    const toast = useToast();
     const [actionsOpen, setActionsOpen] = useState<string | null>(null);
     const [confirmState, setConfirmState] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
 
@@ -56,7 +71,7 @@ export default function ExpensesPage() {
             const res = await api.get(`/expenses?businessId=${bizRes.data.id}`);
             setExpenses(res.data || []);
         } catch (error) {
-            console.error('Failed to fetch expenses', error);
+            toast.error('Failed to load expenses');
         } finally {
             setLoading(false);
         }
@@ -94,7 +109,7 @@ export default function ExpensesPage() {
             setEditingExpense(null);
             fetchExpenses();
         } catch (error) {
-            console.error('Failed to update expense', error);
+            toast.error('Failed to update expense');
         } finally {
             setEditLoading(false);
         }
@@ -108,7 +123,7 @@ export default function ExpensesPage() {
                     await api.delete(`/expenses/${id}`);
                     setExpenses(expenses.filter(e => e.id !== id));
                 } catch (error) {
-                    console.error('Failed to delete expense', error);
+                    toast.error('Failed to delete expense');
                 }
             },
             title: 'Delete Expense',

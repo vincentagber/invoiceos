@@ -20,6 +20,7 @@ import {
 import clsx from 'clsx';
 import api from '@/lib/api';
 import { AddClientModal } from '@/components/ui/AddClientModal';
+import { useToast } from '@/lib/useToast';
 import { StatusModal } from '@/components/ui/StatusModal';
 
 interface CreateInvoiceModalProps {
@@ -31,6 +32,7 @@ interface CreateInvoiceModalProps {
 export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const [submitting, setSubmitting] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
+    const toast = useToast();
     const [showAddClient, setShowAddClient] = useState(false);
     
     // Form State
@@ -61,7 +63,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, 
             const res = await api.get('/clients');
             setClients(res.data);
         } catch (e) {
-            console.error(e);
+            toast.error('Failed to load clients');
         }
     };
 
@@ -118,7 +120,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, 
             });
             setShowStatus(true);
         } catch (error) {
-            console.error(error);
+            toast.error('Failed to create invoice');
             setStatusConfig({
                 title: 'Creation Failed',
                 message: 'There was an error generating your invoice. Please verify all fields.',

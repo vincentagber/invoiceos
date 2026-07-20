@@ -5,6 +5,7 @@ import { calculateInvoiceTaxesAsync, calculateInvoiceTaxes } from '../tax/tax.se
 import { NotFoundError, ConflictError, ForbiddenError } from '../../shared/errors';
 import { verifyBusinessOwnership } from '../../middlewares/auth.middleware';
 import { prisma } from '../../shared/lib/prisma';
+import { eventBus, createInvoiceCreatedEvent } from '../../events';
 
 type InvoiceAccessInfo = NonNullable<Awaited<ReturnType<typeof invoiceRepository.findWithBusiness>>>;
 
@@ -118,6 +119,18 @@ export const invoiceService = {
       },
     });
 
+    eventBus.publish(createInvoiceCreatedEvent({
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      businessId: input.businessId,
+      clientId: input.clientId,
+      totalAmount: Number(calcResult.totalAmount),
+      currency: input.currency || 'USD',
+      status: 'DRAFT',
+      issueDate: (input.issueDate || new Date().toISOString()).split('T')[0],
+      dueDate: (input.dueDate || new Date().toISOString()).split('T')[0],
+    }, { actorId: userId }));
+
     return invoice;
   },
 
@@ -133,6 +146,10 @@ export const invoiceService = {
     const { allowed, invoice } = await this.verifyAccess(userId, invoiceId);
     if (!allowed || !invoice) throw new NotFoundError('Invoice', invoiceId);
     const current = invoice;
+
+    if (current.status === 'PAID') {
+      throw new ForbiddenError('Cannot modify a paid invoice');
+    }
 
     if (current.version !== (input.version || 1)) {
       throw new ConflictError('Conflict detected: The document has been modified by another user.', {
@@ -163,36 +180,42 @@ export const invoiceService = {
 
     const mainVatRate = calcResult.taxLines.find((t) => !t.isWithholding)?.rate || 0;
 
-    await invoiceRepository.deleteTaxLines(invoiceId);
+    const updatedInvoice = await prisma.$transaction(async (tx) => {
+      await tx.invoiceTaxLine.deleteMany({ where: { invoiceId } });
 
-    const updatedInvoice = await invoiceRepository.update(invoiceId, {
-      ...safeData,
-      taxRate: mainVatRate,
-      discountAmount: calcResult.discountAmount,
-      totalAmount: calcResult.totalAmount,
-      applyWht,
-      whtRateOverride: whtRateOverride ?? null,
-      isTaxInclusive,
-      version: current.version + 1,
-      ...(input.items
-        ? {
-            items: {
-              deleteMany: {},
-              create: input.items.map((item) => ({
-                description: item.description,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-              })),
-            },
-          }
-        : {}),
-      taxLines: {
-        create: calcResult.taxLines.map((t) => ({
-          name: t.name,
-          rate: t.rate,
-          amount: t.amount,
-        })),
-      },
+      return tx.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          ...safeData,
+          taxRate: mainVatRate,
+          discountAmount: calcResult.discountAmount,
+          totalAmount: calcResult.totalAmount,
+          applyWht,
+          whtRateOverride: whtRateOverride ?? null,
+          isTaxInclusive,
+          version: current.version + 1,
+          ...(input.items
+            ? {
+                items: {
+                  deleteMany: {},
+                  create: input.items.map((item) => ({
+                    description: item.description,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                  })),
+                },
+              }
+            : {}),
+          taxLines: {
+            create: calcResult.taxLines.map((t) => ({
+              name: t.name,
+              rate: t.rate,
+              amount: t.amount,
+            })),
+          },
+        },
+        include: { client: { select: { id: true, name: true, email: true } }, items: true, taxLines: true, payments: true },
+      });
     });
 
     return updatedInvoice;
@@ -215,26 +238,51 @@ export const invoiceService = {
     const { allowed, invoice: inv } = await this.verifyAccess(userId, invoiceId);
     if (!allowed || !inv) throw new NotFoundError('Invoice', invoiceId);
 
-    const payment = await invoiceRepository.createPayment({
-      invoice: { connect: { id: invoiceId } },
-      amount: input.amount,
-      method: input.method as Prisma.PaymentCreateInput['method'],
-      transactionId: input.transactionId || null,
-      status: 'SUCCESS',
-      paidAt: new Date(),
+    if (inv.status === 'PAID') {
+      throw new ConflictError('Invoice is already paid');
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.create({
+        data: {
+          invoiceId,
+          amount: input.amount,
+          method: input.method as any,
+          transactionId: input.transactionId || null,
+          status: 'SUCCESS',
+          paidAt: new Date(),
+        },
+      });
+
+      const successPayments = await tx.payment.findMany({
+        where: { invoiceId, status: 'SUCCESS' },
+        select: { amount: true },
+      });
+
+      const totalPaid = successPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+
+      const fullInvoice = await tx.invoice.findUnique({
+        where: { id: invoiceId },
+        select: { totalAmount: true, businessId: true },
+      });
+
+      const invoiceTotal = Number(fullInvoice?.totalAmount || 0);
+
+      if (totalPaid > invoiceTotal) {
+        throw new ConflictError('Payment would exceed invoice total');
+      }
+
+      const newStatus = totalPaid >= invoiceTotal ? 'PAID' : 'PARTIAL';
+
+      await tx.invoice.update({
+        where: { id: invoiceId },
+        data: { status: newStatus },
+      });
+
+      return { payment, businessId: fullInvoice?.businessId, totalPaid };
     });
 
-    const allPayments = await invoiceRepository.getSuccessPaymentsForInvoice(invoiceId);
-    const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-
-    const fullInvoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
-      select: { totalAmount: true, businessId: true },
-    });
-    const newStatus = totalPaid >= Number(fullInvoice?.totalAmount || 0) ? 'PAID' : 'PARTIAL';
-    await invoiceRepository.updateStatus(invoiceId, newStatus);
-
-    return { payment, businessId: fullInvoice?.businessId, invoiceNumber: inv.invoiceNumber, totalPaid };
+    return { ...result, invoiceNumber: inv.invoiceNumber };
   },
 
   async triggerReminder(invoiceId: string, userId: string) {

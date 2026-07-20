@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useToast } from '@/lib/useToast';
 import {
     Landmark,
     Calendar,
@@ -19,6 +20,7 @@ import { RemittanceTracker } from '@/app/dashboard/components/RemittanceTracker'
 export default function TaxesPage() {
     const { token, user } = useAuth();
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
     const [summary, setSummary] = useState<any>(null);
     const [compliance, setCompliance] = useState<any>(null);
     const [uploading, setUploading] = useState(false);
@@ -38,7 +40,7 @@ export default function TaxesPage() {
                     setCompliance(complianceRes.data.data);
                     setSummary(summaryRes.data.data);
                 })
-                .catch(err => console.error(err))
+                .catch(() => toast.error('Failed to load tax data'))
                 .finally(() => setLoading(false));
         } else if (!businessId) {
             setLoading(false);
@@ -97,7 +99,7 @@ export default function TaxesPage() {
             });
             setShowModal(true);
         } catch (error) {
-            console.error(error);
+            toast.error('Failed to upload document');
             setModalConfig({
                 title: 'Upload Failed',
                 message: 'Failed to upload document.',

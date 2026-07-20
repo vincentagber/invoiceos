@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useToast } from '@/lib/useToast';
 import { 
     Check, 
     ChevronLeft, 
@@ -29,6 +30,7 @@ export default function BrandingSetupPage() {
     
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const toast = useToast();
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const { user, refreshUser } = useAuth();
@@ -73,7 +75,7 @@ export default function BrandingSetupPage() {
                 setShowModal(true);
             }
         } catch (error: any) {
-            console.error('Upload error:', error);
+            toast.error('Failed to upload logo');
             setModalConfig({
                 title: 'Upload Failed',
                 message: 'Failed to upload logo. Make sure you created the "logos" bucket in Supabase Storage.',
@@ -130,7 +132,7 @@ export default function BrandingSetupPage() {
             // 4. Move to next step
             router.push('/dashboard/setup/financials');
         } catch (error: any) {
-            console.error('Branding Setup Error:', error);
+            toast.error('Branding setup failed');
             setModalConfig({
                 title: 'Setup Failed',
                 message: error.message || "Failed to create business profile",

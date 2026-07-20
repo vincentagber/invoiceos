@@ -7,6 +7,7 @@ import { StatusModal } from '@/components/ui/StatusModal';
 import { AddClientModal } from '@/components/ui/AddClientModal';
 import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
+import { useToast } from '@/lib/useToast';
 import { 
     Plus, 
     Trash, 
@@ -44,6 +45,7 @@ export default function NewInvoicePage() {
 
     const [submitting, setSubmitting] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const toast = useToast();
     const [showAddClient, setShowAddClient] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
@@ -79,7 +81,7 @@ export default function NewInvoicePage() {
                     router.push('/dashboard/setup/branding');
                     return;
                 }
-                console.error('Initialization failure:', error);
+                toast.error('Failed to initialize page');
             } finally {
                 setLoading(false);
             }
@@ -147,7 +149,7 @@ export default function NewInvoicePage() {
             });
             setShowModal(true);
         } catch (error) {
-            console.error(error);
+            toast.error('Failed to create invoice');
             setModalConfig({
                 title: 'Transmission Error',
                 message: 'We encountered a synchronization failure while registering the document.',

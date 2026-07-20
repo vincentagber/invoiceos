@@ -153,32 +153,34 @@ export async function matchPaymentToInvoice(paymentId: string, invoiceId: string
  * Auto-reconcile: mark an invoice as paid manually (for bank transfers)
  */
 export async function markInvoiceAsPaid(invoiceId: string, amount: number, method: string, transactionId?: string) {
-  const payment = await prisma.payment.create({
-    data: {
-      invoiceId,
-      amount,
-      method: method as any,
-      transactionId: transactionId || null,
-      status: 'SUCCESS',
-      paidAt: new Date(),
-    },
+  return prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.create({
+      data: {
+        invoiceId,
+        amount,
+        method: method as any,
+        transactionId: transactionId || null,
+        status: 'SUCCESS',
+        paidAt: new Date(),
+      },
+    });
+
+    const allPayments = await tx.payment.findMany({
+      where: { invoiceId, status: 'SUCCESS' },
+      select: { amount: true },
+    });
+
+    const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const invoice = await tx.invoice.findUnique({ where: { id: invoiceId }, select: { totalAmount: true } });
+    const newStatus = invoice && totalPaid >= Number(invoice.totalAmount) ? 'PAID' : 'PARTIAL';
+
+    await tx.invoice.update({
+      where: { id: invoiceId },
+      data: { status: newStatus },
+    });
+
+    return payment;
   });
-
-  const allPayments = await prisma.payment.findMany({
-    where: { invoiceId, status: 'SUCCESS' },
-    select: { amount: true },
-  });
-
-  const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { totalAmount: true } });
-  const newStatus = invoice && totalPaid >= Number(invoice.totalAmount) ? 'PAID' : 'PARTIAL';
-
-  await prisma.invoice.update({
-    where: { id: invoiceId },
-    data: { status: newStatus },
-  });
-
-  return payment;
 }
 
 /**
@@ -193,26 +195,27 @@ export async function refundPayment(paymentId: string) {
   if (!payment) throw new Error('Payment not found');
   if (payment.status !== 'SUCCESS') throw new Error('Only successful payments can be refunded');
 
-  const updated = await prisma.payment.update({
-    where: { id: paymentId },
-    data: { status: 'REFUNDED' },
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.payment.update({
+      where: { id: paymentId },
+      data: { status: 'REFUNDED' },
+    });
+
+    const allPayments = await tx.payment.findMany({
+      where: { invoiceId: payment.invoiceId, status: 'SUCCESS' },
+      select: { amount: true },
+    });
+
+    const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const newStatus = totalPaid >= Number(payment.invoice.totalAmount) ? 'PAID' : totalPaid > 0 ? 'PARTIAL' : 'SENT';
+
+    await tx.invoice.update({
+      where: { id: payment.invoiceId },
+      data: { status: newStatus },
+    });
+
+    return updated;
   });
-
-  // Recalculate invoice status
-  const allPayments = await prisma.payment.findMany({
-    where: { invoiceId: payment.invoiceId, status: 'SUCCESS' },
-    select: { amount: true },
-  });
-
-  const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const newStatus = totalPaid >= Number(payment.invoice.totalAmount) ? 'PAID' : totalPaid > 0 ? 'PARTIAL' : 'SENT';
-
-  await prisma.invoice.update({
-    where: { id: payment.invoiceId },
-    data: { status: newStatus },
-  });
-
-  return updated;
 }
 
 /**
@@ -222,25 +225,26 @@ export async function markPaymentDisputed(paymentId: string) {
   const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
   if (!payment) throw new Error('Payment not found');
 
-  const updated = await prisma.payment.update({
-    where: { id: paymentId },
-    data: { status: 'DISPUTED' },
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.payment.update({
+      where: { id: paymentId },
+      data: { status: 'DISPUTED' },
+    });
+
+    const allPayments = await tx.payment.findMany({
+      where: { invoiceId: payment.invoiceId, status: 'SUCCESS' },
+      select: { amount: true },
+    });
+
+    const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const invoice = await tx.invoice.findUnique({ where: { id: payment.invoiceId }, select: { totalAmount: true } });
+    const newStatus = invoice && totalPaid >= Number(invoice.totalAmount) ? 'PAID' : totalPaid > 0 ? 'PARTIAL' : 'SENT';
+
+    await tx.invoice.update({
+      where: { id: payment.invoiceId },
+      data: { status: newStatus },
+    });
+
+    return updated;
   });
-
-  // Recalculate invoice status
-  const allPayments = await prisma.payment.findMany({
-    where: { invoiceId: payment.invoiceId, status: 'SUCCESS' },
-    select: { amount: true },
-  });
-
-  const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const invoice = await prisma.invoice.findUnique({ where: { id: payment.invoiceId }, select: { totalAmount: true } });
-  const newStatus = invoice && totalPaid >= Number(invoice.totalAmount) ? 'PAID' : totalPaid > 0 ? 'PARTIAL' : 'SENT';
-
-  await prisma.invoice.update({
-    where: { id: payment.invoiceId },
-    data: { status: newStatus },
-  });
-
-  return updated;
 }

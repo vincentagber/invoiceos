@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { SocketProvider } from "@/context/SocketContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ToastProvider } from "@/components/ToastProvider";
 
 export const metadata: Metadata = {
   title: "InvoiceOS | Online Invoicing Software for Small Businesses & Freelancers",
@@ -54,6 +55,7 @@ export default function RootLayout({
           <AuthProvider>
             <SocketProvider>
               {children}
+              <ToastProvider />
             </SocketProvider>
           </AuthProvider>
         </ErrorBoundary>

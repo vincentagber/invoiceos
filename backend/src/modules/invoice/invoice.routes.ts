@@ -1,28 +1,25 @@
 import { Router } from 'express';
 import { invoiceController } from './invoice.controller';
-import { authenticate, checkRole } from '../../middlewares/auth.middleware';
+import { authenticate } from '../../middlewares/auth.middleware';
+import { requirePermission } from '../authz';
+import { Permissions } from '../authz/authz.types';
+import { idempotency } from '../../middlewares/idempotency.middleware';
 
 const router = Router();
-
-const ROLES = {
-  ANY: ['OWNER', 'ADMIN', 'MEMBER'],
-  MANAGE: ['OWNER', 'ADMIN'],
-  ROOT: ['OWNER'],
-};
 
 router.get('/public/:id', invoiceController.getPublic);
 
 router.use(authenticate);
 
-router.get('/', checkRole(ROLES.ANY), invoiceController.getAll);
-router.post('/', checkRole(ROLES.MANAGE), invoiceController.create);
-router.get('/:id', checkRole(ROLES.ANY), invoiceController.getOne);
-router.put('/:id', checkRole(ROLES.MANAGE), invoiceController.update);
-router.patch('/:id/status', checkRole(ROLES.MANAGE), invoiceController.updateStatus);
-router.post('/:id/view', checkRole(ROLES.ANY), invoiceController.trackView);
-router.post('/:id/send', checkRole(ROLES.MANAGE), invoiceController.sendInvoice);
-router.post('/:id/payments', checkRole(ROLES.MANAGE), invoiceController.addPayment);
-router.post('/:id/remind', checkRole(ROLES.MANAGE), invoiceController.triggerReminder);
-router.delete('/:id', checkRole(ROLES.ROOT), invoiceController.remove);
+router.get('/', requirePermission(Permissions.InvoiceRead), invoiceController.getAll);
+router.post('/', idempotency(), requirePermission(Permissions.InvoiceCreate), invoiceController.create);
+router.get('/:id', requirePermission(Permissions.InvoiceRead), invoiceController.getOne);
+router.put('/:id', requirePermission(Permissions.InvoiceUpdate), invoiceController.update);
+router.patch('/:id/status', requirePermission(Permissions.InvoiceApprove), invoiceController.updateStatus);
+router.post('/:id/view', requirePermission(Permissions.InvoiceRead), invoiceController.trackView);
+router.post('/:id/send', requirePermission(Permissions.InvoiceSend), invoiceController.sendInvoice);
+router.post('/:id/payments', idempotency(), requirePermission(Permissions.InvoicePaymentRecord), invoiceController.addPayment);
+router.post('/:id/remind', requirePermission(Permissions.InvoiceSend), invoiceController.triggerReminder);
+router.delete('/:id', requirePermission(Permissions.InvoiceDelete), invoiceController.remove);
 
 export default router;

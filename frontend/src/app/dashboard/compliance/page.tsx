@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/lib/useToast';
 import api from '@/lib/api';
 import {
   AlertCircle, Calendar, CheckCircle, XCircle, Globe, Wifi, WifiOff,
@@ -132,6 +133,7 @@ function toDeadlineDisplay(d: BackendDeadline): DeadlineDisplay {
 const STATUS_ETA = 10000; // ms before we switch from loading to stale
 
 export default function CompliancePage() {
+  const toast = useToast();
   const { user, token, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<BackendComplianceStatus | null>(null);
   const [deadlines, setDeadlines] = useState<DeadlineDisplay[]>([]);
@@ -175,7 +177,7 @@ export default function CompliancePage() {
         }))
       );
     } catch (err: any) {
-      console.error('Compliance fetch failed', err);
+      toast.error('Failed to load compliance data');
       setError(err?.response?.data?.message || err.message || 'Failed to load compliance data');
     } finally {
       setLoading(false);

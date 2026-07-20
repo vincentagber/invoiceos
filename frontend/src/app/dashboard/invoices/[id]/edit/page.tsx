@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Plus, Trash, Save, ArrowLeft, Eye, User as UserIcon, FileText } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { useToast } from '@/lib/useToast';
 import { StatusModal } from '@/components/ui/StatusModal';
 
 interface Client {
@@ -43,6 +44,7 @@ export default function EditInvoicePage() {
     const [discountAmount, setDiscountAmount] = useState(0);
     const [status, setStatus] = useState('DRAFT');
 
+    const toast = useToast();
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const [showPreviewMobile, setShowPreviewMobile] = useState(false);
@@ -81,7 +83,7 @@ export default function EditInvoicePage() {
                 }
 
             } catch (error) {
-                console.error(error);
+                toast.error('Failed to load invoice');
                 setModalConfig({
                     title: 'Load Error',
                     message: 'Failed to load invoice data',
@@ -145,7 +147,7 @@ export default function EditInvoicePage() {
                 type: 'error'
             });
             setShowModal(true);
-            console.error(error);
+            toast.error('Failed to update invoice');
         } finally {
             setSubmitting(false);
         }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/lib/useToast';
 import api from '@/lib/api';
 import {
     TrendingUp,
@@ -18,6 +19,7 @@ import { StatusModal } from '@/components/ui/StatusModal';
 export default function AccountingPage() {
     const { token, user } = useAuth();
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
     const [summary, setSummary] = useState<any>(null);
     const [expenses, setExpenses] = useState<any[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -46,7 +48,7 @@ export default function AccountingPage() {
             setSummary(summaryRes.data.data);
             setExpenses(expensesRes.data);
         } catch (error) {
-            console.error(error);
+            toast.error('Failed to load accounting data');
         } finally {
             setLoading(false);
         }

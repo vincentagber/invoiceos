@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useToast } from '@/lib/useToast';
 import { Plus, Edit, Trash, Search, Mail, Phone, Users, Download, Filter, Handshake, UserPlus, ShieldCheck } from 'lucide-react';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -26,6 +27,7 @@ export default function ClientsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const toast = useToast();
     const [showAddClient, setShowAddClient] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -47,7 +49,7 @@ export default function ClientsPage() {
                 setClients(Array.isArray(res.data) ? res.data : []);
             }
         } catch (error) {
-            console.error("Failed to fetch clients", error);
+            toast.error('Failed to load clients');
         } finally {
             setLoading(false);
         }

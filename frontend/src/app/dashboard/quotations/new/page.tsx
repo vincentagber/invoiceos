@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/utils';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { AddClientModal } from '@/components/ui/AddClientModal';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/lib/useToast';
 import { 
     Plus, 
     Trash, 
@@ -40,6 +41,7 @@ export default function NewQuotationPage() {
     const [settings, setSettings] = useState<any>({});
     const [loading, setLoading] = useState(true);
 
+    const toast = useToast();
     const [submitting, setSubmitting] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showAddClient, setShowAddClient] = useState(false);
@@ -66,7 +68,7 @@ export default function NewQuotationPage() {
                 setClients(clientsRes.data || []);
                 if (bizRes.data) setSettings(bizRes.data);
             } catch (error) {
-                console.error(error);
+                toast.error('Failed to initialize page');
             } finally {
                 setLoading(false);
             }
@@ -135,7 +137,7 @@ export default function NewQuotationPage() {
             });
             setShowModal(true);
         } catch (error) {
-            console.error(error);
+            toast.error('Failed to create quotation');
             setModalConfig({
                 title: 'Operation Failed',
                 message: 'We encountered an error while processing the quotation. Please verify all line items.',

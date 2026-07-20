@@ -77,22 +77,23 @@ export const expenseService = {
     });
     const defaultCurrency = business?.defaultCurrency || 'USD';
 
-    const created = [];
-    for (const data of expenses) {
-      const expense = await prisma.expense.create({
-        data: {
-          businessId,
-          userId,
-          merchant: data.merchant || 'Unknown Merchant',
-          amount: data.amount ?? 0,
-          currency: data.currency || defaultCurrency,
-          category: data.category,
-          description: data.description,
-          date: data.date || new Date(),
-        },
-      });
-      created.push(expense);
-    }
-    return created;
+    await prisma.expense.createMany({
+      data: expenses.map((data) => ({
+        businessId,
+        userId,
+        merchant: data.merchant || 'Unknown Merchant',
+        amount: data.amount ?? 0,
+        currency: data.currency || defaultCurrency,
+        category: data.category,
+        description: data.description,
+        date: data.date || new Date(),
+      })),
+    });
+
+    return prisma.expense.findMany({
+      where: { businessId },
+      orderBy: { date: 'desc' },
+      take: expenses.length,
+    });
   },
 };
