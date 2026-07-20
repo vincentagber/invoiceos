@@ -5,6 +5,7 @@ export interface LocalSession {
     id: string;
     email: string;
     user_metadata: { full_name?: string; avatar_url?: string };
+    businesses?: Array<{ id: string; name: string }>;
   };
   access_token: string;
   refresh_token?: string;
@@ -21,6 +22,7 @@ export const localAuth = {
           id: user.id,
           email: user.email,
           user_metadata: { full_name: user.name },
+          businesses: user.businesses,
         },
       };
       localStorage.setItem('token', token);
@@ -42,6 +44,7 @@ export const localAuth = {
           id: user.id,
           email: user.email,
           user_metadata: { full_name: user.name },
+          businesses: user.businesses,
         },
       };
       localStorage.setItem('token', token);

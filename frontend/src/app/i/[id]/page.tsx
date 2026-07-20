@@ -27,7 +27,7 @@ export default function PublicInvoicePage() {
         const fetchInvoice = async () => {
             try {
                 // Using the public endpoint we just created
-                const res = await api.get(`/invoices/public_read.php?id=${id}`);
+                const res = await api.get(`/invoices/public/${id}`);
                 setInvoice(res.data);
                 
                 // Track interaction (Behavior-based automation start)

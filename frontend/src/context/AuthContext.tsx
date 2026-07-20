@@ -43,12 +43,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(localSession);
         localStorage.setItem('token', newToken);
 
+        const orgs = (localSession.user.businesses || []).map((b: any) => ({
+            id: b.id,
+            name: b.name,
+            role: 'OWNER',
+        }));
+
         setUser({
             id: localSession.user.id,
             email: localSession.user.email || '',
             name: localSession.user.user_metadata?.full_name || localSession.user.email?.split('@')[0] || 'User',
             profilePicture: localSession.user.user_metadata?.avatar_url,
-            organizations: [],
+            organizations: orgs,
         });
         setLoading(false);
     };
@@ -156,11 +162,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     });
                 }
             } else {
+                const orgs = (session.user.businesses || []).map((b: any) => ({
+                    id: b.id,
+                    name: b.name,
+                    role: 'OWNER',
+                }));
                 setUser({
                     id: session.user.id,
                     email: session.user.email || '',
                     name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-                    organizations: [],
+                    organizations: orgs,
                 });
             }
         } else {

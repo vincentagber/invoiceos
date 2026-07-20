@@ -23,6 +23,8 @@ import expenseRoutes from './routes/expense.routes';
 import settingsRoutes from './routes/settings.routes';
 import documentRoutes from './routes/document.routes';
 import reconciliationRoutes from './routes/reconciliation.routes';
+import accountingRoutes from './routes/accounting.routes';
+import complianceRoutes from './routes/compliance.routes';
 import { errorHandler } from './middlewares/errorHandler';
 import { logger } from './utils/logger';
 
@@ -252,6 +254,8 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/reconciliation', reconciliationRoutes);
+app.use('/api/accounting', accountingRoutes);
+app.use('/api/compliance', complianceRoutes);
 
 // Attach IO to request for use in controllers
 app.set('io', io);

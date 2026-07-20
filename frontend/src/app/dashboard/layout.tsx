@@ -23,6 +23,7 @@ import {
     ChevronDown,
     CreditCard,
     BarChart3,
+    ClipboardCheck,
     Command,
     ArrowUpRight,
     CircleHelp
@@ -65,6 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             label: 'MAIN MENU',
             items: [
                 { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+                { name: 'Compliance', href: '/dashboard/compliance', icon: ClipboardCheck },
                 { name: 'Invoices', href: '/dashboard/invoices', icon: FileText },
                 { name: 'Expenses', href: '/dashboard/expenses', icon: Wallet },
                 { name: 'Clients', href: '/dashboard/clients', icon: Users },

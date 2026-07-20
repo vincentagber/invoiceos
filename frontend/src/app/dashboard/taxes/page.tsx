@@ -17,43 +17,59 @@ import { StatusModal } from '@/components/ui/StatusModal';
 import { RemittanceTracker } from '@/app/dashboard/components/RemittanceTracker';
 
 export default function TaxesPage() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [summary, setSummary] = useState<any>(null);
+    const [compliance, setCompliance] = useState<any>(null);
     const [uploading, setUploading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
 
+    const businessId = user?.organizations?.[0]?.id;
+
     useEffect(() => {
-        if (token) {
-            // Ensure your backend calculates based on the Nigerian 3-tier system
-            api.get('/accounting/summary.php')
-                .then(res => setSummary(res.data.data))
+        if (token && businessId) {
+            setLoading(true);
+            Promise.all([
+                api.get(`/accounting/compliance-status?businessId=${businessId}`),
+                api.get(`/accounting/summary?businessId=${businessId}`)
+            ])
+                .then(([complianceRes, summaryRes]) => {
+                    setCompliance(complianceRes.data.data);
+                    setSummary(summaryRes.data.data);
+                })
                 .catch(err => console.error(err))
                 .finally(() => setLoading(false));
+        } else if (!businessId) {
+            setLoading(false);
         }
-    }, [token]);
+    }, [token, businessId]);
 
     const handleExport = () => {
-        if (!summary) return;
+        if (!summary || !compliance) return;
         const taxData = summary?.tax_projection || { estimated_tax_owed: 0, tax_rate: 0 };
         const currentYear = new Date().getFullYear();
+        const currencySymbol = compliance.currency === 'NGN' ? '₦' : compliance.currency + ' ';
 
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "FIRS TAX FILING DATA (NIGERIA)\n";
+        csvContent += `TAX FILING DATA (${compliance.countryName.toUpperCase()})\n`;
         csvContent += `Assessment Year,${currentYear}\n`;
-        csvContent += `Estimated CIT Liability,₦${taxData.estimated_tax_owed || 0}\n`;
+        csvContent += `Estimated CIT Liability,${currencySymbol}${taxData.estimated_tax_owed || 0}\n`;
         csvContent += `Applicable CIT Rate,${taxData.tax_rate}%\n`;
-        csvContent += `Development Levy (4%),₦${taxData.dev_levy_amount || 0}\n`;
-        csvContent += `Filing Deadline,June 30 ${currentYear + 1}\n`;
-        csvContent += `Turnover (Gross Revenue),₦${summary.gross_revenue}\n`;
-        csvContent += `Assessable Profit,₦${summary.net_profit}\n`;
+        
+        if (compliance.countryCode === 'NG') {
+            csvContent += `Development Levy (4%),₦${taxData.dev_levy_amount || 0}\n`;
+        }
+        
+        csvContent += `Filing Deadline,${compliance.deadlines?.[0]?.dateDescription || 'June 30'}\n`;
+        csvContent += `Turnover (Gross Revenue),${currencySymbol}${summary.gross_revenue}\n`;
+        csvContent += `Assessable Profit (Net Profit),${currencySymbol}${summary.net_profit}\n`;
 
         // Trigger Download
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `firs_tax_package_${currentYear}.csv`);
+        link.setAttribute("download", `${compliance.countryCode.toLowerCase()}_tax_package_${currentYear}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -93,25 +109,24 @@ export default function TaxesPage() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading Nigerian Tax Data...</div>;
+    if (loading) return <div className="p-8 text-center">Loading Compliance & Tax Data...</div>;
+    if (!businessId) return <div className="p-8 text-center text-red-500">Please setup your business profile to view compliance settings.</div>;
 
     const taxData = summary?.tax_projection || { estimated_tax_owed: 0, tax_rate: 0, turnover: 0 };
     const currentYear = new Date().getFullYear();
-
-    // Nigerian CIT Filing: 6 months after the end of the company's financial year
-    // Assuming Dec 31st year-end, the deadline is June 30th.
-    const filingDeadline = `June 30, ${currentYear + 1}`;
+    const filingDeadline = compliance?.deadlines?.[0]?.dateDescription || 'June 30';
+    const currencySymbol = compliance?.currency === 'NGN' ? '₦' : compliance?.currency + ' ';
 
     return (
         <div className="max-w-5xl mx-auto space-y-8 p-6">
             <div className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Tax Compliance (FIRS)</h1>
-                    <p className="text-gray-500">Estimates based on Nigeria Tax Act 2025 & Finance Acts.</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Tax Compliance ({compliance?.governingBody || 'FIRS'})</h1>
+                    <p className="text-gray-500">Estimates based on {compliance?.countryName || 'Nigeria'} Tax Act & regulations.</p>
                 </div>
                 <div className="text-right">
                     <span className="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full uppercase">
-                        Currency: Nigerian Naira (₦)
+                        Currency: {compliance?.currency || 'NGN'}
                     </span>
                 </div>
             </div>
@@ -124,17 +139,19 @@ export default function TaxesPage() {
 
                 <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div>
-                        <p className="text-emerald-200 font-medium mb-2 uppercase tracking-wide text-xs">Estimated CIT Liability ({currentYear})</p>
+                        <p className="text-emerald-200 font-medium mb-2 uppercase tracking-wide text-xs">Estimated Corporate Tax Liability ({currentYear})</p>
                         <h2 className="text-5xl font-bold mb-4">
-                            ₦{taxData.estimated_tax_owed?.toLocaleString()}
+                            {currencySymbol}{taxData.estimated_tax_owed?.toLocaleString()}
                         </h2>
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2 text-sm text-emerald-100">
                                 <span className="bg-white/20 px-2 py-0.5 rounded font-semibold">{taxData.tax_rate}% CIT Rate</span>
-                                <span>+ {taxData.dev_levy_rate || '4'}% Development Levy*</span>
+                                {taxData.dev_levy_rate > 0 && (
+                                    <span>+ {taxData.dev_levy_rate}% Development Levy*</span>
+                                )}
                             </div>
                             <p className="text-xs text-emerald-300 mt-2 italic">
-                                *Small companies (Turnover &lt; ₦100M) may be exempt from CIT.
+                                *Calculated based on net profit. Exemptions or rate tiers apply based on company size.
                             </p>
                         </div>
                     </div>
@@ -145,8 +162,8 @@ export default function TaxesPage() {
                                 <Calendar className="text-emerald-300" size={24} />
                             </div>
                             <div>
-                                <p className="font-semibold text-emerald-50">CIT Filing Deadline</p>
-                                <p className="text-emerald-200 text-sm">{filingDeadline} (6 months post-FYE)</p>
+                                <p className="font-semibold text-emerald-50">Next Filing Deadline</p>
+                                <p className="text-emerald-200 text-sm">{filingDeadline}</p>
                             </div>
                         </div>
 
@@ -156,7 +173,7 @@ export default function TaxesPage() {
                             </div>
                             <div>
                                 <p className="font-semibold text-emerald-50">Filing Platform</p>
-                                <p className="text-emerald-200 text-sm">TaxPro-Max (FIRS Portal)</p>
+                                <p className="text-emerald-200 text-sm">{compliance?.invoicingRules?.portalName || 'TaxPro-Max (FIRS Portal)'}</p>
                             </div>
                         </div>
                     </div>
@@ -168,23 +185,19 @@ export default function TaxesPage() {
 
             {/* Action Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Nigerian Compliance Checklist */}
+                {/* Dynamic Compliance Checklist */}
                 <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                     <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <CheckCircle size={20} className="text-emerald-600" />
-                        Monthly & Annual Compliance
+                        Filing Schedules & Deadlines
                     </h3>
                     <div className="space-y-3">
-                        {[
-                            'VAT Remittance (by 21st of every month)',
-                            'WHT Returns (by 21st of every month)',
-                            'PAYE Remittance (by 10th of every month)',
-                            'Annual Returns (CAC filing)',
-                            'Industrial Training Fund (ITF) - 1%',
-                        ].map((item, i) => (
+                        {(compliance?.deadlines || []).map((item: any, i: number) => (
                             <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer border border-transparent hover:border-emerald-100">
-                                <div className="h-5 w-5 rounded border border-gray-300 group-hover:border-emerald-500 transition-colors"></div>
-                                <span className="text-gray-600 text-sm">{item}</span>
+                                <div className="h-5 w-5 rounded-full bg-emerald-50 border border-emerald-300 group-hover:border-emerald-500 transition-colors flex items-center justify-center text-emerald-700 font-bold text-[10px]">✓</div>
+                                <span className="text-gray-600 text-sm">
+                                    <strong>{item.name}</strong> ({item.dateDescription}) via {item.governingBody}
+                                </span>
                             </div>
                         ))}
                     </div>
@@ -194,14 +207,14 @@ export default function TaxesPage() {
                     <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Audit & Export</h3>
                         <p className="text-gray-500 text-sm mb-4">
-                            Export your Trial Balance, P&L, and WHT credit notes for your Auditor or the FIRS TaxPro-Max upload.
+                            Export your Trial Balance, P&L, and WHT credit notes for your Auditor or your local tax upload.
                         </p>
                         <button
                             onClick={handleExport}
                             className="w-full py-3 bg-emerald-900 hover:bg-emerald-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-2"
                         >
                             <Download size={18} />
-                            Download FIRS Data Package
+                            Download {compliance?.governingBody || 'FIRS'} Data Package
                         </button>
                     </div>
 
@@ -227,16 +240,20 @@ export default function TaxesPage() {
                 </div>
             </div>
 
-            {/* New Policy Alert */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                <Info className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
-                <div className="text-sm text-amber-900">
-                    <h4 className="font-bold mb-1">2026 Policy Note: Development Levy</h4>
-                    <p>
-                        The <strong>4% Development Levy</strong> (replacing the Education Tax) applies to companies other than small companies. Ensure your "Assessable Profit" calculation includes this new unified rate.
-                    </p>
+            {/* Dynamic Compliance Requirement Alert */}
+            {compliance?.missingRequirements?.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                    <Info className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                    <div className="text-sm text-amber-900 w-full">
+                        <h4 className="font-bold mb-1">Tax Readiness Alert</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                            {compliance.missingRequirements.map((req: string, i: number) => (
+                                <li key={i}>{req}</li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
-            </div>
+            )}
             <StatusModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}

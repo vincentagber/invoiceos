@@ -29,6 +29,7 @@ model Business {
   phone           String?
   email           String?
   taxNumber       String?
+  country         String           @default("NG")
   paymentDetails  String?
 
   logo            String?          // URL to object storage (was Bytes)
@@ -86,6 +87,8 @@ model Subscription {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime   @updatedAt
   transactions    SubscriptionTransaction[]
+
+  @@index([status])
 }
 
 model SubscriptionTransaction {
@@ -99,6 +102,8 @@ model SubscriptionTransaction {
   status          String
   createdAt       DateTime    @default(now())
   updatedAt       DateTime   @updatedAt
+
+  @@index([subscriptionId])
 }
 
 model Client {
@@ -140,6 +145,9 @@ model Invoice {
   taxRate         Decimal       @default(0) @db.Decimal(5, 2)
   discountAmount  Decimal       @default(0) @db.Decimal(12, 2)
   totalAmount     Decimal       @db.Decimal(12, 2)
+  applyWht        Boolean       @default(false)
+  whtRateOverride Decimal?      @db.Decimal(5, 2)
+  isTaxInclusive  Boolean       @default(false)
 
   viewCount       Int           @default(0)
   lastViewedAt    DateTime?
@@ -148,6 +156,7 @@ model Invoice {
   recurringFrequency String?    // daily, weekly, monthly, custom
 
   payments        Payment[]
+  taxLines        InvoiceTaxLine[]
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -236,6 +245,8 @@ model InvoiceTemplate {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([businessId])
 }
 
 model AutomationRule {
@@ -249,6 +260,8 @@ model AutomationRule {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([businessId])
 }
 
 model Expense {
@@ -305,4 +318,208 @@ enum PaymentStatus {
   DISPUTED
   REFUNDED
   CHARGED_BACK
+}
+
+model InvoiceTaxLine {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  name        String   // e.g., VAT, WHT, Sales Tax
+  rate        Decimal  @db.Decimal(5, 2)
+  amount      Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId])
+}
+
+// ─── COMPLIANCE ENGINE ────────────────────────────────────────────
+
+enum TaxType {
+  VAT
+  GST
+  SALES_TAX
+  WITHHOLDING
+  CORPORATE
+  EXCISE
+  CONSUMPTION
+  LUXURY
+  ENVIRONMENTAL
+  EDUCATION
+  HEALTH
+  CUSTOMS
+  STAMP
+  OTHER
+}
+
+enum TaxCalculationMethod {
+  EXCLUSIVE
+  INCLUSIVE
+  COMPOUND
+  ZERO_RATED
+  REVERSE_CHARGE
+}
+
+enum TaxApplication {
+  ITEM_LEVEL
+  INVOICE_LEVEL
+  SHIPPING_LEVEL
+}
+
+/// Per-country compliance configuration stored in the database
+/// instead of being hardcoded, enabling adding new countries
+/// without modifying application code.
+model ComplianceConfig {
+  id            String   @id @default(cuid())
+  countryCode   String   // ISO 3166-1 alpha-2: NG, GH, KE, ZA, etc.
+  countryName   String
+  currency      String   @default("NGN")
+  governingBody String
+  isActive      Boolean  @default(true)
+
+  // Invoice number rules
+  invoicePrefix       String   @default("INV")
+  invoiceNumberLength Int      @default(8)
+  invoiceNumberPattern String? // e.g., "INV-{YYYY}-{SEQUENCE}"
+
+  // Electronic invoicing requirements
+  qrRequired                  Boolean @default(false)
+  electronicSignatureRequired Boolean @default(false)
+  continuousTransmission      Boolean @default(false) // Real-time reporting to tax authority
+  portalName                  String  @default("")
+  portalUrl                   String?
+
+  // Tax rule defaults
+  defaultVatRate       Decimal @default(0) @db.Decimal(5, 2)
+  defaultWhtRate       Decimal @default(0) @db.Decimal(5, 2)
+  defaultCorporateRate Decimal @default(0) @db.Decimal(5, 2)
+  devLevyRate          Decimal? @db.Decimal(5, 2)
+
+  // Accounting standards
+  accountingStandard String @default("IFRS") // IFRS, GAAP, etc.
+  fiscalYearStart    String @default("01-01") // MM-DD format
+
+  // Effective dating for rate changes
+  effectiveFrom DateTime @default(now())
+  effectiveTo   DateTime?
+  version       Int      @default(1)
+
+  // Compliance metadata
+  requiresTaxRegistration Boolean @default(true)
+  registrationUrl         String?
+  registrationFormat      String? // e.g., "RC-{NUMBER}", "TIN-{NUMBER}"
+  registrationExample     String? // e.g., "RC-1234567"
+
+  // Archive & time travel
+  supersededById String?
+  supersededBy   ComplianceConfig? @relation("SupersededConfig", fields: [supersededById], references: [id])
+  supersedes     ComplianceConfig[] @relation("SupersededConfig")
+
+  deadlines ComplianceDeadline[]
+  taxRules  TaxRule[]
+  connectors GovernmentConnector[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([countryCode, effectiveFrom])
+  @@index([countryCode, isActive])
+  @@index([countryCode, effectiveFrom, effectiveTo])
+}
+
+/// Filing deadlines for tax and regulatory submissions
+model ComplianceDeadline {
+  id             String           @id @default(cuid())
+  configId       String
+  config         ComplianceConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  name           String           // e.g., "VAT Remittance", "Annual Returns"
+  description    String?
+  frequency      String           // MONTHLY, QUARTERLY, BI_MONTHLY, ANNUALLY, SEMI_ANNUALLY
+  dueDay         Int?             // Day of month (1-31)
+  dueMonth       Int?             // Month for annual filings (1-12)
+  dueDescription String           // Human-readable: "21st of every month"
+  governingBody  String
+  formName       String?          // e.g., "VAT 7", "CIT 102"
+  portalSection  String?          // URL path or section name on the portal
+  penaltyLate    Decimal?         @db.Decimal(12, 2)
+  penaltyRate    Decimal?         @db.Decimal(5, 2) // Percentage per period
+  isActive       Boolean          @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([configId, isActive])
+}
+
+/// Configurable tax rules per country — fully data-driven
+/// Avoids hardcoding tax formulas in application code
+model TaxRule {
+  id                String              @id @default(cuid())
+  configId          String
+  config            ComplianceConfig    @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  name              String              // "Standard VAT", "Withholding Tax", "NHIL"
+  code              String              // "VAT_STANDARD", "WHT", "NHIL"
+  type              TaxType
+  method            TaxCalculationMethod @default(EXCLUSIVE)
+  application       TaxApplication      @default(INVOICE_LEVEL)
+
+  rate              Decimal             @db.Decimal(5, 2)
+  effectiveFrom     DateTime            @default(now())
+  effectiveTo       DateTime?
+  priority          Int                 @default(0) // Lower = applied first
+  isStackable       Boolean             @default(true) // Can be combined with other taxes
+  isRefundable      Boolean             @default(false)
+  isWithholding     Boolean             @default(false) // Deducted at source
+  isReverseCharge   Boolean             @default(false)
+
+  // Threshold and exemption rules
+  minimumThreshold  Decimal?            @db.Decimal(14, 2)
+  maximumThreshold  Decimal?            @db.Decimal(14, 2)
+  exemptionCodes    String?             // Comma-separated: "EDUCATION,HEALTH,EXPORT"
+  appliesTo         String?             // "ALL, GOODS, SERVICES, BOTH"
+  customerType      String?             // "ALL, BUSINESS, CONSUMER, BOTH"
+
+  // Compound tax: if set, this tax is calculated ON the amount after parent tax
+  compoundOnParentId String?
+  compoundOnParent   TaxRule?          @relation("CompoundTax", fields: [compoundOnParentId], references: [id])
+  compoundChildren   TaxRule[]         @relation("CompoundTax")
+
+  // Reporting
+  reportingCode     String?            // Code used in government reports
+  reportingName     String?            // Name used in government reports
+  isActive          Boolean            @default(true)
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@unique([configId, code, effectiveFrom])
+  @@index([configId, isActive])
+  @@index([configId, type])
+}
+
+/// Government Integration Layer — abstract connector definitions
+/// for integrating with government APIs (tax authorities, business registration, etc.)
+model GovernmentConnector {
+  id              String           @id @default(cuid())
+  configId        String
+  config          ComplianceConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  name            String           // "FIRS TaxPro-Max", "KRA eTIMS", "SARS eFiling"
+  provider        String           // "FIRS", "KRA", "SARS", "GRA"
+  type            String           // TAX_FILING, INVOICE_VALIDATION, BUSINESS_REGISTRATION, IDENTITY_VERIFICATION
+  baseUrl         String?
+  apiVersion      String?
+  authType        String?          // API_KEY, OAUTH2, BEARER, MUTUAL_TLS, DIGITAL_SIGNATURE
+  isAvailable     Boolean          @default(false) // Whether the API is currently live
+  isMandatory     Boolean          @default(false) // Whether integration is legally required
+  documentationUrl String?
+  statusUrl       String?          // Status page URL
+
+  providerConfig  Json?            // Provider-specific configuration (endpoints, scopes, etc.)
+  isActive        Boolean          @default(true)
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([configId, type])
 }

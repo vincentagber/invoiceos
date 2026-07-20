@@ -16,7 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { StatusModal } from '@/components/ui/StatusModal';
 
 export default function AccountingPage() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [summary, setSummary] = useState<any>(null);
     const [expenses, setExpenses] = useState<any[]>([]);
@@ -33,15 +33,18 @@ export default function AccountingPage() {
         description: ''
     });
 
+    const businessId = user?.organizations?.[0]?.id;
+
     const fetchData = async () => {
+        if (!businessId) return;
         try {
             setLoading(true);
             const [summaryRes, expensesRes] = await Promise.all([
-                api.get('/accounting/summary.php'),
-                api.get('/accounting/expenses.php')
+                api.get(`/accounting/summary?businessId=${businessId}`),
+                api.get(`/expenses?businessId=${businessId}`)
             ]);
             setSummary(summaryRes.data.data);
-            setExpenses(expensesRes.data.data);
+            setExpenses(expensesRes.data);
         } catch (error) {
             console.error(error);
         } finally {
@@ -50,13 +53,18 @@ export default function AccountingPage() {
     };
 
     useEffect(() => {
-        if (token) fetchData();
-    }, [token]);
+        if (token && businessId) fetchData();
+    }, [token, businessId]);
 
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!businessId) return;
         try {
-            await api.post('/accounting/expenses.php', newExpense);
+            await api.post('/expenses', {
+                ...newExpense,
+                amount: Number(newExpense.amount),
+                businessId
+            });
             setShowAddModal(false);
             setNewExpense({
                 merchant: '',
