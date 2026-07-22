@@ -83,11 +83,11 @@ export const AddClientModal = ({ isOpen, onClose, onSuccess }: AddClientModalPro
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
             
             <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.2)] overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="p-8 sm:p-10 space-y-8">
+                <div className="p-6 sm:p-10 space-y-6 sm:space-y-8">
                     {/* Header with AI Icons */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <h2 className="text-xl font-heading font-black text-slate-900 tracking-tight">Add New Customer</h2>
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Add New Customer</h2>
                             <div className="flex items-center gap-2">
                                 <button 
                                     type="button"

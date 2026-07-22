@@ -151,7 +151,7 @@ export default function BrandingSetupPage() {
     return (
         <div className="min-h-screen bg-[#F8F9FB] flex flex-col font-sans text-slate-900">
             {/* Header */}
-            <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+            <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="text-xl font-black tracking-tight">InvoiceOS</span>
                 </div>
@@ -165,10 +165,10 @@ export default function BrandingSetupPage() {
                 <div className="max-w-[720px] mx-auto space-y-12">
                     
                     {/* Stepper */}
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center overflow-x-auto pb-2">
                         {steps.map((step, index) => (
                             <React.Fragment key={step.id}>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                     <div className={clsx(
                                         "h-8 w-8 rounded-lg flex items-center justify-center text-[11px] font-black transition-all",
                                         step.status === 'complete' ? "bg-emerald-800 text-white" :
@@ -186,7 +186,7 @@ export default function BrandingSetupPage() {
                                     </span>
                                 </div>
                                 {index < steps.length - 1 && (
-                                    <div className="w-16 h-px bg-slate-200 mx-4" />
+                                    <div className="w-8 sm:w-16 h-px bg-slate-200 mx-2 sm:mx-4 shrink-0" />
                                 )}
                             </React.Fragment>
                         ))}
@@ -207,7 +207,7 @@ export default function BrandingSetupPage() {
                             {/* Logo Upload Section */}
                             <div className="space-y-6">
                                 <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest block">Business Logo</label>
-                                <div className="flex items-center gap-10">
+                                <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-10">
                                     <input 
                                         type="file" 
                                         ref={fileInputRef}
@@ -217,7 +217,7 @@ export default function BrandingSetupPage() {
                                     />
                                     <div 
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="h-24 w-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer group overflow-hidden relative"
+                                        className="h-24 w-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer group overflow-hidden relative shrink-0"
                                     >
                                         {logoUrl ? (
                                             <img src={logoUrl} alt="Logo Preview" className="h-full w-full object-contain p-2" />
@@ -236,7 +236,7 @@ export default function BrandingSetupPage() {
                                     </div>
                                     <div className="flex-1 space-y-1">
                                         <p className="text-sm font-bold text-slate-800">Company Brand Asset</p>
-                                        <p className="text-xs text-slate-400 max-w-xs leading-relaxed">High-resolution PNG or SVG recommended. Transparent backgrounds work best on invoices.</p>
+                                        <p className="text-xs text-slate-400 leading-relaxed">High-resolution PNG or SVG recommended. Transparent backgrounds work best on invoices.</p>
                                     </div>
                                 </div>
                             </div>
@@ -361,11 +361,11 @@ export default function BrandingSetupPage() {
             </main>
 
             {/* Footer */}
-            <footer className="h-20 bg-[#F8F9FB] border-t border-slate-100 flex items-center justify-between px-12 shrink-0">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    © 2024 INVOICEOS. INSTITUTIONAL GRADE FINANCE.
+            <footer className="min-h-20 bg-[#F8F9FB] border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 px-4 sm:px-12 py-4 sm:py-0 shrink-0">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center sm:text-left">
+                    © 2026 INVOICEOS. INSTITUTIONAL GRADE FINANCE.
                 </div>
-                <div className="flex items-center gap-8">
+                <div className="flex items-center gap-4 sm:gap-8">
                     <Link href="#" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">Privacy Policy</Link>
                     <Link href="#" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">Terms of Service</Link>
                     <Link href="#" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">Security</Link>

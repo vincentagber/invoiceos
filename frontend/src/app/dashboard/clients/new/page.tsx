@@ -95,7 +95,7 @@ export default function NewClientPage() {
     };
 
     return (
-        <div className="max-w-[1024px] mx-auto space-y-10 pb-20 animate-in fade-in duration-700">
+        <div className="max-w-[1024px] mx-auto space-y-10 pb-20 animate-in fade-in duration-700 overflow-x-hidden">
             {/* Custom Breadcrumbs & Top Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100 pb-8">
                 <div className="space-y-4">
@@ -113,7 +113,7 @@ export default function NewClientPage() {
 
             <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Partner Identity Card */}
-                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 space-y-8 transition-all hover:shadow-md">
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-5 sm:p-10 space-y-8 transition-all hover:shadow-md">
                     <div className="flex items-center gap-3 pb-6 border-b border-slate-50">
                         <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900 border border-slate-100">
                             <Building2 size={20} />
@@ -163,7 +163,7 @@ export default function NewClientPage() {
                 </div>
 
                 {/* Contact Information Card */}
-                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 space-y-8 transition-all hover:shadow-md">
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-5 sm:p-10 space-y-8 transition-all hover:shadow-md">
                     <div className="flex items-center gap-3 pb-6 border-b border-slate-50">
                         <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900 border border-slate-100">
                             <Mail size={20} />
@@ -219,7 +219,7 @@ export default function NewClientPage() {
                 {/* Grid for Address & Financial */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Business Address Card */}
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 space-y-8 transition-all hover:shadow-md">
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-5 sm:p-10 space-y-8 transition-all hover:shadow-md">
                         <div className="flex items-center gap-3 pb-6 border-b border-slate-50">
                             <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900 border border-slate-100">
                                 <MapPin size={20} />
@@ -295,7 +295,7 @@ export default function NewClientPage() {
                     </div>
 
                     {/* Financial Configuration Card */}
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 space-y-8 transition-all hover:shadow-md">
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-5 sm:p-10 space-y-8 transition-all hover:shadow-md">
                         <div className="flex items-center gap-3 pb-6 border-b border-slate-50">
                             <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900 border border-slate-100">
                                 <CreditCard size={20} />

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Navbar from '@/components/landing/Navbar';
+import SiteNavbar from '@/components/SiteNavbar';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
 import HowItWorks from '@/components/landing/HowItWorks';
@@ -13,8 +13,8 @@ import Footer from '@/components/landing/Footer';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background font-sans antialiased">
-      <Navbar />
+    <div className="min-h-screen bg-surface-secondary font-sans antialiased">
+      <SiteNavbar />
       <main>
         <Hero />
         <Features />

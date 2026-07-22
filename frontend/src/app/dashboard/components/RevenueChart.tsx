@@ -57,11 +57,11 @@ export const RevenueChart = ({ data = [], type = 'bar' }: { data?: any[], type?:
     };
 
     return (
-        <div className="h-full w-full relative group font-sans">
+        <div className="h-full w-full relative group font-sans overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart 
                     data={data} 
-                    margin={{ top: 20, right: 0, left: -20, bottom: 0 }}
+                    margin={{ top: 20, right: 16, left: -20, bottom: 0 }}
                     onMouseMove={(e: any) => {
                         if (e && e.activeTooltipIndex !== undefined) {
                             setActiveIndex(Number(e.activeTooltipIndex));

@@ -2,41 +2,63 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
 
-const footerLinks: Record<string, [string, string][]> = {
-  Company: [['About', '#'], ['Careers', '#'], ['Blog', '/blog'], ['Press', '#']],
-  Resources: [['Documentation', '#'], ['API Reference', '#'], ['Guides', '#'], ['Support', '/contact']],
-  Support: [['FAQ', '/faq'], ['Contact', '/contact'], ['Privacy', '/privacy'], ['Terms', '/terms']],
-};
+const footerLinks = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Features', href: '/#features' },
+      { label: 'Pricing', href: '/#pricing' },
+      { label: 'Free Generator', href: '/tools/invoice-generator' },
+      { label: 'Blog', href: '/blog' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', href: '/about' },
+      { label: 'Privacy', href: '/privacy' },
+      { label: 'Terms', href: '/terms' },
+      { label: 'Security', href: '/security' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { label: 'Help Center', href: '/contact' },
+      { label: 'Documentation', href: '#' },
+      { label: 'API Reference', href: '#' },
+      { label: 'Status', href: '#' },
+    ],
+  },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white pt-20 pb-12">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 sm:gap-12 mb-16">
-          <div className="col-span-2">
-            <div className="mb-5">
-              <img src="/logo.png" alt="InvoiceOS" className="h-12 w-auto object-contain brightness-0 invert" />
-            </div>
-            <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
-              Professional invoicing software for freelancers and businesses.
-              Send invoices, track payments, and get paid faster.
+    <footer className="border-t border-border bg-surface">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="flex items-center gap-2.5 mb-4">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-white">
+                <Sparkles size={16} />
+              </div>
+              <span className="text-lg font-bold tracking-tight text-text-primary">InvoiceOS</span>
+            </Link>
+            <p className="text-sm text-text-tertiary leading-relaxed max-w-xs">
+              The all-in-one financial OS for modern businesses. Invoicing, compliance, accounting — unified.
             </p>
           </div>
 
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-6">
-                {category}
-              </h4>
-              <ul className="space-y-4">
-                {links.map(([label, href]) => (
-                  <li key={label}>
-                    <Link
-                      href={href}
-                      className="text-sm text-gray-400 hover:text-white transition-colors"
-                    >
-                      {label}
+          {footerLinks.map((group) => (
+            <div key={group.title}>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-4">{group.title}</h4>
+              <ul className="space-y-3">
+                {group.links.map((link) => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="text-sm text-text-secondary hover:text-text-primary transition-colors">
+                      {link.label}
                     </Link>
                   </li>
                 ))}
@@ -45,20 +67,14 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-xs text-gray-400">
-            &copy; 2026 InvoiceOS. All rights reserved.
+        <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-text-tertiary">
+            &copy; {new Date().getFullYear()} InvoiceOS. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            {['Twitter', 'GitHub', 'LinkedIn'].map((social) => (
-              <Link
-                key={social}
-                href="#"
-                className="text-xs text-gray-400 hover:text-white transition-colors"
-              >
-                {social}
-              </Link>
-            ))}
+            <Link href="/privacy" className="text-xs text-text-tertiary hover:text-text-secondary transition-colors">Privacy</Link>
+            <Link href="/terms" className="text-xs text-text-tertiary hover:text-text-secondary transition-colors">Terms</Link>
+            <Link href="/security" className="text-xs text-text-tertiary hover:text-text-secondary transition-colors">Security</Link>
           </div>
         </div>
       </div>

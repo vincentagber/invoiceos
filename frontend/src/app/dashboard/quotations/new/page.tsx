@@ -165,7 +165,7 @@ export default function NewQuotationPage() {
                 {/* Header */}
                 <div className="p-8 lg:p-10 border-b border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-5">
-                        <h1 className="text-2xl font-heading font-black text-slate-900 tracking-tight">Quotation Details</h1>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Quotation Details</h1>
                         <div className="flex items-center gap-2">
                             <button className="flex items-center gap-2 px-4 py-2 bg-indigo-50/50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all">
                                 <Mic size={14} /> Autofill with AI
@@ -247,19 +247,20 @@ export default function NewQuotationPage() {
 
                     {/* Line Items */}
                     <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden bg-slate-50/30">
-                        <table className="w-full border-collapse">
+                        <div className="overflow-x-auto">
+                        <table className="w-full border-collapse min-w-[600px]">
                             <thead>
                                 <tr className="bg-white border-b border-slate-50">
-                                    <th className="text-left py-6 px-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">Item Description</th>
-                                    <th className="text-right py-6 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24">Qty</th>
-                                    <th className="text-right py-6 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">Price</th>
-                                    <th className="text-right py-6 px-10 text-[10px] font-black text-slate-400 uppercase tracking-widest w-40">Total</th>
+                                    <th className="text-left py-6 px-4 sm:px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Item Description</th>
+                                    <th className="text-right py-6 px-2 sm:px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 whitespace-nowrap">Qty</th>
+                                    <th className="text-right py-6 px-2 sm:px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32 whitespace-nowrap">Price</th>
+                                    <th className="text-right py-6 px-4 sm:px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest w-40 whitespace-nowrap">Total</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 bg-white">
                                 {items.map((item, index) => (
                                     <tr key={index} className="group hover:bg-slate-50/30 transition-colors">
-                                        <td className="py-6 px-10">
+                                        <td className="py-6 px-4 sm:px-8 whitespace-nowrap">
                                             <div className="flex items-center gap-4">
                                                 <GripVertical className="text-slate-200 cursor-move" size={16} />
                                                 <input
@@ -271,7 +272,7 @@ export default function NewQuotationPage() {
                                                 />
                                             </div>
                                         </td>
-                                        <td className="py-6 px-6">
+                                        <td className="py-6 px-2 sm:px-4 whitespace-nowrap">
                                             <input
                                                 type="number"
                                                 className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-2 py-3 text-sm font-bold text-center text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
@@ -279,7 +280,7 @@ export default function NewQuotationPage() {
                                                 onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
                                             />
                                         </td>
-                                        <td className="py-6 px-6">
+                                        <td className="py-6 px-2 sm:px-4 whitespace-nowrap">
                                             <input
                                                 type="number"
                                                 placeholder="0.00"
@@ -288,7 +289,7 @@ export default function NewQuotationPage() {
                                                 onChange={(e) => updateItem(index, 'unitPrice', Number(e.target.value))}
                                             />
                                         </td>
-                                        <td className="py-6 px-10 text-right">
+                                        <td className="py-6 px-4 sm:px-8 whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end gap-4">
                                                 <span className="text-sm font-black text-slate-900 tabular-nums">
                                                     {currency === 'NGN' ? '₦' : '$'}{(item.quantity * item.unitPrice).toLocaleString()}
@@ -312,6 +313,7 @@ export default function NewQuotationPage() {
                                 </div>
                                 Add Line Item
                             </button>
+                        </div>
                         </div>
                     </div>
 

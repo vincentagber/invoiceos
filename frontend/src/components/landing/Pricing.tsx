@@ -3,79 +3,108 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { Check, Zap, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import clsx from 'clsx';
-import { Check } from 'lucide-react';
 
 const plans = [
   {
-    name: 'Starter',
-    desc: 'Perfect for freelancers getting started.',
-    monthlyPrice: '₦1,500',
-    yearlyPrice: '₦1,200',
-    features: ['Up to 20 invoices/month', '3 invoice templates', 'Payment tracking', 'Email support'],
-    cta: 'Get Started',
-    popular: false,
+    name: 'Free',
+    description: 'Perfect for freelancers and sole proprietors getting started.',
+    price: { monthly: '$0', yearly: '$0' },
+    period: 'forever',
+    features: [
+      'Up to 5 invoices/month',
+      'Basic expense tracking',
+      'Invoice templates',
+      'Email support',
+    ],
+    cta: 'Start Free',
+    href: '/register',
+    featured: false,
   },
   {
     name: 'Professional',
-    desc: 'Best for growing businesses and agencies.',
-    monthlyPrice: '₦4,000',
-    yearlyPrice: '₦3,200',
-    features: ['Unlimited invoices', 'All templates', 'Recurring invoices', 'Analytics & reports', 'Priority support'],
+    description: 'For growing businesses that need advanced financial tools.',
+    price: { monthly: '$29', yearly: '$23' },
+    period: '/month',
+    features: [
+      'Unlimited invoices',
+      'Expense categorization',
+      'Tax reports (VAT/GST/WHT)',
+      'Client management',
+      'Quotations & estimates',
+      'Multi-user access (3 seats)',
+      'API access',
+      'Priority support',
+    ],
     cta: 'Start Free Trial',
-    popular: true,
+    href: '/register',
+    featured: true,
   },
   {
     name: 'Enterprise',
-    desc: 'For large teams with advanced needs.',
-    monthlyPrice: '₦8,000',
-    yearlyPrice: '₦6,400',
-    features: ['Everything in Professional', 'Multi-entity management', 'Custom integrations', 'White-label invoices', 'Dedicated account manager', '99.99% SLA'],
+    description: 'For scaling teams needing custom workflows and dedicated support.',
+    price: { monthly: '$99', yearly: '$79' },
+    period: '/month',
+    features: [
+      'Everything in Professional',
+      'Unlimited users',
+      'Custom compliance rules',
+      'Dedicated account manager',
+      'SSO & SAML',
+      'Custom integrations',
+      'SLA guarantee',
+      'On-premise option',
+    ],
     cta: 'Contact Sales',
-    popular: false,
+    href: '/register',
+    featured: false,
   },
 ];
 
 export default function Pricing() {
-  const [isYearly, setIsYearly] = useState(false);
+  const [annual, setAnnual] = useState(true);
 
   return (
-    <section id="pricing" className="py-16 lg:py-24 bg-gray-50/50">
-      <div className="max-w-7xl mx-auto px-6">
+    <section id="pricing" className="py-24 lg:py-32 bg-surface">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12 lg:mb-16"
+          viewport={{ once: true, margin: '-100px' }}
+          className="text-center max-w-2xl mx-auto mb-12"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-4 block">
-            Pricing
-          </span>
-          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-            Simple, transparent pricing
-          </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
-            Choose the plan that fits your needs. No hidden fees.
-          </p>
-
-          <div className="flex items-center justify-center gap-4">
-            <span className={clsx('text-sm font-medium transition-colors', !isYearly ? 'text-gray-900' : 'text-gray-400')}>Monthly</span>
-            <button
-              onClick={() => setIsYearly(!isYearly)}
-              className="w-14 h-7 bg-gray-200 rounded-full relative p-1 transition-all cursor-pointer"
-            >
-              <div
-                className={clsx(
-                  'w-5 h-5 bg-primary rounded-full transition-transform duration-300 shadow-sm',
-                  isYearly ? 'translate-x-7' : 'translate-x-0'
-                )}
-              />
-            </button>
-            <span className={clsx('text-sm font-medium transition-colors', isYearly ? 'text-gray-900' : 'text-gray-400')}>
-              Yearly <span className="text-green-500 text-xs font-semibold">Save 20%</span>
-            </span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-50 border border-primary-200 rounded-full text-xs font-semibold text-primary-700 mb-6">
+            Simple pricing
           </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary">
+            No hidden fees. No surprises.
+          </h2>
+          <p className="mt-4 text-lg text-text-secondary">
+            Start free and upgrade when you need more power.
+          </p>
         </motion.div>
+
+        <div className="flex items-center justify-center gap-3 mb-12">
+          <span className={clsx('text-sm font-medium', !annual ? 'text-text-primary' : 'text-text-tertiary')}>Monthly</span>
+          <button
+            onClick={() => setAnnual(!annual)}
+            className={clsx(
+              'relative w-12 h-6 rounded-full transition-colors duration-200',
+              annual ? 'bg-primary' : 'bg-border-dark',
+            )}
+          >
+            <div className={clsx(
+              'absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200',
+              annual ? 'translate-x-6' : 'translate-x-0.5',
+            )} />
+          </button>
+          <span className={clsx('text-sm font-medium', annual ? 'text-text-primary' : 'text-text-tertiary')}>
+            Annual
+            <span className="ml-1.5 text-xs text-success font-semibold">Save 20%</span>
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {plans.map((plan, i) => (
@@ -83,55 +112,67 @@ export default function Pricing() {
               key={plan.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: '-50px' }}
               transition={{ delay: i * 0.1 }}
               className={clsx(
-                'relative bg-white rounded-2xl p-8 flex flex-col transition-all duration-300',
-                plan.popular
-                  ? 'border-2 border-primary shadow-xl shadow-primary/10 scale-100 md:scale-105'
-                  : 'border border-gray-100 hover:border-primary/30 hover:shadow-lg'
+                'relative flex flex-col rounded-2xl border p-6 lg:p-8 transition-all duration-200',
+                plan.featured
+                  ? 'bg-primary text-white border-primary shadow-xl scale-[1.02] lg:scale-105'
+                  : 'bg-surface border-border hover:shadow-card-hover',
               )}
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full">
+              {plan.featured && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-success text-white text-[10px] font-semibold uppercase tracking-wider px-4 py-1 rounded-full shadow-lg flex items-center gap-1">
+                  <Zap size={10} />
                   Most Popular
                 </div>
               )}
+
+              <div className="mb-6">
+                <h3 className={clsx('text-lg font-semibold', plan.featured ? 'text-white' : 'text-text-primary')}>
+                  {plan.name}
+                </h3>
+                <p className={clsx('text-sm mt-1', plan.featured ? 'text-white/70' : 'text-text-secondary')}>
+                  {plan.description}
+                </p>
+              </div>
+
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                <p className="text-sm text-gray-500 mb-4 lg:mb-6">{plan.desc}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-gray-900">
-                    {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                  <span className={clsx('text-4xl font-bold', plan.featured ? 'text-white' : 'text-text-primary')}>
+                    {annual ? plan.price.yearly : plan.price.monthly}
                   </span>
-                  <span className="text-gray-400 text-sm">/month</span>
+                  {plan.period && (
+                    <span className={clsx('text-sm font-medium', plan.featured ? 'text-white/60' : 'text-text-tertiary')}>
+                      {plan.period}
+                    </span>
+                  )}
                 </div>
-                {isYearly && (
-                  <p className="text-xs text-green-500 font-medium mt-1">
-                    Billed annually
-                  </p>
+                {plan.name === 'Free' && (
+                  <span className={clsx('text-sm font-medium', plan.featured ? 'text-white/60' : 'text-text-tertiary')}>
+                    No credit card
+                  </span>
                 )}
               </div>
 
-              <ul className="space-y-4 mb-8 flex-grow">
-                {plan.features.map((feat) => (
-                  <li key={feat} className="flex items-start gap-3 text-sm text-gray-600">
-                    <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
-                    {feat}
+              <ul className="space-y-3 mb-8 flex-1">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-3">
+                    <Check size={16} className={clsx('shrink-0 mt-0.5', plan.featured ? 'text-success-300' : 'text-success')} />
+                    <span className={clsx('text-sm', plan.featured ? 'text-white/80' : 'text-text-secondary')}>{f}</span>
                   </li>
                 ))}
               </ul>
 
-              <Link
-                href={`/register?plan=${plan.name.toLowerCase()}&cycle=${isYearly ? 'yearly' : 'monthly'}`}
-                className={clsx(
-                  'w-full py-3.5 rounded-xl text-center text-sm font-semibold transition-all active:scale-[0.98]',
-                  plan.popular
-                    ? 'bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/25'
-                    : 'bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200'
-                )}
-              >
-                {plan.cta}
+              <Link href={plan.href}>
+                <Button
+                  variant={plan.featured ? 'secondary' : 'primary'}
+                  size="lg"
+                  className="w-full"
+                  rightIcon={<ArrowRight size={16} />}
+                >
+                  {plan.cta}
+                </Button>
               </Link>
             </motion.div>
           ))}

@@ -73,10 +73,10 @@ export const ConversionIntelligence = ({ total, clientName, dueDate, items, note
             <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-2">
                     <Sparkles size={18} className="text-emerald-400" />
-                    <h3 className="text-sm font-heading font-black uppercase tracking-widest">Revenue Intelligence</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-widest">Revenue Intelligence</h3>
                 </div>
                 <div className="flex flex-col items-end">
-                    <span className={clsx("text-2xl font-heading font-black tracking-tighter", getScoreColor())}>{score}%</span>
+                    <span className={clsx("text-2xl font-black tracking-tight", getScoreColor())}>{score}%</span>
                     <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/30">Conv. Score</span>
                 </div>
             </div>

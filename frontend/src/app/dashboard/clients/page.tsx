@@ -3,431 +3,339 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useToast } from '@/lib/useToast';
-import { Plus, Edit, Trash, Search, Mail, Phone, Users, Download, Filter, Handshake, UserPlus, ShieldCheck } from 'lucide-react';
+import {
+  Plus, Edit, Trash, Search, Mail, Phone, Download, Filter,
+  Handshake, UserPlus, X,
+} from 'lucide-react';
 import { StatusModal } from '@/components/ui/StatusModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AddClientModal } from '@/components/ui/AddClientModal';
-import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
-import clsx from 'clsx';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/Button';
 
 interface Client {
-    id: string;
-    name: string;
-    contactName?: string;
-    email: string;
-    phone?: string;
-    address?: string;
-    taxId?: string;
-    version: number;
+  id: string;
+  name: string;
+  contactName?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  taxId?: string;
+  version: number;
 }
 
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+
+const itemAnim = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0 },
+};
+
 export default function ClientsPage() {
-    const [clients, setClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showModal, setShowModal] = useState(false);
-    const toast = useToast();
-    const [showAddClient, setShowAddClient] = useState(false);
-    const [editingClient, setEditingClient] = useState<Client | null>(null);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [editForm, setEditForm] = useState({ name: '', contactName: '', email: '', phone: '', address: '', taxId: '' });
-    const [editLoading, setEditLoading] = useState(false);
-    const [editError, setEditError] = useState('');
-    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
-    const [confirmState, setConfirmState] = useState<{ isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info' }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const toast = useToast();
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', contactName: '', email: '', phone: '', address: '', taxId: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info'
+  }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
 
-    useEffect(() => {
-        fetchClients();
-    }, []);
+  useEffect(() => { fetchClients(); }, []);
 
-    const fetchClients = async () => {
+  const fetchClients = async () => {
+    try {
+      const bizRes = await api.get('/business/me');
+      if (bizRes.data?.id) {
+        const res = await api.get(`/clients?businessId=${bizRes.data.id}`);
+        setClients(Array.isArray(res.data) ? res.data : []);
+      }
+    } catch { toast.error('Failed to load clients'); }
+    finally { setLoading(false); }
+  };
+
+  const handleClientCreated = (newClient: any) => setClients([newClient, ...clients]);
+
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      onConfirm: async () => {
         try {
-            const bizRes = await api.get('/business/me');
-            if (bizRes.data && bizRes.data.id) {
-                const res = await api.get(`/clients?businessId=${bizRes.data.id}`);
-                setClients(Array.isArray(res.data) ? res.data : []);
-            }
-        } catch (error) {
-            toast.error('Failed to load clients');
-        } finally {
-            setLoading(false);
+          await api.delete(`/clients/${id}`);
+          setClients(clients.filter(c => c.id !== id));
+          setModalConfig({ title: 'Relationship Terminated', message: 'The partner has been removed from your database.', type: 'info' });
+          setShowModal(true);
+        } catch {
+          setModalConfig({ title: 'Termination Failed', message: 'Could not remove this partner. They may be linked to active records.', type: 'error' });
+          setShowModal(true);
         }
-    };
+      },
+      title: 'Terminate Relationship',
+      message: 'Are you sure you want to terminate this partner relationship?',
+      variant: 'danger',
+    });
+  };
 
-    const handleClientCreated = (newClient: any) => {
-        setClients([newClient, ...clients]);
-    };
+  const openEditModal = (client: Client) => {
+    setEditingClient(client);
+    setEditForm({
+      name: client.name, contactName: client.contactName || '',
+      email: client.email, phone: client.phone || '',
+      address: client.address || '', taxId: client.taxId || '',
+    });
+    setEditError('');
+    setShowEditModal(true);
+  };
 
-    const handleDelete = (id: string) => {
-        setConfirmState({
-            isOpen: true,
-            onConfirm: async () => {
-                try {
-                    await api.delete(`/clients/${id}`);
-                    setClients(clients.filter(c => c.id !== id));
-                    setModalConfig({
-                        title: 'Relationship Terminated',
-                        message: 'The partner has been successfully purged from your active database.',
-                        type: 'info'
-                    });
-                    setShowModal(true);
-                } catch (error) {
-                    setModalConfig({
-                        title: 'Termination Failed',
-                        message: 'We could not remove this partner. They may be linked to active revenue streams.',
-                        type: 'error'
-                    });
-                    setShowModal(true);
-                }
-            },
-            title: 'Terminate Relationship',
-            message: 'Are you sure you want to terminate this partner relationship?',
-            variant: 'danger'
-        });
-    };
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClient) return;
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const { data } = await api.put(`/clients/${editingClient.id}`, { ...editForm, version: editingClient.version });
+      setClients(clients.map(c => c.id === editingClient.id ? data : c));
+      setShowEditModal(false);
+      setEditingClient(null);
+      setModalConfig({ title: 'Partner Updated', message: 'The client record has been updated successfully.', type: 'success' });
+      setShowModal(true);
+    } catch (error: any) {
+      setEditError(error.response?.data?.message || 'Failed to update client. Please try again.');
+    } finally { setEditLoading(false); }
+  };
 
-    const openEditModal = (client: Client) => {
-        setEditingClient(client);
-        setEditForm({
-            name: client.name,
-            contactName: client.contactName || '',
-            email: client.email,
-            phone: client.phone || '',
-            address: client.address || '',
-            taxId: client.taxId || '',
-        });
-        setEditError('');
-        setShowEditModal(true);
-    };
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const handleEditSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingClient) return;
-        setEditLoading(true);
-        setEditError('');
-        try {
-            const { data } = await api.put(`/clients/${editingClient.id}`, {
-                ...editForm,
-                version: editingClient.version,
-            });
-            setClients(clients.map(c => c.id === editingClient.id ? data : c));
-            setShowEditModal(false);
-            setEditingClient(null);
-            setModalConfig({
-                title: 'Partner Updated',
-                message: 'The client record has been successfully updated in the ledger.',
-                type: 'success'
-            });
-            setShowModal(true);
-        } catch (error: any) {
-            setEditError(error.response?.data?.message || 'Failed to update client. Please try again.');
-        } finally {
-            setEditLoading(false);
-        }
-    };
+  if (loading) return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
 
-    const filteredClients = clients.filter(client =>
-        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (loading) return (
-        <div className="flex h-[60vh] items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+  return (
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 pb-20">
+      {/* Page Header */}
+      <motion.div variants={itemAnim} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Partners & Clients</h1>
+          <p className="text-sm text-text-secondary mt-1">Manage your revenue-generating relationships and institutional ledger entries.</p>
         </div>
-    );
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" size="sm" leftIcon={<Download size={14} />}>Export CSV</Button>
+          <Link href="/dashboard/clients/new">
+            <Button size="sm" leftIcon={<Plus size={14} />}>New Partner</Button>
+          </Link>
+        </div>
+      </motion.div>
 
-    return (
-        <div className="max-w-[1400px] mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
-            {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-10">
-                <div className="space-y-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200">
-                        <ShieldCheck size={12} />
-                        Enterprise Ledger
-                    </div>
-                    <div>
-                        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Partners & Clients</h1>
-                        <p className="text-slate-500 mt-2 font-medium max-w-xl">
-                            Manage your revenue-generating relationships and institutional ledger entries.
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 rounded-2xl py-3 px-6 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95">
-                        <Download size={14} />
-                        Export CSV
-                    </button>
-                    <Link 
-                        href="/dashboard/clients/new"
-                        className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl py-3 px-6 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-slate-200 active:scale-95"
+      {/* Search + Filter */}
+      <motion.div variants={itemAnim} className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
+          <input
+            type="text"
+            placeholder="Search by name, email, or tax ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+          />
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-xs font-medium text-text-secondary hover:bg-surface-tertiary transition-colors whitespace-nowrap">
+          <Filter size={14} />
+          Filters (0)
+        </button>
+      </motion.div>
+
+      {/* Content */}
+      <motion.div variants={itemAnim}>
+        {filteredClients.length === 0 ? (
+          <div className="bg-surface rounded-2xl border border-border py-20 px-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-16 w-16 rounded-2xl bg-surface-tertiary flex items-center justify-center text-text-tertiary">
+                <Handshake size={28} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-text-primary">Build Your Partner Network</p>
+                <p className="text-xs text-text-tertiary max-w-sm">Start by adding your first client, vendor, or partner to begin tracking relationships and generating invoices.</p>
+              </div>
+              <Button size="sm" leftIcon={<UserPlus size={14} />}>Add First Partner</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full text-left min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">Partner Identity</th>
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">Contact Info</th>
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">Tax Identity</th>
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-light">
+                  {filteredClients.map((client, i) => (
+                    <motion.tr
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      key={client.id}
+                      className="hover:bg-surface-secondary transition-colors group"
                     >
-                        <Plus size={14} />
-                        New Partner
-                    </Link>
-                </div>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-surface-tertiary flex items-center justify-center text-text-primary font-semibold text-sm">
+                            {client.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-text-primary">{client.name}</div>
+                            <div className="text-[10px] text-text-tertiary mt-0.5">ID: {client.id.substring(0, 8).toUpperCase()}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-xs text-text-secondary">
+                            <Mail size={12} className="text-text-tertiary" />
+                            {client.email}
+                          </div>
+                          {client.phone && (
+                            <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                              <Phone size={12} className="text-text-tertiary" />
+                              {client.phone}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-surface-tertiary text-[10px] font-medium text-text-secondary">
+                          {client.taxId || 'NO TAX ID'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditModal(client)}
+                            className="p-2 text-text-tertiary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-tertiary"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(client.id)}
+                            className="p-2 text-text-tertiary hover:text-danger transition-colors rounded-lg hover:bg-danger-50"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </div>
+        )}
+      </motion.div>
 
-            {/* Tools Row */}
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={18} />
-                    <input 
-                        type="text"
-                        placeholder="Search by name, email, or tax ID..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white pl-12 pr-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
-                    />
+      <AddClientModal isOpen={showAddClient} onClose={() => setShowAddClient(false)} onSuccess={handleClientCreated} />
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onConfirm={() => { confirmState.onConfirm(); setConfirmState(prev => ({ ...prev, isOpen: false })); }}
+        onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant || 'danger'}
+      />
+      <StatusModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        actionLabel="Proceed"
+      />
+
+      {/* Edit Modal */}
+      {showEditModal && editingClient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-overlay backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
+          <div className="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-text-primary">Edit Partner</h2>
+                  <p className="text-sm text-text-secondary mt-0.5">Update the institutional record for this client.</p>
                 </div>
-                <button className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 rounded-2xl px-6 py-4 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm">
-                    <Filter size={18} />
-                    Filters (0)
+                <button onClick={() => setShowEditModal(false)} className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors">
+                  <X size={16} />
                 </button>
+              </div>
+
+              {editError && (
+                <div className="bg-danger-50 border border-danger-200 rounded-xl px-4 py-3 text-sm text-danger">{editError}</div>
+              )}
+
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Partner Name <span className="text-danger">*</span></label>
+                  <input type="text" required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+                    placeholder="Enter partner name" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Contact Name</label>
+                  <input type="text" value={editForm.contactName} onChange={(e) => setEditForm({ ...editForm, contactName: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+                    placeholder="Primary contact person" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Email Address <span className="text-danger">*</span></label>
+                  <input type="email" required value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+                    placeholder="partner@company.com" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Phone</label>
+                  <input type="tel" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+                    placeholder="+1 (555) 000-0000" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Address</label>
+                  <input type="text" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+                    placeholder="Full business address" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Tax ID</label>
+                  <input type="text" value={editForm.taxId} onChange={(e) => setEditForm({ ...editForm, taxId: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+                    placeholder="Tax identification number" />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="secondary" size="md" className="flex-1" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                  <Button type="submit" size="md" className="flex-1" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save Changes'}</Button>
+                </div>
+              </form>
             </div>
-
-            {/* Content Area */}
-            {filteredClients.length === 0 ? (
-                <div className="relative w-full rounded-[2.5rem] border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[550px] flex items-center justify-center p-8 group">
-                    {/* Decorative Background Elements */}
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-50">
-                        <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[60%] rounded-full bg-slate-50 blur-3xl transition-transform duration-1000 group-hover:scale-110"></div>
-                        <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[50%] rounded-full bg-slate-50 blur-3xl transition-transform duration-1000 group-hover:scale-110 delay-150"></div>
-                    </div>
-
-                    <div className="relative z-10 flex flex-col items-center text-center max-w-md mx-auto space-y-8">
-                        <div className="w-24 h-24 relative flex items-center justify-center animate-in zoom-in-50 duration-500">
-                            <div className="absolute inset-0 bg-slate-50 rounded-[2rem] rotate-6 shadow-sm border border-slate-100 transition-transform duration-500 group-hover:rotate-12"></div>
-                            <div className="absolute inset-0 bg-white rounded-[2rem] -rotate-6 shadow-xl border border-slate-100 flex items-center justify-center transition-transform duration-500 group-hover:-rotate-12">
-                                <Handshake size={40} className="text-slate-900" />
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Build Your Partner Network</h3>
-                            <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                                Start by adding your first client, vendor, or partner to begin tracking intelligence, managing relationships, and generating institutional invoices.
-                            </p>
-                        </div>
-                        <Link 
-                            href="/dashboard/clients/new"
-                            className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl py-4 px-8 font-black text-[11px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all shadow-2xl shadow-slate-200 active:scale-95"
-                        >
-                            <UserPlus size={18} />
-                            Add First Partner
-                        </Link>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-slate-50/50">
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Partner Identity</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Intelligence Info</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Tax Identity</th>
-                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {filteredClients.map((client) => (
-                                    <tr key={client.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-900 font-black text-sm border border-slate-200 transition-transform duration-300 group-hover:scale-110">
-                                                    {client.name.substring(0, 2).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-black text-slate-900 tracking-tight">{client.name}</div>
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Partner ID: {client.id.substring(0, 8).toUpperCase()}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <div className="space-y-1.5">
-                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                                                    <Mail size={14} className="text-slate-300" />
-                                                    {client.email}
-                                                </div>
-                                                {client.phone && (
-                                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                                                        <Phone size={14} className="text-slate-300" />
-                                                        {client.phone}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500 border border-slate-200">
-                                                {client.taxId || 'NO TAX ID'}
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-6 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button 
-                                                    onClick={() => openEditModal(client)}
-                                                    className="p-2.5 text-slate-400 hover:text-slate-900 transition-colors rounded-xl hover:bg-slate-100"
-                                                >
-                                                    <Edit size={18} />
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleDelete(client.id)}
-                                                    className="p-2.5 text-slate-400 hover:text-rose-600 transition-colors rounded-xl hover:bg-rose-50"
-                                                >
-                                                    <Trash size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            <AddClientModal 
-                isOpen={showAddClient} 
-                onClose={() => setShowAddClient(false)} 
-                onSuccess={handleClientCreated}
-            />
-
-            <ConfirmDialog
-                isOpen={confirmState.isOpen}
-                onConfirm={() => { confirmState.onConfirm(); setConfirmState(prev => ({ ...prev, isOpen: false })); }}
-                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
-                title={confirmState.title}
-                message={confirmState.message}
-                variant={confirmState.variant || 'danger'}
-            />
-            <StatusModal 
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                title={modalConfig.title}
-                message={modalConfig.message}
-                type={modalConfig.type}
-                actionLabel="Proceed"
-            />
-
-            {showEditModal && editingClient && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
-                    <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-300">
-                        <div className="p-8 space-y-6">
-                            <div>
-                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Edit Partner</h2>
-                                <p className="text-slate-500 text-sm font-medium mt-1">Update the institutional record for this client.</p>
-                            </div>
-
-                            {editError && (
-                                <div className="bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3 text-rose-700 text-sm font-bold">
-                                    {editError}
-                                </div>
-                            )}
-
-                            <form onSubmit={handleEditSubmit} className="space-y-5">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                                        Partner Name <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editForm.name}
-                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
-                                        placeholder="Enter partner name"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                                        Contact Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editForm.contactName}
-                                        onChange={(e) => setEditForm({ ...editForm, contactName: e.target.value })}
-                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
-                                        placeholder="Primary contact person"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                                        Email Address <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        type="email"
-                                        required
-                                        value={editForm.email}
-                                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
-                                        placeholder="partner@company.com"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                                        Phone
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={editForm.phone}
-                                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
-                                        placeholder="+1 (555) 000-0000"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                                        Address
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editForm.address}
-                                        onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
-                                        placeholder="Full business address"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                                        Tax ID
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editForm.taxId}
-                                        onChange={(e) => setEditForm({ ...editForm, taxId: e.target.value })}
-                                        className="w-full bg-white px-4 py-4 rounded-2xl border border-slate-200 text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none shadow-sm"
-                                        placeholder="Tax identification number"
-                                    />
-                                </div>
-
-                                <div className="flex gap-3 pt-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowEditModal(false)}
-                                        className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 rounded-2xl py-4 font-black text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={editLoading}
-                                        className="flex-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl py-4 font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-slate-200 active:scale-95"
-                                    >
-                                        {editLoading ? 'Saving...' : 'Save Changes'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
+          </div>
         </div>
-    );
+      )}
+    </motion.div>
+  );
 }

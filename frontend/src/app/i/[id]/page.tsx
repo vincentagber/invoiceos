@@ -132,7 +132,7 @@ export default function PublicInvoicePage() {
 
                             {/* Calculation */}
                             <div className="flex justify-end pt-6 border-t border-slate-50">
-                                <div className="w-64 space-y-3 text-right">
+                                <div className="w-full sm:w-64 space-y-3 text-right">
                                     <div className="flex justify-between text-slate-400 font-bold text-xs uppercase tracking-widest">
                                         <span>Subtotal</span>
                                         <span className="text-slate-900">{formatCurrency(invoice.total, invoice.currency)}</span>

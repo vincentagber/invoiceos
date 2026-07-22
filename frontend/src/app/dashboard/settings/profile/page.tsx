@@ -78,7 +78,7 @@ export default function ProfilePage() {
     );
 
     return (
-        <div className="max-w-4xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000 font-sans">
+        <div className="max-w-4xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000 font-sans overflow-x-hidden">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-10">
                 <div>
@@ -100,7 +100,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Profile Card */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 text-center space-y-6">
+                    <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-5 sm:p-8 text-center space-y-6">
                         <div className="relative inline-block mx-auto">
                             <div className="h-32 w-32 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 overflow-hidden ring-4 ring-slate-50 shadow-inner">
                                 {profilePicture ? (
@@ -126,7 +126,7 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="bg-slate-900 rounded-[2rem] p-8 text-white space-y-6">
+                    <div className="bg-slate-900 rounded-[2rem] p-5 sm:p-8 text-white space-y-6">
                         <div className="flex items-center gap-3">
                             <Shield size={20} className="text-emerald-400" />
                             <h4 className="text-xs font-black uppercase tracking-widest">Security Status</h4>
@@ -148,7 +148,7 @@ export default function ProfilePage() {
 
                 {/* Form Section */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-10">
+                    <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-5 sm:p-10 space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Full Identity Name</label>

@@ -22,7 +22,7 @@ export default function MiniPayment() {
       </div>
 
       <div className="space-y-1 mb-3">
-        <div className="text-[18px] font-bold text-slate-900">$4,515.00</div>
+        <div className="text-lg font-bold text-slate-900">$4,515.00</div>
         <div className="text-[9px] text-slate-400">Received from Acme Corp</div>
       </div>
 

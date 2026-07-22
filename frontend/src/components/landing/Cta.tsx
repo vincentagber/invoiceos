@@ -3,48 +3,53 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function Cta() {
   return (
-    <section id="contact" className="py-16 lg:py-24 bg-gradient-to-br from-primary to-primary-dark relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-      </div>
+    <section className="py-24 lg:py-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 p-8 sm:p-12 lg:p-16 text-center"
+        >
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/10 rounded-full blur-3xl" />
+            <div className="absolute inset-0 bg-grid opacity-[0.03]" />
+          </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="max-w-3xl mx-auto px-6 text-center relative z-10"
-      >
-        <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-6">
-          Ready to streamline your invoicing?
-        </h2>
-        <p className="text-lg text-white/80 leading-relaxed mb-10 max-w-xl mx-auto">
-          Join 12,000+ businesses that trust InvoiceOS for their invoicing needs.
-          Start your free trial today.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link
-            href="/register"
-            className="inline-flex items-center justify-center gap-2 bg-white text-primary px-8 py-4 rounded-xl text-base font-bold hover:bg-white/90 transition-all active:scale-[0.98] shadow-xl"
-          >
-            Get Started Free
-            <ArrowRight size={18} />
-          </Link>
-          <Link
-            href="#features"
-            className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-8 py-4 rounded-xl text-base font-semibold border border-white/20 hover:bg-white/20 transition-all active:scale-[0.98]"
-          >
-            Learn More
-          </Link>
-        </div>
-        <p className="mt-6 text-sm text-white/60 font-medium">
-          No credit card required. Setup takes less than 3 minutes.
-        </p>
-      </motion.div>
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 border border-white/20 rounded-full text-xs font-semibold text-white/80 mb-8">
+              <Sparkles size={12} />
+              Get started in minutes
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+              Ready to transform your financial operations?
+            </h2>
+            <p className="mt-4 text-lg text-white/70 max-w-xl mx-auto">
+              Join thousands of businesses using InvoiceOS to streamline invoicing, compliance, and accounting.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/register">
+                <Button size="xl" variant="secondary" className="w-full sm:w-auto bg-white text-primary-700 hover:bg-white/90 border-0">
+                  Start Free
+                  <ArrowRight size={18} />
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="xl" variant="ghost" className="w-full sm:w-auto text-white/80 hover:text-white hover:bg-white/10 border border-white/20">
+                  Login
+                </Button>
+              </Link>
+            </div>
+            <p className="mt-4 text-xs text-white/50">No credit card required. Free forever plan included.</p>
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }

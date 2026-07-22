@@ -48,12 +48,12 @@ export function StatusModal({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 p-10 text-center">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 p-6 sm:p-10 text-center">
                 <div className={clsx("w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-sm", bgColors[type])}>
                     {icons[type]}
                 </div>
                 
-                <h3 className="text-xl font-heading font-black text-slate-900 tracking-tighter uppercase mb-2">
+                <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">
                     {title}
                 </h3>
                 

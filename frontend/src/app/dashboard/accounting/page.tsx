@@ -4,347 +4,220 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/lib/useToast';
 import api from '@/lib/api';
 import {
-    TrendingUp,
-    TrendingDown,
-    DollarSign,
-    PieChart,
-    Plus,
-    Download,
-    Calendar,
-    Briefcase
+  TrendingUp, TrendingDown, DollarSign, PieChart,
+  Plus, Download, X,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { StatusModal } from '@/components/ui/StatusModal';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/Button';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+const itemAnim = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0 },
+};
 
 export default function AccountingPage() {
-    const { token, user } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const toast = useToast();
-    const [summary, setSummary] = useState<any>(null);
-    const [expenses, setExpenses] = useState<any[]>([]);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [showModal, setShowModal] = useState(false);
-    const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+  const { token, user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  const [summary, setSummary] = useState<any>(null);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalConfig, setModalConfig] = useState({ title: '', message: '', type: 'success' as any });
+  const [newExpense, setNewExpense] = useState({
+    merchant: '', category: 'Office', amount: '',
+    date: new Date().toISOString().split('T')[0], description: '',
+  });
 
-    // Form State
-    const [newExpense, setNewExpense] = useState({
-        merchant: '',
-        category: 'Office',
-        amount: '',
-        date: new Date().toISOString().split('T')[0],
-        description: ''
+  const businessId = user?.organizations?.[0]?.id;
+
+  const fetchData = async () => {
+    if (!businessId) return;
+    try {
+      setLoading(true);
+      const [summaryRes, expensesRes] = await Promise.all([
+        api.get(`/accounting/summary?businessId=${businessId}`),
+        api.get(`/expenses?businessId=${businessId}`),
+      ]);
+      setSummary(summaryRes.data.data);
+      setExpenses(expensesRes.data);
+    } catch { toast.error('Failed to load accounting data'); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { if (token && businessId) fetchData(); }, [token, businessId]);
+
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!businessId) return;
+    try {
+      await api.post('/expenses', { ...newExpense, amount: Number(newExpense.amount), businessId });
+      setShowAddModal(false);
+      setNewExpense({ merchant: '', category: 'Office', amount: '', date: new Date().toISOString().split('T')[0], description: '' });
+      fetchData();
+    } catch {
+      setModalConfig({ title: 'Operation Failed', message: 'Failed to add expense.', type: 'error' });
+      setShowModal(true);
+    }
+  };
+
+  const exportData = () => {
+    if (!expenses.length && !summary) return;
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += 'FINANCIAL SUMMARY\n';
+    csvContent += `Gross Revenue,$${summary?.gross_revenue || 0}\n`;
+    csvContent += `Total Expenses,$${summary?.total_expenses || 0}\n`;
+    csvContent += `Net Profit,$${summary?.net_profit || 0}\n`;
+    csvContent += `Profit Margin,${summary?.profit_margin || 0}%\n\n`;
+    csvContent += 'EXPENSE REPORT\nDate,Merchant,Category,Description,Amount\n';
+    expenses.forEach(exp => {
+      csvContent += `${exp.date},"${exp.merchant}","${exp.category}","${(exp.description || '').replace(/"/g, '""')}",${exp.amount}\n`;
     });
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `accounting_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-    const businessId = user?.organizations?.[0]?.id;
+  if (loading) return <div className="flex h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
 
-    const fetchData = async () => {
-        if (!businessId) return;
-        try {
-            setLoading(true);
-            const [summaryRes, expensesRes] = await Promise.all([
-                api.get(`/accounting/summary?businessId=${businessId}`),
-                api.get(`/expenses?businessId=${businessId}`)
-            ]);
-            setSummary(summaryRes.data.data);
-            setExpenses(expensesRes.data);
-        } catch (error) {
-            toast.error('Failed to load accounting data');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (token && businessId) fetchData();
-    }, [token, businessId]);
-
-    const handleAddExpense = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!businessId) return;
-        try {
-            await api.post('/expenses', {
-                ...newExpense,
-                amount: Number(newExpense.amount),
-                businessId
-            });
-            setShowAddModal(false);
-            setNewExpense({
-                merchant: '',
-                category: 'Office',
-                amount: '',
-                date: new Date().toISOString().split('T')[0],
-                description: ''
-            });
-            fetchData(); // Reload
-        } catch (error) {
-            setModalConfig({
-                title: 'Operation Failed',
-                message: 'Failed to add expense. Please try again.',
-                type: 'error'
-            });
-            setShowModal(true);
-        }
-    };
-
-    const exportData = () => {
-        if (!expenses.length && !summary) return;
-
-        // 1. Prepare CSV Content
-        let csvContent = "data:text/csv;charset=utf-8,";
-
-        // Summary Section
-        csvContent += "FINANCIAL SUMMARY\n";
-        csvContent += `Gross Revenue,₦${summary?.gross_revenue || 0}\n`;
-        csvContent += `Total Expenses,₦${summary?.total_expenses || 0}\n`;
-        csvContent += `Net Profit,₦${summary?.net_profit || 0}\n`;
-        csvContent += `Profit Margin,${summary?.profit_margin || 0}%\n\n`;
-
-        // Expenses Section
-        csvContent += "EXPENSE REPORT\n";
-        csvContent += "Date,Merchant,Category,Description,Amount\n";
-
-        expenses.forEach(exp => {
-            const row = [
-                exp.date,
-                `"${exp.merchant.replace(/"/g, '""')}"`, // Escape quotes
-                exp.category,
-                `"${(exp.description || '').replace(/"/g, '""')}"`,
-                exp.amount
-            ].join(",");
-            csvContent += row + "\n";
-        });
-
-        // 2. Trigger Download
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `accounting_report_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    if (loading) return <div className="p-8">Loading Financial Data...</div>;
-
-    return (
-        <div className="max-w-7xl mx-auto space-y-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Accounting</h1>
-                    <p className="text-gray-500">Real-time financial overview and expense tracking.</p>
-                </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={exportData}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                        <Download size={18} />
-                        Export
-                    </button>
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-                    >
-                        <Plus size={18} />
-                        Add Expense
-                    </button>
-                </div>
-            </div>
-
-            {/* Financial Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <TrendingUp size={48} className="text-green-600" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-500 mb-1">Total Revenue</p>
-                    <h3 className="text-3xl font-bold text-gray-900">
-                        ₦{summary?.gross_revenue?.toLocaleString()}
-                    </h3>
-                    <div className="mt-4 flex items-center text-sm text-green-600 bg-green-50 w-fit px-2 py-1 rounded-full">
-                        <TrendingUp size={14} className="mr-1" />
-                        <span>Income from Invoices</span>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <TrendingDown size={48} className="text-red-600" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-500 mb-1">Total Expenses</p>
-                    <h3 className="text-3xl font-bold text-gray-900">
-                        ₦{summary?.total_expenses?.toLocaleString()}
-                    </h3>
-                    <div className="mt-4 flex items-center text-red-600 bg-red-50 w-fit px-2 py-1 rounded-full">
-                        <TrendingDown size={14} className="mr-1" />
-                        <span>Operating Costs</span>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <DollarSign size={48} className="text-indigo-600" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-500 mb-1">Net Profit</p>
-                    <h3 className={`text-3xl font-bold ${summary?.net_profit >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                        ₦{summary?.net_profit?.toLocaleString()}
-                    </h3>
-                    <div className={`mt-4 flex items-center text-sm w-fit px-2 py-1 rounded-full ${summary?.net_profit >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-red-50 text-red-600'}`}>
-                        <PieChart size={14} className="mr-1" />
-                        <span>{summary?.profit_margin}% Margin</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-                    <button className="text-sm text-indigo-600 font-medium hover:text-indigo-700">View All</button>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant / Invoice</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {expenses.length > 0 ? expenses.map((expense) => (
-                                <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(expense.date).toLocaleDateString()}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{expense.merchant}</div>
-                                        <div className="text-xs text-gray-500">{expense.description}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                            {expense.category}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                                        -₦{parseFloat(expense.amount).toLocaleString()}
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                                        No expenses recorded yet. Start by adding one!
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Add Expense Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-900">Add New Expense</h3>
-                            <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
-                                <span className="text-2xl">×</span>
-                            </button>
-                        </div>
-                        <form onSubmit={handleAddExpense} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Merchant / Vendor</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={newExpense.merchant}
-                                    onChange={(e) => setNewExpense({ ...newExpense, merchant: e.target.value })}
-                                    className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                                    placeholder="e.g. Adobe Creative Cloud"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <span className="text-gray-500 sm:text-sm">₦</span>
-                                        </div>
-                                        <input
-                                            type="number"
-                                            required
-                                            min="0"
-                                            step="0.01"
-                                            value={newExpense.amount}
-                                            onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                                            className="w-full pl-7 rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={newExpense.date}
-                                        onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-                                        className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                <select
-                                    value={newExpense.category}
-                                    onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                                    className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                                >
-                                    <option>Office</option>
-                                    <option>Software</option>
-                                    <option>Travel</option>
-                                    <option>Marketing</option>
-                                    <option>Contractors</option>
-                                    <option>Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-                                <textarea
-                                    value={newExpense.description}
-                                    onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-                                    className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                                    rows={2}
-                                />
-                            </div>
-                            <div className="pt-4 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddModal(false)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm"
-                                >
-                                    Add Expense
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            <StatusModal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                title={modalConfig.title}
-                message={modalConfig.message}
-                type={modalConfig.type}
-                actionLabel="Proceed"
-            />
+  return (
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 pb-20">
+      {/* Header */}
+      <motion.div variants={itemAnim} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Accounting</h1>
+          <p className="text-sm text-text-secondary mt-1">Real-time financial overview and expense tracking.</p>
         </div>
-    );
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" size="sm" leftIcon={<Download size={14} />} onClick={exportData}>Export CSV</Button>
+          <Button size="sm" leftIcon={<Plus size={14} />} onClick={() => setShowAddModal(true)}>Add Expense</Button>
+        </div>
+      </motion.div>
+
+      {/* Financial Cards */}
+      <motion.div variants={itemAnim} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { label: 'Total Revenue', value: `$${summary?.gross_revenue?.toLocaleString() || 0}`, subtitle: 'Income from Invoices', icon: TrendingUp, color: 'text-success', bg: 'bg-success-50' },
+          { label: 'Total Expenses', value: `$${summary?.total_expenses?.toLocaleString() || 0}`, subtitle: 'Operating Costs', icon: TrendingDown, color: 'text-danger', bg: 'bg-danger-50' },
+          { label: 'Net Profit', value: `$${summary?.net_profit?.toLocaleString() || 0}`, subtitle: `${summary?.profit_margin || 0}% Margin`, icon: DollarSign, color: summary?.net_profit >= 0 ? 'text-primary' : 'text-danger', bg: summary?.net_profit >= 0 ? 'bg-primary-50' : 'bg-danger-50' },
+        ].map((card, i) => (
+          <div key={i} className="bg-surface rounded-2xl border border-border p-5 hover:shadow-card-hover transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-text-tertiary">{card.label}</span>
+              <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${card.bg} ${card.color}`}>
+                <card.icon size={16} />
+              </div>
+            </div>
+            <div className="text-xl font-semibold text-text-primary">{card.value}</div>
+            <p className="text-xs text-text-tertiary mt-1.5">{card.subtitle}</p>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* Recent Transactions */}
+      <motion.div variants={itemAnim}>
+        <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+          <div className="px-4 py-3.5 border-b border-border">
+            <h3 className="text-sm font-semibold text-text-primary">Recent Transactions</h3>
+          </div>
+          {expenses.length === 0 ? (
+            <div className="py-16 text-center text-sm text-text-tertiary">No expenses recorded yet.</div>
+          ) : (
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full min-w-[500px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary text-left">Date</th>
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary text-left">Merchant</th>
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary text-left">Category</th>
+                    <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-light">
+                  {expenses.map((expense: any) => (
+                    <tr key={expense.id} className="hover:bg-surface-secondary transition-colors">
+                      <td className="px-4 py-4 text-xs text-text-tertiary whitespace-nowrap">{new Date(expense.date).toLocaleDateString()}</td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-text-primary">{expense.merchant}</div>
+                        <div className="text-xs text-text-tertiary">{expense.description}</div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-2.5 py-1 text-[10px] font-medium rounded-lg bg-surface-tertiary text-text-secondary">{expense.category}</span>
+                      </td>
+                      <td className="px-4 py-4 text-sm font-semibold text-text-primary text-right whitespace-nowrap">-${parseFloat(expense.amount).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Add Expense Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-overlay backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+          <div className="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md">
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-text-primary">Add New Expense</h3>
+                <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+              <form onSubmit={handleAddExpense} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Merchant / Vendor</label>
+                  <input type="text" required value={newExpense.merchant} onChange={(e) => setNewExpense({ ...newExpense, merchant: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+                    placeholder="e.g. Adobe Creative Cloud" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-text-secondary mb-1.5">Amount</label>
+                    <input type="number" required min="0" step="0.01" value={newExpense.amount} onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-text-secondary mb-1.5">Date</label>
+                    <input type="date" required value={newExpense.date} onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Category</label>
+                  <select value={newExpense.category} onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all">
+                    <option>Office</option><option>Software</option><option>Travel</option><option>Marketing</option><option>Contractors</option><option>Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Description (Optional)</label>
+                  <textarea value={newExpense.description} onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all resize-none"
+                    rows={2} />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="secondary" size="md" className="flex-1" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                  <Button type="submit" size="md" className="flex-1">Add Expense</Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <StatusModal isOpen={showModal} onClose={() => setShowModal(false)} title={modalConfig.title} message={modalConfig.message} type={modalConfig.type} actionLabel="Proceed" />
+    </motion.div>
+  );
 }

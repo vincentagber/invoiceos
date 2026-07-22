@@ -6,76 +6,82 @@ import { Star } from 'lucide-react';
 
 const testimonials = [
   {
-    name: 'Sarah Johnson',
-    role: 'Freelance Designer',
-    content: 'InvoiceOS has completely transformed how I manage my billing. I save 10+ hours every month on invoicing. The templates are beautiful and professional.',
+    name: 'Sarah Chen',
+    role: 'CEO, Bright Studio',
+    avatar: 'SC',
+    content: 'InvoiceOS transformed how we bill our clients. We went from spending 8 hours a week on invoicing to fully automated. The compliance features alone are worth it.',
     rating: 5,
-    avatar: 'SJ',
-    color: 'bg-primary',
   },
   {
-    name: 'Michael Chen',
-    role: 'Agency Owner',
-    content: 'We manage 50+ clients and InvoiceOS makes it effortless. The recurring invoices and payment tracking are absolute game-changers for our agency.',
+    name: 'James Okafor',
+    role: 'CFO, TechLabs Africa',
+    avatar: 'JO',
+    content: 'Finally, a financial platform built for African businesses. The automated VAT and WHT calculations save us hours every month. Our accountant loves it.',
     rating: 5,
-    avatar: 'MC',
-    color: 'bg-green-500',
   },
   {
     name: 'Emily Rodriguez',
-    role: 'Small Business Owner',
-    content: 'The multi-currency feature alone is worth it. I can invoice clients in USD, EUR, and NGN from one dashboard. The analytics help me understand my cash flow.',
-    rating: 5,
+    role: 'Freelance Designer',
     avatar: 'ER',
-    color: 'bg-accent',
+    content: 'As a solo founder, I needed something that didnt require an accounting degree. InvoiceOS makes invoicing, expense tracking, and tax prep dead simple.',
+    rating: 5,
+  },
+  {
+    name: 'David Kim',
+    role: 'COO, Nexus Digital',
+    avatar: 'DK',
+    content: 'We evaluated Mercury, Ramp, and QuickBooks. InvoiceOS won because it combines invoicing, compliance, and accounting in one beautiful platform.',
+    rating: 5,
   },
 ];
 
 export default function Testimonials() {
   return (
-    <section className="py-16 lg:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-24 lg:py-32 relative">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/3 w-[400px] h-[400px] bg-accent-500/3 rounded-full blur-3xl" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12 lg:mb-16"
+          viewport={{ once: true, margin: '-100px' }}
+          className="text-center max-w-2xl mx-auto mb-16"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-4 block">
-            Testimonials
-          </span>
-          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-            Loved by thousands
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary">
+            Loved by businesses everywhere
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            See what our customers say about InvoiceOS.
+          <p className="mt-4 text-lg text-text-secondary">
+            See what our customers have to say about their experience.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {testimonials.map((t, i) => (
             <motion.div
               key={t.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: '-50px' }}
               transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -4 }}
-              className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300"
+              className="bg-surface rounded-2xl border border-border p-6 lg:p-8"
             >
-              <div className="flex gap-1 mb-5">
+              <div className="flex items-center gap-1 mb-4">
                 {Array.from({ length: t.rating }).map((_, j) => (
-                  <Star key={j} size={18} className="text-yellow-400 fill-yellow-400" />
+                  <Star key={j} size={16} className="fill-warning-400 text-warning-400" />
                 ))}
               </div>
-              <p className="text-gray-600 leading-relaxed mb-8">&ldquo;{t.content}&rdquo;</p>
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full ${t.color} flex items-center justify-center text-white font-bold text-sm`}>
+              <p className="text-sm lg:text-base text-text-primary leading-relaxed mb-6">
+                &ldquo;{t.content}&rdquo;
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-sm">
                   {t.avatar}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">{t.name}</p>
-                  <p className="text-sm text-gray-500">{t.role}</p>
+                  <div className="text-sm font-semibold text-text-primary">{t.name}</div>
+                  <div className="text-xs text-text-tertiary">{t.role}</div>
                 </div>
               </div>
             </motion.div>

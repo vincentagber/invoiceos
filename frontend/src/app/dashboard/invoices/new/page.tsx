@@ -171,7 +171,7 @@ export default function NewInvoicePage() {
     );
 
     return (
-        <div className="max-w-[1400px] mx-auto animate-in fade-in duration-700">
+        <div className="max-w-[1400px] mx-auto animate-in fade-in duration-700 overflow-x-hidden">
             {/* Header Area */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-10 mb-10">
                 <div className="space-y-1">
@@ -189,7 +189,7 @@ export default function NewInvoicePage() {
                 <div className="flex-1 space-y-8 w-full">
                     
                     {/* Invoice Details Card */}
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 space-y-8">
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-5 sm:p-10 space-y-8">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-6">
                             <h3 className="text-xl font-black text-slate-900 tracking-tight">Document Configuration</h3>
                             <span className="px-3 py-1 rounded-full bg-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500 border border-slate-200">DRAFT</span>
@@ -266,7 +266,7 @@ export default function NewInvoicePage() {
                     </div>
 
                     {/* Line Items Card */}
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 space-y-8">
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-5 sm:p-10 space-y-8">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-6">
                             <h3 className="text-xl font-black text-slate-900 tracking-tight">Financial Items</h3>
                         </div>
@@ -363,7 +363,7 @@ export default function NewInvoicePage() {
                     </div>
 
                     {/* Notes & Terms Card */}
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 space-y-8">
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-5 sm:p-10 space-y-8">
                         <h3 className="text-xl font-black text-slate-900 tracking-tight border-b border-slate-100 pb-6">Notes & Governance</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
@@ -431,9 +431,9 @@ export default function NewInvoicePage() {
                             
                             {/* Paper Preview Container */}
                             <div className="p-10 bg-white">
-                                <div className="border border-slate-100 p-8 shadow-sm rounded-sm text-[10px] leading-relaxed text-slate-600 min-h-[600px] flex flex-col">
+                                <div className="border border-slate-100 p-4 md:p-8 shadow-sm rounded-sm text-[10px] leading-relaxed text-slate-600 min-h-[400px] md:min-h-[600px] flex flex-col">
                                     {/* Invoice Header */}
-                                    <div className="flex justify-between items-start mb-10 pb-10 border-b border-slate-100">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start mb-10 pb-10 border-b border-slate-100 gap-4">
                                         <div className="space-y-1">
                                             <h4 className="text-xl font-black text-slate-900 tracking-tight uppercase">Invoice</h4>
                                             <p className="text-slate-400 font-bold uppercase tracking-widest text-[8px]">{invoiceNumber}</p>
@@ -448,7 +448,7 @@ export default function NewInvoicePage() {
                                     </div>
 
                                     {/* Document Meta */}
-                                    <div className="grid grid-cols-2 gap-10 mb-10">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10 mb-10">
                                         <div className="space-y-2">
                                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Bill To / Partner</p>
                                             <p className="text-sm font-black text-slate-900 tracking-tight">{selectedClient?.name || '[Partner Name]'}</p>
@@ -497,7 +497,7 @@ export default function NewInvoicePage() {
                                     </div>
 
                                     {/* Footer / Totals */}
-                                    <div className="mt-10 pt-10 border-t border-slate-100 space-y-1.5 w-1/2 ml-auto">
+                                    <div className="mt-10 pt-10 border-t border-slate-100 space-y-1.5 w-full sm:w-1/2 ml-auto">
                                         <div className="flex justify-between items-center">
                                             <span className="text-slate-400 font-bold uppercase text-[8px] tracking-widest">Subtotal</span>
                                             <span className="font-bold text-slate-900">{formatCurrency(subtotal, currency)}</span>

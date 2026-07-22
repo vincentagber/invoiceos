@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import { addMonths, format, isAfter, setDate, differenceInDays } from 'date-fns';
+import { addMonths, setDate, differenceInDays, isAfter } from 'date-fns';
+import api from '@/lib/api';
 
 export interface RemittanceRecord {
-    month: string; // e.g., "2026-01"
+    month: string;
     vatDue: number;
     whtDue: number;
+    revenue: number;
     isFiled: boolean;
     isPaid: boolean;
 }
@@ -18,14 +20,13 @@ export interface VATTransaction {
 }
 
 interface TaxState {
-    // Financial Inputs
     turnover: number;
     assessableProfit: number;
     monthlyRecords: RemittanceRecord[];
     vatTransactions: VATTransaction[];
-
-    // Actions
-    addMonthlyRecord: (record: Omit<RemittanceRecord, 'isFiled' | 'isPaid'>) => void;
+    loading: boolean;
+    error: string | null;
+    fetchMonthlyRecords: (businessId: string) => Promise<void>;
     markAsFiled: (month: string) => void;
     getDeadlineStatus: (month: string) => {
         deadline: Date;
@@ -33,11 +34,10 @@ interface TaxState {
         isOverdue: boolean;
         potentialPenalty: number;
     };
-
     addVATTransaction: (t: VATTransaction) => void;
     calculateMonthlyVAT: () => {
         totalOutput: number;
-        totalInput: number; // Includes services & assets (2026 rule)
+        totalInput: number;
         netPayable: number;
         isRefundEligible: boolean;
     };
@@ -46,16 +46,25 @@ interface TaxState {
 export const useTaxStore = create<TaxState>((set, get) => ({
     turnover: 0,
     assessableProfit: 0,
-    monthlyRecords: [
-        // Seed some data for 2026
-        { month: '2026-01', vatDue: 150000, whtDue: 25000, isFiled: true, isPaid: true },
-        { month: '2026-02', vatDue: 180000, whtDue: 30000, isFiled: false, isPaid: false },
-    ],
+    monthlyRecords: [],
     vatTransactions: [],
+    loading: false,
+    error: null,
 
-    addMonthlyRecord: (record) => set((state) => ({
-        monthlyRecords: [...state.monthlyRecords, { ...record, isFiled: false, isPaid: false }]
-    })),
+    fetchMonthlyRecords: async (businessId: string) => {
+        set({ loading: true, error: null });
+        try {
+            const res = await api.get(`/accounting/monthly-remittance?businessId=${businessId}`);
+            const records: RemittanceRecord[] = (res.data.data || []).map((r: any) => ({
+                ...r,
+                isFiled: false,
+                isPaid: false,
+            }));
+            set({ monthlyRecords: records, loading: false });
+        } catch (err: any) {
+            set({ error: err.message || 'Failed to load remittance data', loading: false });
+        }
+    },
 
     markAsFiled: (month) => set((state) => ({
         monthlyRecords: state.monthlyRecords.map(r =>
@@ -64,24 +73,16 @@ export const useTaxStore = create<TaxState>((set, get) => ({
     })),
 
     getDeadlineStatus: (monthStr) => {
-        // Logic: Due by 21st of the following month
         const [year, month] = monthStr.split('-').map(Number);
         const transactionDate = new Date(year, month - 1, 1);
         const deadline = setDate(addMonths(transactionDate, 1), 21);
-
-        const now = new Date(); // In a real app, use server time or reliable source
-        // Ensuring we don't count today as overdue if it's strictly the same day, usually deadline is inclusive.
-        // date-fns isAfter returns true if date is after
+        const now = new Date();
         const isOverdue = isAfter(now, deadline);
         const daysRemaining = differenceInDays(deadline, now);
-
-        // 2026 Penalties: ₦100,000 for first month of default + ₦50,000 subsequent
         let potentialPenalty = 0;
         if (isOverdue && !get().monthlyRecords.find(r => r.month === monthStr)?.isFiled) {
             potentialPenalty = 100000;
-            // Simplified logic: Real logic would check how many months overdue
         }
-
         return { deadline, daysRemaining, isOverdue, potentialPenalty };
     },
 
@@ -91,24 +92,18 @@ export const useTaxStore = create<TaxState>((set, get) => ({
 
     calculateMonthlyVAT: () => {
         const { vatTransactions } = get();
-
-        // Output VAT (Tax you charged customers)
         const totalOutput = vatTransactions
             .filter(t => t.type === 'output')
             .reduce((sum, t) => sum + (t.amount * 0.075), 0);
-
-        // Input VAT (Tax you paid to suppliers - now including services/assets)
         const totalInput = vatTransactions
             .filter(t => t.type.startsWith('input'))
             .reduce((sum, t) => sum + (t.amount * 0.075), 0);
-
         const netPayable = totalOutput - totalInput;
-
         return {
             totalOutput,
             totalInput,
             netPayable: netPayable > 0 ? netPayable : 0,
-            isRefundEligible: netPayable < 0 // 2026 rules allow carry-forward or refund
+            isRefundEligible: netPayable < 0
         };
     }
 }));

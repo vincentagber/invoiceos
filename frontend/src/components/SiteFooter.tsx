@@ -13,7 +13,7 @@ export default function SiteFooter() {
                     <div className="col-span-1 lg:col-span-1 space-y-8">
                         <div className="flex items-center gap-2">
                             <img src="/logo.png" alt="InvoiceOS" className="h-10 w-auto bg-white p-1.5 rounded-lg" />
-                            <span className="text-xl font-heading font-black tracking-tighter text-white uppercase">InvoiceOS</span>
+                            <span className="text-xl font-black tracking-tight text-white">InvoiceOS</span>
                         </div>
                         <p className="text-slate-400 font-medium leading-relaxed text-sm">
                             The all-in-one revenue engine designed for the modern entrepreneur in Nigeria & the US.
