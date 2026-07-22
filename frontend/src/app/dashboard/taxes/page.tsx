@@ -49,22 +49,25 @@ export default function TaxesPage() {
           setCompliance(complianceRes.data.data);
           setSummary(summaryRes.data.data);
         })
-        .catch(() => toast.error('Failed to load tax data'))
+        .catch(() => {})
         .finally(() => setLoading(false));
     } else if (!businessId) setLoading(false);
   }, [token, businessId]);
 
   const handleExport = () => {
     if (!summary || !compliance) return;
-    const taxData = summary?.tax_projection || { estimated_tax_owed: 0, tax_rate: 0 };
+    const taxProjection = summary?.tax_projection;
+    const estTaxOwed = taxProjection?.estimated_tax_owed ?? 0;
+    const taxRateVal = taxProjection?.tax_rate ?? 0;
+    const devLevyAmt = taxProjection?.dev_levy_amount ?? 0;
     const currentYear = new Date().getFullYear();
-    const currencySymbol = compliance.currency === 'NGN' ? '₦' : compliance.currency + ' ';
+    const currencySymbol = '₦';
     let csvContent = 'data:text/csv;charset=utf-8,';
     csvContent += `TAX FILING DATA (${compliance.countryName?.toUpperCase()})\n`;
     csvContent += `Assessment Year,${currentYear}\n`;
-    csvContent += `Estimated CIT Liability,${currencySymbol}${taxData.estimated_tax_owed || 0}\n`;
-    csvContent += `Applicable CIT Rate,${taxData.tax_rate}%\n`;
-    if (compliance.countryCode === 'NG') csvContent += `Development Levy (4%),₦${taxData.dev_levy_amount || 0}\n`;
+    csvContent += `Estimated CIT Liability,${currencySymbol}${estTaxOwed}\n`;
+    csvContent += `Applicable CIT Rate,${taxRateVal}%\n`;
+    if (compliance.countryCode === 'NG') csvContent += `Development Levy (4%),₦${devLevyAmt}\n`;
     csvContent += `Filing Deadline,${compliance.deadlines?.[0]?.dateDescription || 'June 30'}\n`;
     csvContent += `Turnover (Gross Revenue),${currencySymbol}${summary.gross_revenue}\n`;
     csvContent += `Assessable Profit (Net Profit),${currencySymbol}${summary.net_profit}\n`;
@@ -97,10 +100,14 @@ export default function TaxesPage() {
   if (loading) return <div className="flex h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   if (!businessId) return <div className="flex h-[60vh] items-center justify-center text-sm text-danger">Please setup your business profile to view compliance settings.</div>;
 
-  const taxData = summary?.tax_projection || { estimated_tax_owed: 0, tax_rate: 0, turnover: 0 };
+  const taxProjection = summary?.tax_projection;
+  const estimatedTaxOwed = taxProjection?.estimated_tax_owed ?? 0;
+  const taxRate = taxProjection?.tax_rate ?? 0;
+  const devLevyRate = taxProjection?.dev_levy_rate ?? 0;
+  const devLevyAmount = taxProjection?.dev_levy_amount ?? 0;
   const currentYear = new Date().getFullYear();
   const filingDeadline = compliance?.deadlines?.[0]?.dateDescription || 'June 30';
-  const currencySymbol = compliance?.currency === 'NGN' ? '₦' : compliance?.currency + ' ';
+  const currencySymbol = '₦';
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 pb-20">
@@ -121,10 +128,10 @@ export default function TaxesPage() {
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <p className="text-emerald-200 text-xs font-medium mb-2 uppercase tracking-wider">Estimated Corporate Tax Liability ({currentYear})</p>
-            <h2 className="text-4xl font-bold mb-3">{currencySymbol}{taxData.estimated_tax_owed?.toLocaleString()}</h2>
+            <h2 className="text-4xl font-bold mb-3">{currencySymbol}{estimatedTaxOwed.toLocaleString()}</h2>
             <div className="flex flex-wrap items-center gap-2 text-sm text-emerald-100">
-              <span className="bg-white/10 px-2.5 py-0.5 rounded-lg font-medium">{taxData.tax_rate}% CIT Rate</span>
-              {taxData.dev_levy_rate > 0 && <span>+ {taxData.dev_levy_rate}% Development Levy</span>}
+              <span className="bg-white/10 px-2.5 py-0.5 rounded-lg font-medium">{taxRate}% CIT Rate</span>
+              {devLevyRate > 0 && <span>+ {devLevyRate}% Development Levy</span>}
             </div>
             <p className="text-xs text-emerald-300 mt-2 italic">Calculated based on net profit. Exemptions apply based on company size.</p>
           </div>

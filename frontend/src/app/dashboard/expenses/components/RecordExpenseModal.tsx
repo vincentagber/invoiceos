@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { X, Mic, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import api from '@/lib/api';
-import { useToast } from '@/lib/useToast';
 import { StatusModal } from '@/components/ui/StatusModal';
 
 interface RecordExpenseModalProps {
@@ -15,7 +14,6 @@ interface RecordExpenseModalProps {
 
 export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const [saving, setSaving] = useState(false);
-    const toast = useToast();
     const [showAlertModal, setShowAlertModal] = useState(false);
     const [alertModalConfig, setAlertModalConfig] = useState({ title: '', message: '', type: 'success' as any });
     const [formData, setFormData] = useState({
@@ -54,7 +52,6 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ isOpen, 
                 description: ''
             });
         } catch (error) {
-            toast.error('Failed to save expense');
             setAlertModalConfig({
                 title: 'Save Failed',
                 message: 'Failed to save expense. Please try again.',

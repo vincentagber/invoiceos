@@ -102,7 +102,6 @@ export default function CompliancePage() {
       const rawConnectors = connectorsRes.data.data || [];
       setConnectors(rawConnectors.map(c => ({ id: c.id, name: c.name, provider: c.provider, type: c.type, status: c.isAvailable ? 'online' as const : 'offline' as const, isMandatory: c.isMandatory, baseUrl: c.baseUrl })));
     } catch (err: any) {
-      toast.error('Failed to load compliance data');
       setError(err?.response?.data?.message || err.message || 'Failed to load compliance data');
     } finally { setLoading(false); }
   }
@@ -130,7 +129,7 @@ export default function CompliancePage() {
     );
   }
 
-  if (error && !status) return <ErrorState message={error} onRetry={fetchComplianceData} />;
+  const fetchError = error && !status ? error : null;
 
   const s = status;
   const score = s?.complianceScore ?? 0;
@@ -146,6 +145,13 @@ export default function CompliancePage() {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 pb-20">
+      {fetchError && (
+        <motion.div variants={itemAnim} className="bg-danger-50 border border-danger-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <AlertCircle size={16} className="text-danger shrink-0" />
+          <p className="text-xs text-danger font-medium flex-1">{fetchError}</p>
+          <button onClick={fetchComplianceData} className="text-xs font-semibold text-danger underline whitespace-nowrap">Retry</button>
+        </motion.div>
+      )}
       {/* Header */}
       <motion.div variants={itemAnim} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -378,20 +384,4 @@ function ComplianceSkeleton() {
   );
 }
 
-function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="max-w-xl mx-auto py-32 text-center space-y-6">
-      <div className="h-20 w-20 rounded-[20px] bg-danger-50 text-danger flex items-center justify-center mx-auto">
-        <AlertCircle size={40} />
-      </div>
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-text-primary">Compliance Data Unavailable</h3>
-        <p className="text-sm text-text-secondary max-w-sm mx-auto">{message}</p>
-      </div>
-      <button onClick={onRetry}
-        className="inline-flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl text-xs font-medium text-text-secondary hover:bg-surface-tertiary transition-all">
-        Retry Connection <ArrowRight size={14} />
-      </button>
-    </div>
-  );
-}
+

@@ -61,7 +61,7 @@ export default function ClientsPage() {
         const res = await api.get(`/clients?businessId=${bizRes.data.id}`);
         setClients(Array.isArray(res.data) ? res.data : []);
       }
-    } catch { toast.error('Failed to load clients'); }
+    } catch {}
     finally { setLoading(false); }
   };
 
@@ -134,7 +134,7 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Partners & Clients</h1>
           <p className="text-sm text-text-secondary mt-1">Manage your revenue-generating relationships and institutional ledger entries.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="sm" leftIcon={<Download size={14} />}>Export CSV</Button>
           <Link href="/dashboard/clients/new">
             <Button size="sm" leftIcon={<Plus size={14} />}>New Partner</Button>

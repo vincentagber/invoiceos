@@ -264,15 +264,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* User Avatar */}
             <Link href="/dashboard/settings/profile" className="flex items-center gap-2 pl-1">
               <div className="hidden sm:block text-right">
-                <p className="text-xs font-semibold text-text-primary leading-none mb-0.5">{user.name}</p>
+                <p className="text-xs font-semibold text-text-primary leading-none mb-0.5">Vincent Agber</p>
                 <p className="text-[10px] text-text-tertiary">Administrator</p>
               </div>
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white font-semibold text-xs shadow-sm overflow-hidden bg-gradient-to-br from-primary to-indigo-500">
-                {user.profilePicture ? (
-                  <img src={user.profilePicture} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span>{user.name?.charAt(0)}</span>
-                )}
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white font-semibold text-xs shadow-sm overflow-hidden">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Vincent%20Agber" alt="" className="h-full w-full object-cover" />
               </div>
             </Link>
           </div>

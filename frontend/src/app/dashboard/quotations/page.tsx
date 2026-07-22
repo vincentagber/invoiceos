@@ -55,7 +55,7 @@ export default function QuotationsPage() {
 
   const fetchSettings = async () => {
     try { const res = await api.get('/business/me'); if (res.data) setSettings(res.data); }
-    catch { toast.error('Failed to load settings'); }
+    catch {} 
   };
 
   const fetchQuotations = async () => {
@@ -65,7 +65,7 @@ export default function QuotationsPage() {
         const res = await api.get(`/quotations?businessId=${bizRes.data.id}`);
         if (Array.isArray(res.data)) setQuotations(res.data);
       }
-    } catch { toast.error('Failed to load quotations'); setQuotations([]); }
+    } catch { setQuotations([]); }
     finally { setLoading(false); }
   };
 

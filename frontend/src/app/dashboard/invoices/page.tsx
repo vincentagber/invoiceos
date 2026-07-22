@@ -55,7 +55,7 @@ export default function InvoicesPage() {
 
   const fetchSettings = async () => {
     try { const res = await api.get('/business/me'); if (res.data) setSettings(res.data); }
-    catch { toast.error('Failed to load settings'); }
+    catch {}
   };
 
   const fetchInvoices = async () => {
@@ -65,7 +65,7 @@ export default function InvoicesPage() {
         const res = await api.get(`/invoices?businessId=${bizRes.data.id}`);
         setInvoices(Array.isArray(res.data) ? res.data : (res.data?.invoices || []));
       }
-    } catch { toast.error('Failed to load invoices'); }
+    } catch {}
     finally { setLoading(false); }
   };
 
@@ -169,7 +169,7 @@ export default function InvoicesPage() {
               placeholder="Search client or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-3 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all w-56"
+              className="pl-9 pr-3 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all w-full sm:w-56"
             />
           </div>
         </div>

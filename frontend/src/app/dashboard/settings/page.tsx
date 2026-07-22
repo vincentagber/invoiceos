@@ -63,7 +63,7 @@ export default function SettingsPage() {
             smtpHost: smtp.host || '', smtpPort: smtp.port || '', smtpUsername: smtp.user || '', smtpPassword: smtp.pass || '', fromName: smtp.fromName || '', fromEmail: smtp.fromEmail || '',
           }));
         }
-      } catch { toast.error('Failed to load settings'); }
+      } catch {}
       finally { setLoading(false); }
     };
     fetchSettings();

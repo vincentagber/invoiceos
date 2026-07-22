@@ -1,4 +1,4 @@
-export const formatCurrency = (amount: number | string, currency: string = 'USD') => {
+export const formatCurrency = (amount: number | string, currency: string = 'NGN') => {
     const value = typeof amount === 'string' ? parseFloat(amount) : amount;
     
     // Map currency to appropriate locale for formatting

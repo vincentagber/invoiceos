@@ -47,7 +47,7 @@ export default function AccountingPage() {
       ]);
       setSummary(summaryRes.data.data);
       setExpenses(expensesRes.data);
-    } catch { toast.error('Failed to load accounting data'); }
+    } catch {}
     finally { setLoading(false); }
   };
 
@@ -106,9 +106,9 @@ export default function AccountingPage() {
       {/* Financial Cards */}
       <motion.div variants={itemAnim} className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total Revenue', value: `$${summary?.gross_revenue?.toLocaleString() || 0}`, subtitle: 'Income from Invoices', icon: TrendingUp, color: 'text-success', bg: 'bg-success-50' },
-          { label: 'Total Expenses', value: `$${summary?.total_expenses?.toLocaleString() || 0}`, subtitle: 'Operating Costs', icon: TrendingDown, color: 'text-danger', bg: 'bg-danger-50' },
-          { label: 'Net Profit', value: `$${summary?.net_profit?.toLocaleString() || 0}`, subtitle: `${summary?.profit_margin || 0}% Margin`, icon: DollarSign, color: summary?.net_profit >= 0 ? 'text-primary' : 'text-danger', bg: summary?.net_profit >= 0 ? 'bg-primary-50' : 'bg-danger-50' },
+          { label: 'Total Revenue', value: `₦${summary?.gross_revenue?.toLocaleString() || 0}`, subtitle: 'Income from Invoices', icon: TrendingUp, color: 'text-success', bg: 'bg-success-50' },
+          { label: 'Total Expenses', value: `₦${summary?.total_expenses?.toLocaleString() || 0}`, subtitle: 'Operating Costs', icon: TrendingDown, color: 'text-danger', bg: 'bg-danger-50' },
+          { label: 'Net Profit', value: `₦${summary?.net_profit?.toLocaleString() || 0}`, subtitle: `${summary?.profit_margin || 0}% Margin`, icon: DollarSign, color: summary?.net_profit >= 0 ? 'text-primary' : 'text-danger', bg: summary?.net_profit >= 0 ? 'bg-primary-50' : 'bg-danger-50' },
         ].map((card, i) => (
           <div key={i} className="bg-surface rounded-2xl border border-border p-5 hover:shadow-card-hover transition-all duration-200">
             <div className="flex items-center justify-between mb-3">

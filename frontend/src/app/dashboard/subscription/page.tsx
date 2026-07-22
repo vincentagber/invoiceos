@@ -51,7 +51,7 @@ export default function SubscriptionPage() {
       const [subRes, historyRes] = await Promise.all([api.get(`/billing/${bizRes.data.id}`), api.get(`/billing/${bizRes.data.id}/history`)]);
       setSubscription(subRes.data);
       setBillingHistory(historyRes.data || []);
-    } catch { toast.error('Failed to load subscription data'); }
+    } catch {}
     finally { setLoading(false); }
   };
 
@@ -164,7 +164,7 @@ export default function SubscriptionPage() {
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold text-text-primary">{plan.name}</h3>
                   <div className="flex items-baseline gap-1 mt-2">
-                    <span className="text-3xl font-bold text-text-primary">${billingCycle === 'MONTHLY' ? '3,000' : '28,800'}</span>
+                    <span className="text-3xl font-bold text-text-primary">₦{billingCycle === 'MONTHLY' ? '3,000' : '28,800'}</span>
                     <span className="text-xs text-text-tertiary">/ {billingCycle === 'MONTHLY' ? 'mo' : 'yr'}</span>
                   </div>
                   <p className="text-xs text-text-secondary mt-1">Full suite of financial intelligence tools.</p>

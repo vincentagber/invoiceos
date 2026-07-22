@@ -45,7 +45,7 @@ export const RevenueChart = ({ data = [], type = 'bar' }: { data?: any[], type?:
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{entry.name}</span>
                                 </div>
                                 <p className="text-sm font-black text-slate-900 tracking-tight">
-                                    {formatCurrency(entry.value, 'USD')}
+                                    {formatCurrency(entry.value, 'NGN')}
                                 </p>
                             </div>
                         ))}
@@ -87,7 +87,7 @@ export const RevenueChart = ({ data = [], type = 'bar' }: { data?: any[], type?:
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
-                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
                         dx={-10}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />

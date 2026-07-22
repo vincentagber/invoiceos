@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/lib/useToast';
 import { RecordExpenseModal } from './components/RecordExpenseModal';
 import { ExcelUploadModal } from './components/ExcelUploadModal';
@@ -55,14 +55,16 @@ export default function ExpensesPage() {
   const [editLoading, setEditLoading] = useState(false);
   const toast = useToast();
   const [actionsOpen, setActionsOpen] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const handleClickOutside = useCallback((e: MouseEvent) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setActionsOpen(null);
-  }, []);
+  const [dropdownUp, setDropdownUp] = useState(false);
   useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [handleClickOutside]);
+    if (!actionsOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-dropdown]')) setActionsOpen(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [actionsOpen]);
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean; onConfirm: () => void; title: string; message: string; variant?: 'danger' | 'warning' | 'info'
   }>({ isOpen: false, onConfirm: () => {}, title: '', message: '' });
@@ -72,7 +74,7 @@ export default function ExpensesPage() {
       const bizRes = await api.get('/business/me');
       const res = await api.get(`/expenses?businessId=${bizRes.data.id}`);
       setExpenses(res.data || []);
-    } catch { toast.error('Failed to load expenses'); }
+    } catch {}
     finally { setLoading(false); }
   };
 
@@ -141,9 +143,9 @@ export default function ExpensesPage() {
   const pendingAmount = expenses.filter(exp => exp.status === 'PENDING').reduce((sum, exp) => sum + Number(exp.amount), 0);
 
   const summaryCards = [
-    { label: 'Total Expenses (MTD)', value: `$${totalMTD.toLocaleString()}`, trend: '+5.2%', up: false, icon: Wallet, color: 'text-danger', bg: 'bg-danger-50' },
-    { label: 'Pending Reimbursement', value: `$${pendingAmount.toLocaleString()}`, subtitle: `Across ${expenses.filter(e => e.status === 'PENDING').length} active items`, icon: Clock, color: 'text-warning', bg: 'bg-warning-50' },
-    { label: 'Top Category', value: topCategory[0] as string, subtitle: `$${(topCategory[1] as number).toLocaleString()} this month`, icon: Receipt, color: 'text-accent', bg: 'bg-accent-50' },
+    { label: 'Total Expenses (MTD)', value: `₦${totalMTD.toLocaleString()}`, trend: '+5.2%', up: false, icon: Wallet, color: 'text-danger', bg: 'bg-danger-50' },
+    { label: 'Pending Reimbursement', value: `₦${pendingAmount.toLocaleString()}`, subtitle: `Across ${expenses.filter(e => e.status === 'PENDING').length} active items`, icon: Clock, color: 'text-warning', bg: 'bg-warning-50' },
+    { label: 'Top Category', value: topCategory[0] as string, subtitle: `₦${(topCategory[1] as number).toLocaleString()} this month`, icon: Receipt, color: 'text-accent', bg: 'bg-accent-50' },
   ];
 
   return (
@@ -154,7 +156,7 @@ export default function ExpensesPage() {
           <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Expenses</h1>
           <p className="text-sm text-text-secondary mt-1">Monitor institutional outgoings, manage vendor payables, and track operational expenditure.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="sm" leftIcon={<FileUp size={14} />} onClick={() => setIsExcelModalOpen(true)}>Upload Excel</Button>
           <Button variant="secondary" size="sm" leftIcon={<Download size={14} />}>Export CSV</Button>
           <Button size="sm" leftIcon={<Plus size={14} />} onClick={() => setIsModalOpen(true)}>Log New Expense</Button>
@@ -184,17 +186,17 @@ export default function ExpensesPage() {
       {/* Filter Bar */}
       <motion.div variants={itemAnim} className="bg-surface rounded-2xl border border-border p-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
             <input
               type="text" placeholder="Search merchant or category..."
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all w-56"
+              className="pl-9 pr-3 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all w-full sm:w-56"
             />
           </div>
           <select
             value={currency} onChange={(e) => setCurrency(e.target.value)}
-            className="bg-surface-secondary border border-border rounded-xl px-3 py-2 text-xs font-medium text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all"
+            className="bg-surface-secondary border border-border rounded-xl px-3 py-2 text-xs font-medium text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all shrink-0"
           >
             <option value="NGN">NGN (₦)</option>
             <option value="USD">USD ($)</option>
@@ -277,15 +279,24 @@ export default function ExpensesPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-4 text-right whitespace-nowrap">
-                        <div className="relative inline-block text-left" ref={dropdownRef}>
+                        <div className="relative inline-block text-left" data-dropdown>
                           <button
-                            onClick={() => setActionsOpen(actionsOpen === exp.id ? null : exp.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const willOpen = actionsOpen !== exp.id;
+                              if (willOpen) {
+                                const btn = e.currentTarget;
+                                const rect = btn.getBoundingClientRect();
+                                setDropdownUp(rect.bottom + 200 > window.innerHeight);
+                              }
+                              setActionsOpen(willOpen ? exp.id : null);
+                            }}
                             className="p-2 text-text-tertiary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-tertiary"
                           >
                             <MoreHorizontal size={14} />
                           </button>
                           {actionsOpen === exp.id && (
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-surface rounded-xl shadow-lg border border-border py-1.5 z-50">
+                            <div className={`absolute right-0 z-50 w-44 bg-surface rounded-xl shadow-lg border border-border py-1.5 ${dropdownUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
                               <button
                                 onClick={() => { openEditModal(exp); setActionsOpen(null); }}
                                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text-secondary hover:bg-surface-tertiary transition-colors"

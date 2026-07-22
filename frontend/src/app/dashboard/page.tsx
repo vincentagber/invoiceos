@@ -4,9 +4,9 @@ import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useToast } from '@/lib/useToast';
 import {
-  Wallet, AlertCircle, TrendingUp, TrendingDown, Users, FileCheck,
+  Wallet, TrendingUp, TrendingDown, Users, FileCheck,
   Calendar, Download, Search, Filter, MoreHorizontal, Rocket,
-  ArrowRight, Sparkles, DollarSign, Activity, Clock, Star,
+  ArrowRight, DollarSign, Activity, Clock, Star,
 } from 'lucide-react';
 import Link from 'next/link';
 import { RevenueChart } from './components/RevenueChart';
@@ -65,24 +65,39 @@ export default function DashboardPage() {
       setLoadingStats(true);
       const businessId = user?.organizations?.[0]?.id;
       if (!businessId) { setLoadingStats(false); return; }
-      const [statsRes, trendsRes, invoicesRes] = await Promise.all([
-        api.get(`/analytics/summary?businessId=${businessId}`),
-        api.get(`/analytics/revenue-trends?businessId=${businessId}&timeframe=${timeframe}`),
-        api.get(`/invoices?businessId=${businessId}&limit=5`),
-      ]);
-      setStats({
-        metrics: statsRes.data.metrics || { totalInvoiced: 0, paidAmount: 0, outstandingAmount: 0, totalExpenses: 0, totalClients: 0, invoicesSentCount: 0, conversionRate: 0 },
-        topClients: (statsRes.data.topClients || []).map((c: any) => ({ ...c, avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.name}` })),
-      });
-      setTrends(trendsRes.data || []);
-      setRecentActivity(invoicesRes.data.data || []);
-    } catch { toast.error('Failed to load dashboard data'); }
-    finally { setLoadingStats(false); }
+
+      const defaultMetrics = { totalInvoiced: 0, paidAmount: 0, outstandingAmount: 0, totalExpenses: 0, totalClients: 0, invoicesSentCount: 0, conversionRate: 0 };
+
+      let metrics = defaultMetrics;
+      let topClients: DashboardStats['topClients'] = [];
+      let trends: any[] = [];
+      let activity: any[] = [];
+
+      try {
+        const statsRes = await api.get(`/analytics/summary?businessId=${businessId}`);
+        metrics = statsRes.data.metrics || defaultMetrics;
+        topClients = (statsRes.data.topClients || []).map((c: any) => ({ ...c, avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.name}` }));
+      } catch {}
+
+      try {
+        const trendsRes = await api.get(`/analytics/revenue-trends?businessId=${businessId}&timeframe=${timeframe}`);
+        trends = trendsRes.data || [];
+      } catch {}
+
+      try {
+        const invoicesRes = await api.get(`/invoices?businessId=${businessId}&limit=5`);
+        activity = invoicesRes.data.data || [];
+      } catch {}
+
+      setStats({ metrics, topClients });
+      setTrends(trends);
+      setRecentActivity(activity);
+    } finally { setLoadingStats(false); }
   };
 
   useEffect(() => {
     if (authLoading) return;
-    if (!token) { setLoadingStats(false); return; }
+    if (!token) { setLoadingStats(false); setStats({ metrics: { totalInvoiced: 0, paidAmount: 0, outstandingAmount: 0, totalExpenses: 0, totalClients: 0, invoicesSentCount: 0, conversionRate: 0 }, topClients: [] }); return; }
     if (user && user.organizations.length === 0) { setLoadingStats(false); return; }
     fetchDashboardData();
   }, [authLoading, token, user, timeframe]);
@@ -102,16 +117,16 @@ export default function DashboardPage() {
 
   if (authLoading || loadingStats) return <DashboardSkeleton />;
   if (user && user.organizations.length === 0) return <OnboardingState />;
-  if (!stats) return <ErrorState onRetry={() => fetchDashboardData()} />;
+  if (!stats) return null;
 
   const m = stats.metrics;
   const profit = (m.paidAmount || 0) - (m.totalExpenses || 0);
   const profitMargin = m.paidAmount > 0 ? ((profit / m.paidAmount) * 100).toFixed(1) : '0';
 
   const kpiValues = [
-    { value: `$${(m.paidAmount || 0).toLocaleString()}`, trend: '+12.5%', up: true },
-    { value: `$${(m.totalExpenses || 0).toLocaleString()}`, trend: '+2.4%', up: false },
-    { value: `$${profit.toLocaleString()}`, trend: `${profitMargin}%`, up: profit >= 0 },
+    { value: `₦${(m.paidAmount || 0).toLocaleString()}`, trend: '+12.5%', up: true },
+    { value: `₦${(m.totalExpenses || 0).toLocaleString()}`, trend: '+2.4%', up: false },
+    { value: `₦${profit.toLocaleString()}`, trend: `${profitMargin}%`, up: profit >= 0 },
     { value: (m.invoicesSentCount || 0).toString(), trend: '+18%', up: true },
     { value: (m.totalClients || 0).toString(), trend: '+2', up: true },
   ];
@@ -121,7 +136,7 @@ export default function DashboardPage() {
       {/* Header */}
       <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Welcome back, {user?.name?.split(' ')[0]}</h1>
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Welcome back, Vincent</h1>
           <p className="text-sm text-text-secondary mt-1">Here&apos;s what&apos;s happening with your business today.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -134,7 +149,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* KPI Cards */}
-      <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {kpiConfig.map((kpi, i) => {
           const v = kpiValues[i];
           return (
@@ -146,7 +161,7 @@ export default function DashboardPage() {
                   <kpi.icon size={16} strokeWidth={2.5} />
                 </div>
               </div>
-              <div className="text-xl font-bold text-text-primary">{v.value}</div>
+              <div className="text-lg sm:text-xl font-bold text-text-primary">{v.value}</div>
               <div className={clsx('flex items-center gap-1 mt-1.5 text-xs font-semibold', v.up ? 'text-success' : 'text-danger')}>
                 {v.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                 {v.trend} vs last month
@@ -156,39 +171,21 @@ export default function DashboardPage() {
         })}
       </motion.div>
 
-      {/* AI Insights */}
-      <motion.div variants={item} className="bg-gradient-to-r from-primary-500 to-indigo-500 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-10 -mt-10" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-10 -mb-10" />
-        <div className="flex items-start gap-4 relative z-10">
-          <div className="h-10 w-10 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0 backdrop-blur-sm border border-white/10">
-            <Sparkles size={18} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold mb-1">AI Insights</p>
-            <p className="text-sm text-white/80 leading-relaxed">
-              Revenue is up 18% this month. You have <strong className="text-white">{m.outstandingAmount > 0 ? `${m.outstandingAmount.toLocaleString()} USD` : 'no'}</strong> in outstanding invoices.
-              {m.totalClients > 0 && ` Your top client accounts for ${stats.topClients[0]?.name || 'N/A'}.`}
-            </p>
-          </div>
-          <Badge variant="default" size="sm" className="shrink-0 bg-white/15 text-white border-white/20">Live</Badge>
-        </div>
-      </motion.div>
-
       {/* Main Grid */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Revenue Chart */}
         <div className="lg:col-span-8">
           <Card>
             <CardHeader
+              className="flex-col sm:flex-row items-start sm:items-center"
               action={
-                <div className="flex items-center gap-1 p-0.5 bg-surface-secondary rounded-lg border border-border">
+                <div className="flex items-center gap-1 p-0.5 bg-surface-secondary rounded-lg border border-border w-full sm:w-auto">
                   {['weekly', 'monthly', 'yearly'].map((t) => (
                     <button
                       key={t}
                       onClick={() => setTimeframe(t as any)}
                       className={clsx(
-                        'px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+                        'px-3 py-1.5 rounded-md text-xs font-medium transition-all flex-1 sm:flex-none',
                         timeframe === t ? 'bg-surface text-text-primary shadow-sm border border-border' : 'text-text-tertiary hover:text-text-secondary',
                       )}
                     >
@@ -268,16 +265,17 @@ export default function DashboardPage() {
       <motion.div variants={item}>
         <Card>
           <CardHeader
+            className="flex-col sm:flex-row items-start sm:items-center"
             action={
-              <div className="flex items-center gap-2">
-                <div className="relative">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
                   <input
                     type="text" placeholder="Search..."
-                    className="pl-9 pr-3 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all w-48"
+                    className="pl-9 pr-3 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-text-primary outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary transition-all w-full sm:w-48"
                   />
                 </div>
-                <button className="p-2 rounded-xl border border-border text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors">
+                <button className="p-2 rounded-xl border border-border text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary transition-colors shrink-0">
                   <Filter size={14} />
                 </button>
               </div>
@@ -365,7 +363,7 @@ function DashboardSkeleton() {
         <div className="space-y-3"><Skeleton className="h-8 w-64 rounded-lg" /><Skeleton className="h-4 w-48 rounded-lg" /></div>
         <div className="flex gap-3"><Skeleton className="h-9 w-32 rounded-xl" /><Skeleton className="h-9 w-24 rounded-xl" /></div>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}</div>
       <Skeleton className="h-16 rounded-2xl" />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <Skeleton className="lg:col-span-8 h-[400px] rounded-2xl" />
@@ -393,17 +391,4 @@ function OnboardingState() {
   );
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="max-w-md mx-auto py-32 text-center space-y-6">
-      <div className="h-16 w-16 rounded-2xl bg-danger-50 text-danger flex items-center justify-center mx-auto">
-        <AlertCircle size={32} />
-      </div>
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-text-primary">Connection Error</h3>
-        <p className="text-sm text-text-secondary">Unable to load your dashboard data. Please check your connection and try again.</p>
-      </div>
-      <Button onClick={onRetry} variant="secondary" size="md">Retry</Button>
-    </div>
-  );
-}
+
